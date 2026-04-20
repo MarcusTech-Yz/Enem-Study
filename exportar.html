@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENEM · Exportar para Obsidian</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .export-hero {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+    }
+    .export-hero-icon {
+      width: 48px; height: 48px;
+      background: rgba(200,241,53,.1);
+      border: 1px solid rgba(200,241,53,.25);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--accent);
+    }
+    .export-hero h2 { font-size: 17px; font-weight: 500; margin-bottom: 4px; }
+    .export-hero p  { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+    .export-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .export-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .export-card-header { display: flex; align-items: center; gap: 10px; }
+    .export-card-icon   {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .export-card-icon.green { background: rgba(74,222,128,.1); color: var(--green); border: 1px solid rgba(74,222,128,.25); }
+    .export-card-icon.blue  { background: rgba(96,165,250,.1); color: var(--blue);  border: 1px solid rgba(96,165,250,.25); }
+    .export-card-icon.amber { background: rgba(245,166,35,.1); color: var(--amber); border: 1px solid rgba(245,166,35,.25); }
+    .export-card h3   { font-size: 14px; font-weight: 500; }
+    .export-card p    { font-size: 12px; color: var(--text2); line-height: 1.6; flex: 1; }
+
+    .preview-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+      line-height: 1.7;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .status-bar {
+      position: sticky;
+      bottom: 1.5rem;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 12px 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .status-bar.show { opacity: 1; }
+
+    .materia-export-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      transition: border-color .15s;
+    }
+    .materia-export-row:hover { border-color: var(--border2); }
+    .materia-export-row i     { color: var(--text3); }
+    .materia-export-nome      { flex: 1; font-size: 13px; }
+    .materia-export-meta      { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><span></span> enem.study</div>
+    <nav>
+      <p class="nav-label">Menu</p>
+      <ul class="nav-links">
+        <li><a href="index.html"><i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard</a></li>
+        <li><a href="hoje.html"><i data-lucide="play-circle" class="nav-icon"></i> Estudar Hoje</a></li>
+        <li><a href="grade.html"><i data-lucide="calendar-days" class="nav-icon"></i> Grade Semanal</a></li>
+        <li><a href="materias.html"><i data-lucide="book-open" class="nav-icon"></i> Matérias</a></li>
+        <li><a href="exportar.html"><i data-lucide="download" class="nav-icon"></i> Exportar</a></li>
+        <li><a href="perfil.html"><i data-lucide="trophy" class="nav-icon"></i> Perfil</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <p class="date-tag">Obsidian</p>
+      <h1>Exportar anotações</h1>
+      <p>Baixe suas notas em Markdown, prontas para colar no vault do Obsidian.</p>
+    </div>
+
+    <!-- Hero info -->
+    <div class="export-hero">
+      <div class="export-hero-icon">
+        <i data-lucide="folder-open" style="width:24px;height:24px;"></i>
+      </div>
+      <div>
+        <h2>Como usar no Obsidian</h2>
+        <p>
+          Baixe o ZIP completo e descompacte dentro da pasta do seu vault.<br>
+          Cada matéria vira uma pasta com o arquivo <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px;">.md</code> e uma pasta
+          <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px;">assets/</code> com as imagens.<br>
+          O <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px;">_indice.md</code> na raiz vira o seu dashboard dentro do Obsidian, com links para todas as matérias.
+        </p>
+      </div>
+    </div>
+
+    <!-- Opções principais -->
+    <div class="export-options">
+
+      <!-- ZIP tudo -->
+      <div class="export-card">
+        <div class="export-card-header">
+          <div class="export-card-icon green">
+            <i data-lucide="package" style="width:18px;height:18px;"></i>
+          </div>
+          <h3>Exportar tudo</h3>
+        </div>
+        <p>Gera um ZIP com todas as matérias, tópicos, anotações, imagens e o índice geral. Pronto para colar direto no vault.</p>
+        <div class="preview-box">enem-vault/
+├── _indice.md
+├── Matemática/
+│   ├── Matemática.md
+│   └── assets/
+├── História/
+│   ├── História.md
+│   └── assets/
+└── ...</div>
+        <button class="btn btn-accent" id="btn-zip" data-label="Baixar ZIP completo"
+                onclick="exportarTudo()">
+          <i data-lucide="download" style="width:14px;height:14px;"></i>
+          Baixar ZIP completo
+        </button>
+      </div>
+
+      <!-- Só hoje -->
+      <div class="export-card">
+        <div class="export-card-header">
+          <div class="export-card-icon blue">
+            <i data-lucide="calendar-check" style="width:18px;height:18px;"></i>
+          </div>
+          <h3>Exportar dia de hoje</h3>
+        </div>
+        <p>Exporta um único arquivo com o resumo do dia — sessões de estudo, registro manual e matérias estudadas hoje.</p>
+        <div class="preview-box">Estudo — 18-04-2026.md
+
+## Resumo do dia
+...suas notas...
+
+## Sessões
+- Matemática · 25min
+- História · 50min</div>
+        <button class="btn btn-blue" onclick="exportarHoje()">
+          <i data-lucide="file-text" style="width:14px;height:14px;"></i>
+          Baixar arquivo do dia
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Por matéria -->
+    <div class="card">
+      <div class="section-header">
+        <p class="card-title" style="margin-bottom:0;">Exportar por matéria</p>
+        <span style="font-size:11px;color:var(--text3);">Clique em uma matéria para baixar o .md dela</span>
+      </div>
+      <div style="margin-top:1rem;" id="materias-export-list"></div>
+    </div>
+
+    <!-- Importação -->
+    <div class="card" style="margin-top:1rem;">
+      <div class="section-header">
+        <p class="card-title" style="margin-bottom:0;">Importar do Obsidian</p>
+        <span style="font-size:11px;color:var(--text3);">Arraste um .md ou um .zip exportado pelo app</span>
+      </div>
+
+      <div id="import-drop"
+        style="border:1px dashed var(--border2);border-radius:var(--radius);padding:2rem;text-align:center;cursor:pointer;color:var(--text3);font-size:13px;margin-top:1rem;transition:all .2s;"
+        onclick="document.getElementById('import-input').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+        ondragleave="this.style.borderColor='';this.style.color=''"
+        ondrop="handleImportDrop(event)">
+        <i data-lucide="upload" style="width:20px;height:20px;margin-bottom:8px;display:block;margin-inline:auto;"></i>
+        Clique ou arraste um <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;">.md</code> ou
+        <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;">.zip</code> aqui
+        <br><span style="font-size:11px;opacity:.5;margin-top:4px;display:block;">
+          Arquivos exportados pelo app: detecta automaticamente.<br>
+          Anotações avulsas do Obsidian: você escolhe a matéria.
+        </span>
+      </div>
+      <input type="file" id="import-input" accept=".md,.zip" style="display:none" onchange="handleImportInput(event)" />
+
+      <!-- Seletor manual de matéria -->
+      <div id="import-seletor" style="display:none;margin-top:1rem;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:1.25rem;">
+        <p style="font-size:13px;font-weight:500;margin-bottom:4px;">
+          Arquivo: <span id="import-arquivo-nome" style="color:var(--accent);"></span>
+        </p>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:12px;">Não foi possível detectar a matéria. Escolha para onde importar:</p>
+        <pre id="import-conteudo-preview"
+          style="font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;margin-bottom:12px;overflow-x:auto;white-space:pre-wrap;max-height:120px;overflow-y:auto;"></pre>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="import-materia-select"
+            style="flex:1;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;"></select>
+          <button class="btn btn-accent btn-sm" onclick="confirmarImportAvulso()">Importar</button>
+          <button class="btn btn-sm btn-ghost" onclick="document.getElementById('import-seletor').style.display='none'">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Resultado -->
+      <div id="import-resultado" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- Status -->
+    <div class="status-bar" id="export-status-bar">
+      <i data-lucide="check-circle" style="width:16px;height:16px;color:var(--accent);"></i>
+      <span id="export-status"></span>
+    </div>
+
+  </main>
+</div>
+
+<script src="data/topicos.js"></script>
+<script src="js/app.js"></script>
+<script src="js/exportar.js"></script>
+<script>
+  // Lista de matérias para exportar individualmente
+  const lista = document.getElementById('materias-export-list')
+  for (const [key, mat] of Object.entries(ENEM)) {
+    const { feitos, total, pct } = getProgressoMateria(key)
+    const tempo = getTempoMateria(key)
+    const anotacao = getAnotacao(key)
+    const imgs = getImagens(key)
+
+    lista.innerHTML += `
+      <div class="materia-export-row">
+        <i data-lucide="${mat.icone}" style="width:16px;height:16px;"></i>
+        <span class="materia-export-nome">${mat.nome}</span>
+        <span class="materia-export-meta">
+          ${feitos}/${total} tópicos
+          ${tempo > 0 ? ' · ' + formatTempo(tempo) : ''}
+          ${anotacao ? ' · nota' : ''}
+          ${imgs.length > 0 ? ' · ' + imgs.length + ' img' : ''}
+        </span>
+        <button class="btn btn-sm btn-ghost" onclick="exportarMateria('${key}')">
+          <i data-lucide="download" style="width:12px;height:12px;"></i>
+          .md
+        </button>
+      </div>
+    `
+  }
+
+  // Preenche select de matérias no seletor manual
+  const importSel = document.getElementById('import-materia-select')
+  for (const [key, mat] of Object.entries(ENEM)) {
+    const opt = document.createElement('option')
+    opt.value = key; opt.textContent = mat.nome
+    importSel.appendChild(opt)
+  }
+
+  // Handlers de upload/drop
+  function handleImportInput(e) {
+    const file = e.target.files[0]; if (!file) return
+    lerArquivoImport(file); e.target.value = ''
+  }
+  function handleImportDrop(e) {
+    e.preventDefault()
+    document.getElementById('import-drop').style.borderColor = ''
+    document.getElementById('import-drop').style.color = ''
+    const file = e.dataTransfer.files[0]; if (file) lerArquivoImport(file)
+  }
+  async function lerArquivoImport(file) {
+    if (file.name.endsWith('.zip')) { await importarZip(file); return }
+    const texto = await file.text()
+    processarImport(texto, file.name)
+  }
+  async function importarZip(file) {
+    setStatus('Lendo ZIP...')
+    try {
+      const zip = await JSZip.loadAsync(file)
+      let importados = 0
+      for (const [caminho, entry] of Object.entries(zip.files)) {
+        if (entry.dir || !caminho.endsWith('.md') || caminho.includes('_indice')) continue
+        const conteudo = await entry.async('string')
+        const nome     = caminho.split('/').pop()
+        const materia  = detectarMateriaDoMd(conteudo)
+        const temTop   = /##\s+T[oó]picos/.test(conteudo)
+        if (materia && temTop) { importarAppMd(conteudo, materia, nome); importados++ }
+      }
+      setStatus(`✓ ZIP importado — ${importados} matéria${importados !== 1 ? 's' : ''} atualizada${importados !== 1 ? 's' : ''}`)
+    } catch(e) {
+      setStatus('Erro ao ler o ZIP. Certifique que foi exportado pelo app.')
+    }
+  }
+
+  // Mostra status bar quando tem mensagem
+  const origSetStatus = setStatus
+  window.setStatus = function(msg) {
+    origSetStatus(msg)
+    document.getElementById('export-status-bar').classList.add('show')
+  }
+
+  // Preenche select de matérias no seletor manual
+  const sel = document.getElementById('import-materia-select')
+  for (const [key, mat] of Object.entries(ENEM)) {
+    const opt = document.createElement('option')
+    opt.value = key
+    opt.textContent = mat.nome
+    sel.appendChild(opt)
+  }
+
+  // Handlers de upload
+  function handleImportInput(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    lerArquivoImport(file)
+    e.target.value = ''
+  }
+
+  function handleImportDrop(e) {
+    e.preventDefault()
+    document.getElementById('import-drop').style.borderColor = ''
+    document.getElementById('import-drop').style.color = ''
+    const file = e.dataTransfer.files[0]
+    if (file) lerArquivoImport(file)
+  }
+
+  async function lerArquivoImport(file) {
+    if (file.name.endsWith('.zip')) {
+      await importarZip(file)
+      return
+    }
+    const texto = await file.text()
+    processarImport(texto, file.name)
+  }
+
+  async function importarZip(file) {
+    setStatus('Lendo ZIP...')
+    try {
+      const zip     = await JSZip.loadAsync(file)
+      let importados = 0
+      for (const [caminho, entry] of Object.entries(zip.files)) {
+        if (entry.dir || !caminho.endsWith('.md') || caminho.includes('_indice')) continue
+        const conteudo = await entry.async('string')
+        const nome     = caminho.split('/').pop()
+        const materia  = detectarMateriaDoMd(conteudo)
+        const temTop   = /##\s+T[oó]picos/.test(conteudo)
+        if (materia && temTop) { importarAppMd(conteudo, materia, nome); importados++ }
+      }
+      setStatus(`✓ ZIP importado — ${importados} matéria${importados !== 1 ? 's' : ''} atualizada${importados !== 1 ? 's' : ''}`)
+    } catch(e) {
+      setStatus('Erro ao ler o ZIP. Certifique que foi exportado pelo app.')
+    }
+  }
+
+  lucide.createIcons()
+</script>
+</body>
+</html>

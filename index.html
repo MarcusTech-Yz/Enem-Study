@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENEM · Dashboard</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo"><span></span> enem.study</div>
+    <nav>
+      <p class="nav-label">Menu</p>
+      <ul class="nav-links">
+        <li><a href="index.html"><i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard</a></li>
+        <li><a href="hoje.html"><i data-lucide="play-circle" class="nav-icon"></i> Estudar Hoje</a></li>
+        <li><a href="grade.html"><i data-lucide="calendar-days" class="nav-icon"></i> Grade Semanal</a></li>
+        <li><a href="materias.html"><i data-lucide="book-open" class="nav-icon"></i> Matérias</a></li>
+        <li><a href="exportar.html"><i data-lucide="download" class="nav-icon"></i> Exportar</a></li>
+        <li><a href="perfil.html"><i data-lucide="trophy" class="nav-icon"></i> Perfil</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <p class="date-tag" id="data-hoje"></p>
+      <h1 id="saudacao"></h1>
+      <p>Aqui está o seu resumo de hoje.</p>
+    </div>
+
+    <div id="bloco-hoje"></div>
+    <div class="stats-row" id="stats-row"></div>
+
+    <div class="two-col" style="margin-top:1.5rem;">
+      <div class="card">
+        <p class="card-title">Recomendados para hoje</p>
+        <div class="rec-list" id="rec-list"></div>
+      </div>
+      <div class="card">
+        <p class="card-title">Matérias mais fracas</p>
+        <div class="fracas-list" id="fracas-list"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;">
+      <p class="card-title">Progresso por matéria</p>
+      <div id="progress-list" style="display:flex;flex-direction:column;gap:14px;"></div>
+    </div>
+  </main>
+</div>
+
+<script src="data/topicos.js"></script>
+<script src="js/app.js"></script>
+<script>
+const agora = new Date()
+const hora  = agora.getHours()
+document.getElementById('data-hoje').textContent =
+  agora.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+document.getElementById('saudacao').textContent =
+  (hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite') + ' '
+
+// ── Bloco Hoje ──
+const materiaHoje = getMateriaHoje()
+const blocoHoje   = document.getElementById('bloco-hoje')
+
+if (materiaHoje.length > 0) {
+  const m      = materiaHoje[0]
+  const dados  = ENEM[m.key]
+  const horTxt = m.inicio ? `${m.inicio}${m.duracao ? ' · ' + m.duracao + ' min' : ''}` : 'Horário não definido'
+  blocoHoje.innerHTML = `
+    <div class="today-block">
+      <div>
+        <p class="today-label">Hoje você estuda</p>
+        <p class="today-materia">${materiaHoje.map(x => ENEM[x.key].nome).join(' + ')}</p>
+        <p class="today-horario">${horTxt}</p>
+        <button class="today-btn" onclick="window.location.href='hoje.html'">
+          ▶ Começar Estudo Agora
+        </button>
+      </div>
+      <div class="today-icon">
+        <i data-lucide="${dados.icone}" style="width:40px;height:40px;"></i>
+      </div>
+    </div>
+  `
+} else {
+  blocoHoje.innerHTML = `
+    <div class="card" style="margin-bottom:1.5rem;border-style:dashed;">
+      <p style="color:var(--text3);font-size:13px;">
+        Nenhuma matéria programada pra hoje.
+        <a href="grade.html" style="color:var(--accent);">Configurar grade →</a>
+      </p>
+    </div>
+  `
+}
+
+// ── Stats ──
+const prog       = getProgressoGlobal()
+const pct        = prog.total > 0 ? Math.round((prog.feitos / prog.total) * 100) : 0
+const streak     = getStreak()
+const tempoTotal = getTempoTotal()
+
+document.getElementById('stats-row').innerHTML = `
+  <div class="stat-card">
+    <p class="stat-label">Tópicos feitos</p>
+    <p class="stat-value accent">${prog.feitos}</p>
+    <p class="stat-sub">de ${prog.total} tópicos</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Progresso geral</p>
+    <p class="stat-value">${pct}<span style="font-size:16px;font-weight:400;color:var(--text3)">%</span></p>
+    <p class="stat-sub">do conteúdo ENEM</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Streak</p>
+    <p class="stat-value amber">${streak.count}</p>
+    <p class="stat-sub">dia${streak.count !== 1 ? 's' : ''} seguido${streak.count !== 1 ? 's' : ''}</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Tempo total</p>
+    <p class="stat-value blue" style="font-size:20px;padding-top:3px;">${formatTempo(tempoTotal)}</p>
+    <p class="stat-sub">estudando</p>
+  </div>
+`
+
+// ── Recomendados ──
+const recs    = getRecomendados(3)
+const recList = document.getElementById('rec-list')
+if (recs.length === 0) {
+  recList.innerHTML = `<p style="color:var(--text3);font-size:13px;">Marque tópicos nas matérias para ver recomendações.</p>`
+} else {
+  recList.innerHTML = recs.map(r => `
+    <a class="rec-item" href="materia.html?m=${r.materiaKey}">
+      <i data-lucide="${r.matIcone}" style="width:16px;height:16px;color:var(--text3);flex-shrink:0;"></i>
+      <div style="flex:1;">
+        <p class="rec-texto">${r.texto}</p>
+        <p class="rec-mat">${r.matNome}</p>
+      </div>
+    </a>
+  `).join('')
+}
+
+// ── Matérias mais fracas ──
+const fracas = getMateriasMaisFracas(4)
+document.getElementById('fracas-list').innerHTML = fracas.map((m, i) => `
+  <a class="fraca-item" href="materia.html?m=${m.key}">
+    <div class="fraca-rank">${i + 1}</div>
+    <div class="fraca-info">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <p class="fraca-nome">
+          <i data-lucide="${m.icone}" style="width:14px;height:14px;"></i>
+          ${m.nome}
+        </p>
+        <span style="font-size:11px;color:var(--text3);font-family:var(--mono);">${m.pct}%</span>
+      </div>
+      <div class="progress-bar" style="margin-top:4px;">
+        <div class="progress-fill" style="width:${m.pct}%;background:${m.pct < 30 ? 'var(--red)' : m.pct < 60 ? 'var(--amber)' : 'var(--accent)'};"></div>
+      </div>
+    </div>
+  </a>
+`).join('')
+
+// ── Progresso por matéria ──
+const list = document.getElementById('progress-list')
+for (const [key, mat] of Object.entries(ENEM)) {
+  const { feitos, total, pct: p } = getProgressoMateria(key)
+  const tempo = getTempoMateria(key)
+  list.innerHTML += `
+    <a href="materia.html?m=${key}" style="text-decoration:none;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <i data-lucide="${mat.icone}" style="width:16px;height:16px;color:var(--text3);flex-shrink:0;"></i>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+            <span style="font-size:13px;color:var(--text);">${mat.nome}</span>
+            <span style="font-size:11px;color:var(--text3);font-family:var(--mono);">
+              ${feitos}/${total}${tempo > 0 ? ' · ' + formatTempo(tempo) : ''}
+            </span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${p}%"></div>
+          </div>
+        </div>
+      </div>
+    </a>
+  `
+}
+
+lucide.createIcons()
+</script>
+</body>
+</html>
