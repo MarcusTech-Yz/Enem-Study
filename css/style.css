@@ -323,15 +323,44 @@ a { color: inherit; text-decoration: none; }
 .topico-item.done .topico-check { background: var(--accent); border-color: var(--accent); color: #0F0F0F; font-weight: 600; }
 .topico-texto { flex: 1; cursor: pointer; }
 
-.dific-group { display: flex; gap: 3px; flex-shrink: 0; }
+.dific-group { display: flex; gap: 6px; flex-shrink: 0; }
 .dific-btn {
-  font-size: 10px; padding: 2px 7px; border-radius: 4px;
-  border: 1px solid var(--border2); background: none;
-  color: var(--text3); cursor: pointer; font-family: var(--font); transition: all .15s;
+  width: 40px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border-radius: 7px;
+  border: 1px solid var(--border2); background: var(--bg2);
+  color: var(--text3); cursor: pointer; font-family: var(--font);
+  transition: all .15s ease;
 }
-.dific-btn.d1.active { background: rgba(255,94,94,.15);  border-color: var(--red);   color: var(--red); }
-.dific-btn.d2.active { background: rgba(245,166,35,.15); border-color: var(--amber); color: var(--amber); }
-.dific-btn.d3.active { background: rgba(74,222,128,.15); border-color: var(--green); color: var(--green); }
+.dific-btn:hover {
+  background: var(--bg3);
+  border-color: #4A4A4A;
+  color: var(--text2);
+  transform: translateY(-1px);
+}
+.dific-btn i {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.1;
+}
+.dific-btn.d1.active {
+  background: rgba(255,94,94,.14);
+  border-color: rgba(255,94,94,.55);
+  color: var(--red);
+  box-shadow: inset 0 0 0 1px rgba(255,94,94,.15);
+}
+.dific-btn.d2.active {
+  background: rgba(245,166,35,.14);
+  border-color: rgba(245,166,35,.55);
+  color: var(--amber);
+  box-shadow: inset 0 0 0 1px rgba(245,166,35,.12);
+}
+.dific-btn.d3.active {
+  background: rgba(74,222,128,.14);
+  border-color: rgba(74,222,128,.55);
+  color: var(--green);
+  box-shadow: inset 0 0 0 1px rgba(74,222,128,.12);
+}
 
 /* Tempo no tópico */
 .topico-tempo {
@@ -540,57 +569,71 @@ a { color: inherit; text-decoration: none; }
 ::-webkit-scrollbar-track  { background: var(--bg); }
 ::-webkit-scrollbar-thumb  { background: var(--border2); border-radius: 4px; }
 
-/* ── Nota por tópico ── */
-.topico-wrapper { margin-bottom: 6px; }
+/* ── Conteúdo (camada 2) ── */
+.conteudo-bloco {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
 
-.nota-toggle {
-  width: 24px; height: 24px;
-  border-radius: 5px;
+.conteudo-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.conteudo-header:hover { background: var(--bg3); }
+
+.conteudo-nome {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.conteudo-body {
+  border-top: 1px solid var(--border);
+  padding: 8px 8px 8px;
+}
+
+.conteudo-body .topico-wrapper { margin-bottom: 4px; }
+.conteudo-body .topico-item    { background: var(--bg3); }
+
+/* ── Filtro de prioridade ── */
+.prioridade-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border2);
   background: none;
   color: var(--text3);
   cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  font-family: var(--font);
   transition: all .15s;
+  white-space: nowrap;
 }
-.nota-toggle:hover       { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,.07); }
-.nota-toggle.has-nota    { border-color: rgba(96,165,250,.4); color: var(--blue); background: rgba(96,165,250,.08); }
+.prioridade-btn:hover       { background: var(--bg3); color: var(--text2); }
+.prioridade-btn.ativo       { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+.prioridade-btn.alta.ativo  { color: var(--red);   border-color: rgba(255,94,94,.4);   background: rgba(255,94,94,.08); }
+.prioridade-btn.media.ativo { color: var(--amber); border-color: rgba(245,166,35,.4);  background: rgba(245,166,35,.08); }
+.prioridade-btn.baixa.ativo { color: var(--green); border-color: rgba(74,222,128,.4);  background: rgba(74,222,128,.08); }
+
+/* ── Nota por tópico ── */
+.topico-wrapper { margin-bottom: 4px; }
+
+.nota-toggle {
+  width: 24px; height: 24px;
+  border-radius: 5px; border: 1px solid var(--border2);
+  background: none; color: var(--text3);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .15s;
+}
+.nota-toggle:hover    { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,.07); }
+.nota-toggle.has-nota { border-color: rgba(96,165,250,.4); color: var(--blue); background: rgba(96,165,250,.08); }
 .nota-toggle.has-nota:hover { border-color: var(--blue); }
-
-.nota-panel {
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-top: none;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  padding: 10px 12px;
-  margin-top: -1px;
-}
-
-.nota-topico-input {
-  width: 100%;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.7;
-  resize: vertical;
-  min-height: 90px;
-  outline: none;
-  transition: border-color .15s;
-}
-.nota-topico-input:focus { border-color: var(--accent); }
-
-.nota-panel-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 8px;
-}
-.nota-save-status { font-size: 11px; color: var(--text3); font-family: var(--mono); }
 
 @media (max-width: 768px) {
   .sidebar { display: none; }

@@ -95,16 +95,31 @@ function getTempoSemana() {
 function getProgressoGlobal() {
   let total = 0, feitos = 0
   for (const k of Object.keys(ENEM)) {
-    total  += ENEM[k].topicos.length
+    const mat = ENEM[k]
+    // Calcula total de habilidades
+    let topicosTotais = 0
+    if (mat.conteudos) {
+      for (const c of mat.conteudos) topicosTotais += c.habilidades.length
+    } else if (mat.topicos) {
+      topicosTotais = mat.topicos.length
+    }
+    total  += topicosTotais
     feitos += getTopicosFeitos(k).length
   }
   return { total, feitos }
 }
 
 function getProgressoMateria(k) {
-  const feitos = getTopicosFeitos(k).length
-  const total  = ENEM[k].topicos.length
-  return { feitos, total, pct: total ? Math.round((feitos / total) * 100) : 0 }
+  const mat = ENEM[k]
+  if (!mat) return { feitos: 0, total: 0, pct: 0 }
+  const feitos = store.get('topicos_' + k) || []
+  let total = 0
+  if (mat.conteudos) {
+    for (const c of mat.conteudos) total += c.habilidades.length
+  } else if (mat.topicos) {
+    total = mat.topicos.length
+  }
+  return { feitos: feitos.length, total, pct: total ? Math.round((feitos.length / total) * 100) : 0 }
 }
 
 function getMateriasMaisFracas(limit = 4) {
@@ -132,14 +147,18 @@ function getRecomendados(n = 3) {
   const result = []
   for (const mat of fracas) {
     if (result.length >= n) break
-    const feitos   = getTopicosFeitos(mat.key)
-    const dific    = getDificuldades(mat.key)
-    const pendentes = ENEM[mat.key].topicos
-      .map((t, idx) => ({ idx, texto: t, dif: dific[idx] || 0 }))
-      .filter(t => !feitos.includes(t.idx))
-      .sort((a, b) => a.dif - b.dif)
-    if (pendentes.length > 0)
-      result.push({ materiaKey: mat.key, matNome: mat.nome, matIcone: mat.icone, ...pendentes[0] })
+    const feitos = store.get('topicos_' + mat.key) || []
+    const dific  = store.get('dific_' + mat.key) || {}
+    for (const conteudo of ENEM[mat.key].conteudos) {
+      if (result.length >= n) break
+      for (const h of conteudo.habilidades) {
+        const tKey = `${conteudo.id}__${h.id}`
+        if (!feitos.includes(tKey)) {
+          result.push({ materiaKey: mat.key, matNome: mat.nome, matIcone: mat.icone, tKey, texto: h.topico, prioridade: h.prioridade })
+          break
+        }
+      }
+    }
   }
   return result
 }
@@ -161,13 +180,6 @@ function saveNotaTopico(materiaKey, topicoIdx, texto) {
 }
 function getNotasMateria(materiaKey) {
   return store.get('nota_topico_' + materiaKey) || {}
-}
-
-// ── Helper: extrair titulo do tópico ───────────────────
-function tituloTopico(topico) {
-  if (typeof topico === 'string') return topico
-  if (topico && topico.titulo) return topico.titulo
-  return String(topico)
 }
 
 // ── Nav ────────────────────────────────────────────────

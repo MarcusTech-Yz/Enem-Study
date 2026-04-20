@@ -223,7 +223,7 @@ let timerAtivo     = false
 let timerPausado   = false
 let timerFase      = 'work'  // 'work' | 'rest'
 let timerMateriaKey = null
-let timerTopicoIdx  = null
+let timerTopicoKey  = null
 let timerTopicoNome = null
 let workMin = 25, restMin = 5
 let segDecorridos = 0   // segundos acumulados no tópico atual
@@ -259,9 +259,22 @@ function renderHoje() {
     const dific  = getDificuldades(m.key)
     const horTxt = m.inicio ? `${m.inicio}${m.duracao ? ' · ' + m.duracao + 'min' : ''}` : ''
 
-    const pendentes = dados.topicos
-      .map((t, idx) => ({ idx, texto: t, dif: dific[idx] || 0 }))
-      .filter(t => !feitos.includes(t.idx))
+    // Extrai todas as habilidades da nova estrutura
+    const todasHabilidades = []
+    if (dados.conteudos) {
+      for (const conteudo of dados.conteudos) {
+        for (const h of conteudo.habilidades) {
+          const tKey = `${conteudo.id}__${h.id}`
+          todasHabilidades.push({ tKey, texto: h.topico, dif: h.prioridade === 'alta' ? 3 : h.prioridade === 'media' ? 2 : 1 })
+        }
+      }
+    } else if (dados.topicos) {
+      // Fallback para estrutura antiga
+      todasHabilidades.push(...dados.topicos.map((t, idx) => ({ tKey: idx, texto: t, dif: dific[idx] || 0 })))
+    }
+
+    const pendentes = todasHabilidades
+      .filter(t => !feitos.includes(t.tKey))
       .sort((a, b) => a.dif - b.dif)
       .slice(0, 6)
 
@@ -282,13 +295,13 @@ function renderHoje() {
       html += `<p style="font-size:13px;color:var(--text3);padding:10px 0;">✓ Todos os tópicos concluídos!</p>`
     } else {
       html += pendentes.map(t => {
-        const isDone = feitos.includes(t.idx)
-        const tempo  = getTempo(m.key, t.idx)
-        const isAtivo = timerMateriaKey === m.key && timerTopicoIdx === t.idx
+        const isDone = feitos.includes(t.tKey)
+        const tempo  = getTempo(m.key, t.tKey)
+        const isAtivo = timerMateriaKey === m.key && timerTopicoKey === t.tKey
         return `
           <div class="topico-hoje ${isDone ? 'done' : ''} ${isAtivo ? 'ativo' : ''}"
-               id="th-${m.key}-${t.idx}">
-            <div class="hoje-check" onclick="toggleHoje('${m.key}',${t.idx})">
+               id="th-${m.key}-${t.tKey}">
+            <div class="hoje-check" onclick="toggleHoje('${m.key}','${t.tKey}')">
               ${isDone ? '✓' : ''}
             </div>
             <div class="hoje-info">
@@ -296,12 +309,12 @@ function renderHoje() {
               <p class="hoje-mat">${dados.nome}</p>
             </div>
             <span class="hoje-tempo-badge ${tempo > 0 ? 'has-time' : ''} ${isAtivo ? 'ativo' : ''}"
-                  id="badge-${m.key}-${t.idx}">
+                  id="badge-${m.key}-${t.tKey}">
               ${isAtivo ? '●' : (tempo > 0 ? formatTempo(tempo) : '—')}
             </span>
             <button class="iniciar-btn ${isAtivo ? 'parar' : ''}"
-                    id="btn-${m.key}-${t.idx}"
-                    onclick="toggleTimer('${m.key}',${t.idx},'${t.texto.replace(/'/g,"\\'")}')">
+                    id="btn-${m.key}-${t.tKey}"
+                    onclick="toggleTimer('${m.key}','${t.tKey}','${t.texto.replace(/'/g,"\\'")}')">
               <i data-lucide="${isAtivo ? 'square' : 'play'}" ></i>
             </button>
           </div>
@@ -319,17 +332,17 @@ function renderHoje() {
 }
 
 // ── Timer ──
-function toggleTimer(materiaKey, topicoIdx, topicoNome) {
-  if (timerAtivo && timerMateriaKey === materiaKey && timerTopicoIdx === topicoIdx) {
+function toggleTimer(materiaKey, topicoKey, topicoNome) {
+  if (timerAtivo && timerMateriaKey === materiaKey && timerTopicoKey === topicoKey) {
     pararTimer(); return
   }
   if (timerAtivo) pararTimer(true)
-  iniciarTimer(materiaKey, topicoIdx, topicoNome)
+  iniciarTimer(materiaKey, topicoKey, topicoNome)
 }
 
-function iniciarTimer(materiaKey, topicoIdx, topicoNome) {
+function iniciarTimer(materiaKey, topicoKey, topicoNome) {
   timerMateriaKey = materiaKey
-  timerTopicoIdx  = topicoIdx
+  timerTopicoKey  = topicoKey
   timerTopicoNome = topicoNome
   timerFase       = 'work'
   timerSegundos   = workMin * 60
@@ -341,7 +354,7 @@ function iniciarTimer(materiaKey, topicoIdx, topicoNome) {
   document.getElementById('pomo-nome').textContent = topicoNome
   document.getElementById('pomo-pausar').textContent = 'Pausar'
 
-  atualizarBotoesTopic(materiaKey, topicoIdx, true)
+  atualizarBotoesTopic(materiaKey, topicoKey, true)
   atualizarBarTimer()
 
   timerInterval = setInterval(tickTimer, 1000)
@@ -353,8 +366,8 @@ function tickTimer() {
   segDecorridos++
 
   // Atualiza badge do tópico em tempo real
-  const tempoSalvo = getTempo(timerMateriaKey, timerTopicoIdx)
-  const badge = document.getElementById(`badge-${timerMateriaKey}-${timerTopicoIdx}`)
+  const tempoSalvo = getTempo(timerMateriaKey, timerTopicoKey)
+  const badge = document.getElementById(`badge-${timerMateriaKey}-${timerTopicoKey}`)
   if (badge) {
     badge.textContent = formatTempo(tempoSalvo + segDecorridos)
     badge.className   = 'hoje-tempo-badge ativo'
@@ -368,7 +381,7 @@ function tickTimer() {
 function fimFase() {
   clearInterval(timerInterval)
   // Salva o tempo acumulado
-  addTempo(timerMateriaKey, timerTopicoIdx, segDecorridos)
+  addTempo(timerMateriaKey, timerTopicoKey, segDecorridos)
   segDecorridos = 0
   tocarSom()
 
@@ -402,8 +415,8 @@ function fimFase() {
 function fecharConclusao(marcar) {
   document.getElementById('conclusao-modal').classList.remove('open')
   if (marcar) {
-    const feitos = toggleTopico(timerMateriaKey, timerTopicoIdx)
-    const el    = document.getElementById(`th-${timerMateriaKey}-${timerTopicoIdx}`)
+    const feitos = toggleTopico(timerMateriaKey, timerTopicoKey)
+    const el    = document.getElementById(`th-${timerMateriaKey}-${timerTopicoKey}`)
     const check = el?.querySelector('.hoje-check')
     if (el) { el.classList.add('done'); if (check) check.textContent = '✓' }
   }
@@ -418,19 +431,19 @@ function pausarTimer() {
 function pararTimer(silencioso = false) {
   clearInterval(timerInterval)
   if (segDecorridos > 0) {
-    addTempo(timerMateriaKey, timerTopicoIdx, segDecorridos)
+    addTempo(timerMateriaKey, timerTopicoKey, segDecorridos)
     segDecorridos = 0
   }
-  const mk  = timerMateriaKey, ti = timerTopicoIdx
-  timerAtivo = false; timerMateriaKey = null; timerTopicoIdx = null; timerTopicoNome = null
+  const mk  = timerMateriaKey, tk = timerTopicoKey
+  timerAtivo = false; timerMateriaKey = null; timerTopicoKey = null; timerTopicoNome = null
   document.getElementById('pomo-bar').classList.remove('visible')
-  atualizarBotoesTopic(mk, ti, false)
+  atualizarBotoesTopic(mk, tk, false)
   atualizarTempoTotal()
   renderSessoes()
-  if (mk && ti !== null) {
-    const badge = document.getElementById(`badge-${mk}-${ti}`)
+  if (mk && tk !== null) {
+    const badge = document.getElementById(`badge-${mk}-${tk}`)
     if (badge) {
-      const t = getTempo(mk, ti)
+      const t = getTempo(mk, tk)
       badge.textContent = t > 0 ? formatTempo(t) : '—'
       badge.className   = `hoje-tempo-badge ${t > 0 ? 'has-time' : ''}`
     }
@@ -459,10 +472,10 @@ function atualizarBarTimer() {
   }
 }
 
-function atualizarBotoesTopic(materiaKey, topicoIdx, ativo) {
-  if (!materiaKey && topicoIdx == null) return
-  const btn = document.getElementById(`btn-${materiaKey}-${topicoIdx}`)
-  const el  = document.getElementById(`th-${materiaKey}-${topicoIdx}`)
+function atualizarBotoesTopic(materiaKey, topicoKey, ativo) {
+  if (!materiaKey && topicoKey == null) return
+  const btn = document.getElementById(`btn-${materiaKey}-${topicoKey}`)
+  const el  = document.getElementById(`th-${materiaKey}-${topicoKey}`)
   if (btn) {
     btn.className = `iniciar-btn ${ativo ? 'parar' : ''}`
     btn.innerHTML = `<i data-lucide="${ativo ? 'square' : 'play'}"></i>`
@@ -538,11 +551,11 @@ document.querySelectorAll('.pomo-seg-btn').forEach(btn => {
 })
 
 // ── Funções globais para toggleHoje ──
-function toggleHoje(materiaKey, idx) {
-  const feitos = toggleTopico(materiaKey, idx)
-  const el     = document.getElementById(`th-${materiaKey}-${idx}`)
+function toggleHoje(materiaKey, tKey) {
+  const feitos = toggleTopico(materiaKey, tKey)
+  const el     = document.getElementById(`th-${materiaKey}-${tKey}`)
   const check  = el?.querySelector('.hoje-check')
-  const isDone = feitos.includes(idx)
+  const isDone = feitos.includes(tKey)
   if (el)    el.classList.toggle('done', isDone)
   if (check) check.textContent = isDone ? '✓' : ''
   atualizarTempoTotal()
