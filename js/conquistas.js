@@ -1,116 +1,181 @@
-function renderAchievementsPage() {
-  const conquistas = getConquistasState()
-  const unlocked = conquistas.filter(item => item.unlocked)
-  const lockedVisible = conquistas.filter(item => !item.unlocked && !item.secreta)
-  const lockedSecret = conquistas.filter(item => !item.unlocked && item.secreta)
-  const progressPct = conquistas.length ? Math.round((unlocked.length / conquistas.length) * 100) : 0
+function formatAchievementDate(isoStr) {
+  if (!isoStr) return '—'
+  const d = new Date(isoStr)
+  return d.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
-  const overview = document.getElementById('achievement-overview')
-  const unlockedList = document.getElementById('achievement-list-unlocked')
-  const lockedList = document.getElementById('achievement-list-locked')
-  const secretList = document.getElementById('achievement-list-secret')
+function getAchievementRarity(item) {
+  const base = item.secreta ? 6 : 14
+  const spread = item.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 61
+  return Number((base + spread).toFixed(1))
+}
 
-  overview.innerHTML = `
-    <div class="achievement-overview-head">
-      <p class="achievement-overview-kicker">Conquistas</p>
-      <div class="achievement-overview-stats">
-        <div>
-          <div class="achievement-overview-count">${unlocked.length}/${conquistas.length} alcançadas (${progressPct}%)</div>
-          <div class="achievement-overview-note">Você vê o que já conquistou, o que ainda falta e ainda mantém uma camada de troféus secretos para descoberta.</div>
-        </div>
-      </div>
-      <div class="achievement-overview-bar">
-        <div style="width:${Math.max(0, progressPct)}%"></div>
-      </div>
+function formatProgressLabel(item) {
+  if (item.tipo === 'tempo_total' || item.tipo === 'tempo_materia') {
+    const current = Math.round((item.progressAtual / 3600) * 10) / 10
+    const target = Math.round((item.progressAlvo / 3600) * 10) / 10
+    return `${current}h / ${target}h`
+  }
+  if (item.tipo === 'streak') return `${item.progressAtual} / ${item.progressAlvo} dias`
+  if (item.tipo === 'progresso_materia') return `${item.progressAtual}% / ${item.progressAlvo}%`
+  return `${item.progressAtual} / ${item.progressAlvo}`
+}
+
+function renderAchievementRow(item, state) {
+  const rarity = getAchievementRarity(item)
+  const isRare = rarity < 15
+  const isUnlocked = state === 'unlocked'
+  const isLocked = state === 'locked'
+  const isSecret = state === 'secret'
+  const progress = item.progressAlvo > 0 ? Math.min(100, item.progressPct) : 0
+
+  let classes = ['ach-row', state]
+  if (isRare && !isSecret) classes.push('rare')
+
+  let title = item.nome
+  let description = item.descricao
+  if (isSecret) {
+    title = '??? Conquista Secreta'
+    description = 'Continue estudando para descobrir este marco oculto.'
+  }
+
+  const progressHTML = isLocked ? `
+    <div class="ach-progress-row">
+      <div class="ach-mini-bar"><div class="ach-mini-fill" style="width:${progress}%"></div></div>
+      <span class="ach-progress-label">${formatProgressLabel(item)}</span>
     </div>
-    <div class="achievement-overview-grid">
-      <div class="achievement-group">
-        <p class="achievement-group-kicker">Conquistas recentes</p>
-        <div class="achievement-inline-list">
-          ${unlocked.slice(0, 5).map(item => `
-            <span class="achievement-inline-card" title="${item.nome}">
-              <i data-lucide="${item.icon}"></i>
-            </span>
-          `).join('') || '<span class="achievement-secret-note">Nenhuma desbloqueada ainda.</span>'}
-          ${unlocked.length > 5 ? `<span class="achievement-inline-more">+${unlocked.length - 5}</span>` : ''}
-        </div>
+  ` : ''
+
+  const tags = []
+  if (!isSecret) {
+    tags.push(`<span class="ach-tag">${item.categoria}</span>`)
+    if (isRare) tags.push(`<span class="ach-tag rarity">rara · ${rarity}%</span>`)
+  }
+
+  const sideHTML = isUnlocked
+    ? `
+      <div class="ach-side">
+        <span class="ach-side-label">Alcançada em</span>
+        <span class="ach-side-date">${formatAchievementDate(item.unlockedAt)}</span>
       </div>
-      <div class="achievement-group">
-        <p class="achievement-group-kicker">Segredos restantes</p>
-        <div class="achievement-inline-list">
-          ${lockedSecret.slice(0, 4).map(() => `
-            <span class="achievement-inline-secret" title="Conquista secreta">
-              <i data-lucide="lock"></i>
-            </span>
-          `).join('') || '<span class="achievement-secret-note">Todas as secretas já foram reveladas.</span>'}
-          ${lockedSecret.length > 4 ? `<span class="achievement-inline-more">+${lockedSecret.length - 4}</span>` : ''}
+    `
+    : isSecret
+      ? `
+        <div class="ach-side">
+          <span class="ach-side-label">Oculta</span>
+          <span class="ach-side-date">— — —</span>
         </div>
+      `
+      : `
+        <div class="ach-side">
+          <span class="ach-side-label">Em progresso</span>
+          <span class="ach-side-date">${formatProgressLabel(item)}</span>
+        </div>
+      `
+
+  return `
+    <div class="${classes.join(' ')}" data-name="${item.nome.toLowerCase()}" data-desc="${item.descricao.toLowerCase()}">
+      <div class="ach-icon"><i data-lucide="${item.icon}"></i></div>
+      <div class="ach-body">
+        <h3 class="ach-title">${title}</h3>
+        <p class="ach-desc">${description}</p>
+        ${progressHTML}
+        ${tags.length ? `<div class="ach-tags">${tags.join('')}</div>` : ''}
       </div>
+      ${sideHTML}
     </div>
   `
+}
 
-  unlockedList.innerHTML = unlocked.length
-    ? unlocked.map(item => renderAchievementItem(item, true)).join('')
-    : `<div class="achievement-secret-note">Sua primeira conquista aparece aqui assim que você desbloquear um marco real.</div>`
+function renderSteamAchievements() {
+  const conquistas = getConquistasState()
+  const unlocked = conquistas.filter(item => item.unlocked)
+  const locked = conquistas.filter(item => !item.unlocked && !item.secreta)
+  const secret = conquistas.filter(item => !item.unlocked && item.secreta)
+  const total = conquistas.length
+  const done = unlocked.length
+  const pct = total ? (done / total) * 100 : 0
 
-  lockedList.innerHTML = lockedVisible.length
-    ? lockedVisible.map(item => renderAchievementItem(item, false)).join('')
-    : `<div class="achievement-secret-note">Você já completou todas as conquistas visíveis dessa leva.</div>`
+  document.getElementById('steam-title').textContent = `${done} de ${total} conquistas alcançadas`
+  document.getElementById('steam-sub').textContent = `Continue estudando para desbloquear ${Math.max(0, total - done)} marcos restantes.`
+  document.getElementById('steam-progress-fill').style.width = `${pct}%`
+  document.getElementById('steam-progress-text').textContent = `${done} / ${total}`
+  document.getElementById('steam-progress-percent').textContent = `${pct.toFixed(1)}%`
 
-  secretList.innerHTML = lockedSecret.length
-    ? lockedSecret.map(item => renderSecretItem(item)).join('')
-    : `<div class="achievement-secret-note">Nenhuma conquista secreta restante por enquanto.</div>`
+  document.getElementById('count-unlocked').textContent = String(unlocked.length)
+  document.getElementById('count-locked').textContent = String(locked.length)
+  document.getElementById('count-secret').textContent = String(secret.length)
+
+  document.getElementById('list-unlocked').innerHTML = unlocked.length
+    ? unlocked.map(item => renderAchievementRow(item, 'unlocked')).join('')
+    : `<div class="ach-empty"><i data-lucide="trophy"></i><div>Nenhuma conquista desbloqueada ainda.</div></div>`
+
+  document.getElementById('list-locked').innerHTML = locked.length
+    ? locked.map(item => renderAchievementRow(item, 'locked')).join('')
+    : `<div class="ach-empty"><i data-lucide="check-circle-2"></i><div>Todas as conquistas visíveis desta leva já foram alcançadas.</div></div>`
+
+  document.getElementById('list-secret').innerHTML = secret.length
+    ? secret.map(item => renderAchievementRow(item, 'secret')).join('')
+    : `<div class="ach-empty"><i data-lucide="sparkles"></i><div>Nenhuma conquista secreta restante.</div></div>`
 
   lucide.createIcons()
 }
 
-function renderAchievementItem(item, unlocked) {
-  const side = unlocked
-    ? `Desbloqueada`
-    : `${Math.min(item.progressAtual, item.progressAlvo)}/${item.progressAlvo}`
+function initAchievementTabs() {
+  const tabs = document.querySelectorAll('.steam-tab')
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(item => item.classList.remove('active'))
+      tab.classList.add('active')
 
-  return `
-    <div class="achievement-item ${unlocked ? 'unlocked' : 'locked'}">
-      <div class="achievement-item-icon">
-        <i data-lucide="${item.icon}"></i>
-      </div>
-      <div>
-        <div class="achievement-item-title">${item.nome}</div>
-        <div class="achievement-item-desc">${item.descricao}</div>
-        <div class="achievement-item-meta">
-          <span class="achievement-tag">${item.categoria}</span>
-          ${unlocked ? '' : `
-            <div class="achievement-mini-progress">
-              <div style="width:${item.progressPct}%"></div>
-            </div>
-          `}
-        </div>
-      </div>
-      <div class="achievement-item-side">${side}</div>
-    </div>
-  `
+      const target = tab.dataset.tab
+      document.getElementById('panel-unlocked').classList.toggle('hidden', target !== 'unlocked')
+      document.getElementById('panel-locked').classList.toggle('hidden', target !== 'locked')
+      document.getElementById('panel-secret').classList.toggle('hidden', target !== 'secret')
+      applyAchievementSearch()
+    })
+  })
 }
 
-function renderSecretItem(item) {
-  return `
-    <div class="achievement-item locked">
-      <div class="achievement-item-icon">
-        <i data-lucide="lock"></i>
-      </div>
-      <div>
-        <div class="achievement-item-title">Conquista secreta</div>
-        <div class="achievement-item-desc">Continue estudando para descobrir este troféu oculto.</div>
-        <div class="achievement-item-meta">
-          <span class="achievement-tag">secreta</span>
-        </div>
-      </div>
-      <div class="achievement-item-side">oculta</div>
-    </div>
-  `
+function applyAchievementSearch() {
+  const activePanel = document.querySelector('.steam-panel:not(.hidden)')
+  const query = document.getElementById('search-input').value.trim().toLowerCase()
+  if (!activePanel) return
+
+  activePanel.querySelectorAll('.ach-row').forEach(row => {
+    const haystack = `${row.dataset.name || ''} ${row.dataset.desc || ''}`
+    row.style.display = !query || haystack.includes(query) ? '' : 'none'
+  })
+}
+
+function initAchievementSearch() {
+  const input = document.getElementById('search-input')
+  input.addEventListener('input', applyAchievementSearch)
+}
+
+function initSimulateButton() {
+  const button = document.getElementById('simulate-btn')
+  if (!button) return
+  button.addEventListener('click', () => {
+    showConquistaToast({
+      nome: 'Conquista de teste',
+      descricao: 'Esse botão serve para validar visual e som do toast.',
+      icon: 'sparkles',
+    })
+  })
 }
 
 function initConquistasPage() {
-  renderAchievementsPage()
+  renderSteamAchievements()
+  initAchievementTabs()
+  initAchievementSearch()
+  initSimulateButton()
   setNavActive()
   lucide.createIcons()
 }

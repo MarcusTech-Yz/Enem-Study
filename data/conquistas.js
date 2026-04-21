@@ -124,3 +124,5 @@ const CONQUISTAS = [
     alvo: 1,
   },
 ]
+
+window.CONQUISTAS = CONQUISTAS

@@ -29,7 +29,7 @@ function toggleTopico(k, idx) {
   f = f.includes(idx) ? f.filter(i => i !== idx) : [...f, idx]
   store.set('topicos_' + k, f)
   bumpStreak()
-  checkConquistas()
+  runConquistasCheck()
   return f
 }
 
@@ -58,7 +58,7 @@ function addTempo(materiaKey, topicoIdx, segundos) {
   const key = `${materiaKey}:${topicoIdx}`
   all[key] = (all[key] || 0) + segundos
   store.set('tempo_topicos', all)
-  checkConquistas()
+  runConquistasCheck()
 }
 
 // Tempo total por matéria (em segundos)
@@ -140,7 +140,7 @@ function bumpStreak() {
   const ontem = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
   const novo  = { count: s.lastDate === ontem ? s.count + 1 : 1, lastDate: hoje }
   store.set('streak', novo)
-  checkConquistas()
+  runConquistasCheck()
   return novo
 }
 
@@ -172,11 +172,12 @@ function getRegistroHoje() {
 }
 function saveRegistroHoje(r) {
   store.set('registro_' + getTodayStr(), r)
-  checkConquistas()
+  runConquistasCheck()
 }
 
 // Achievements
 function getConquistasDefs() {
+  if (typeof window !== 'undefined' && Array.isArray(window.CONQUISTAS)) return window.CONQUISTAS
   return typeof CONQUISTAS !== 'undefined' ? CONQUISTAS : []
 }
 
@@ -287,6 +288,11 @@ function checkConquistas() {
   return unlockedNow
 }
 
+function runConquistasCheck() {
+  if (typeof checkConquistasComToast === 'function') return checkConquistasComToast()
+  return checkConquistas()
+}
+
 // ── Nota por tópico ────────────────────────────────────
 function getNotaTopico(materiaKey, topicoIdx) {
   return store.get('nota_topico_' + materiaKey) || {}
@@ -309,7 +315,8 @@ function setNavActive() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  checkConquistas()
+  if (typeof initToastSystem === 'function') initToastSystem()
+  runConquistasCheck()
   setNavActive()
   if (typeof lucide !== 'undefined') lucide.createIcons()
 })

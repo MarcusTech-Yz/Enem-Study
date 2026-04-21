@@ -95,6 +95,133 @@ a { color: inherit; text-decoration: none; }
 
 .nav-icon { width: 16px; height: 16px; flex-shrink: 0; }
 
+/* Toast de conquista */
+#conquista-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.conquista-toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px 14px 14px;
+  width: 320px;
+  background: linear-gradient(135deg, rgba(26,38,22,.98), rgba(14,17,14,.98));
+  border: 1px solid rgba(200,241,53,.28);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(200,241,53,.06),
+    0 8px 32px rgba(0,0,0,.55),
+    0 0 40px rgba(200,241,53,.08);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+  pointer-events: all;
+  opacity: 0;
+  transform: translateX(calc(100% + 24px));
+  transition: opacity .35s ease, transform .35s cubic-bezier(.22,.68,0,1.2);
+}
+
+.conquista-toast.ct-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.conquista-toast.ct-hiding {
+  opacity: 0;
+  transform: translateX(calc(100% + 24px));
+  transition: opacity .3s ease, transform .3s ease;
+}
+
+.ct-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(200,241,53,.08) 50%, transparent 65%);
+  background-size: 200% 100%;
+  animation: ctShine 2.5s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes ctShine {
+  0% { background-position: 200% 0; }
+  60% { background-position: -50% 0; }
+  100% { background-position: -100% 0; opacity: 0; }
+}
+
+.ct-icon {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(200,241,53,.18), rgba(96,165,250,.1));
+  border: 1px solid rgba(200,241,53,.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  box-shadow: 0 0 16px rgba(200,241,53,.15);
+}
+
+.ct-icon i { width: 24px; height: 24px; }
+
+.ct-body { min-width: 0; }
+
+.ct-kicker {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--accent);
+  font-family: var(--mono);
+  margin-bottom: 3px;
+  opacity: .85;
+}
+
+.ct-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--text);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ct-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.conquista-toast::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: rgba(200,241,53,.25);
+  transform-origin: left;
+  animation: ctTimer 4.5s linear forwards;
+}
+
+@keyframes ctTimer {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
 /* ── Main ── */
 .main {
   margin-left: 220px;

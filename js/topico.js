@@ -1,468 +1,543 @@
-// ── topico.js ──
-// Página do "universo" de um tópico
+const topicoParams = new URLSearchParams(window.location.search)
+const topicoMateriaKey = topicoParams.get('m')
 
-const _params  = new URLSearchParams(window.location.search)
-const topicoId = _params.get('id')
-const ctx      = topicoId ? getTopicoById(topicoId) : null
-
-if (!ctx) {
+if (!topicoMateriaKey || !ENEM[topicoMateriaKey]) {
   window.location.href = 'materias.html'
 }
 
-const { materiaKey, materia, topico, idx: topicoIdx } = ctx
+const topicoMateria = ENEM[topicoMateriaKey]
+const topicoContext = resolveTopicoContext(topicoMateria, topicoParams)
 
-// ── Markdown renderer (simples e seguro) ───────────────
-function escapeHtml(str) {
-  return (str || '')
+if (!topicoContext) {
+  window.location.href = `materia.html?m=${topicoMateriaKey}`
+}
+
+const { conteudo, habilidade, topicoKeyId, topicoFlatIdx } = topicoContext
+
+const TOPICO_SK = {
+  anotacao: `tuniv_anotacao_${topicoKeyId}`,
+  videos: `tuniv_videos_${topicoKeyId}`,
+  questoes: `tuniv_questoes_${topicoKeyId}`,
+  vault: 'obsidian_vault',
+}
+
+function resolveTopicoContext(materia, params) {
+  const byId = params.get('id')
+  const byConteudo = params.get('conteudo')
+  const byHab = params.get('h')
+  const byIdx = params.get('idx')
+  const flat = []
+
+  for (const conteudo of materia.conteudos || []) {
+    for (const habilidade of conteudo.habilidades || []) {
+      flat.push({
+        conteudo,
+        habilidade,
+        topicoKeyId: `${conteudo.id}__${habilidade.id}`,
+      })
+    }
+  }
+
+  if (byId) {
+    const found = flat.find(item =>
+      item.topicoKeyId === byId ||
+      String(item.habilidade.id) === byId
+    )
+    if (found) return { ...found, topicoFlatIdx: flat.indexOf(found) }
+  }
+
+  if (byConteudo && byHab) {
+    const found = flat.find(item =>
+      item.conteudo.id === byConteudo && String(item.habilidade.id) === String(byHab)
+    )
+    if (found) return { ...found, topicoFlatIdx: flat.indexOf(found) }
+  }
+
+  if (byIdx !== null) {
+    const idx = Number(byIdx)
+    if (!Number.isNaN(idx) && flat[idx]) return { ...flat[idx], topicoFlatIdx: idx }
+  }
+
+  return null
+}
+
+function getTopicoTitulo() {
+  return habilidade.topico || habilidade.titulo || String(habilidade.id)
+}
+
+function getTopicoDescricao() {
+  return habilidade.descricao || 'Espaço dedicado para anotações, vídeos, questões e revisão desse tópico.'
+}
+
+function getTopicoAnotacao() {
+  return store.get(TOPICO_SK.anotacao) || ''
+}
+
+function saveTopicoAnotacao(text) {
+  store.set(TOPICO_SK.anotacao, text)
+}
+
+function getTopicoVideos() {
+  return store.get(TOPICO_SK.videos) || []
+}
+
+function saveTopicoVideos(videos) {
+  store.set(TOPICO_SK.videos, videos)
+}
+
+function getTopicoQuestoes() {
+  return store.get(TOPICO_SK.questoes) || []
+}
+
+function saveTopicoQuestoes(questoes) {
+  store.set(TOPICO_SK.questoes, questoes)
+}
+
+function getVaultName() {
+  return store.get(TOPICO_SK.vault) || ''
+}
+
+function saveVaultName(name) {
+  store.set(TOPICO_SK.vault, name)
+}
+
+function isTopicoFeito() {
+  return getTopicosFeitos(topicoMateriaKey).includes(topicoKeyId)
+}
+
+function toggleTopicoFeitoAtual() {
+  let feitos = getTopicosFeitos(topicoMateriaKey)
+  feitos = feitos.includes(topicoKeyId)
+    ? feitos.filter(item => item !== topicoKeyId)
+    : [...feitos, topicoKeyId]
+  store.set(`topicos_${topicoMateriaKey}`, feitos)
+  bumpStreak()
+  runConquistasCheck()
+  return feitos
+}
+
+function getTopicoDificuldade() {
+  return getDificuldades(topicoMateriaKey)[topicoKeyId] || 0
+}
+
+function setTopicoDificuldade(value) {
+  const all = getDificuldades(topicoMateriaKey)
+  all[topicoKeyId] = value
+  store.set(`dific_${topicoMateriaKey}`, all)
+}
+
+function renderTopicoPage() {
+  document.title = `ENEM · ${getTopicoTitulo()}`
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="topico-shell">
+      <a class="back-link" href="materia.html?m=${topicoMateriaKey}">
+        <i data-lucide="arrow-left" style="width:14px;height:14px;"></i> Voltar para ${topicoMateria.nome}
+      </a>
+
+      <section class="topico-hero">
+        <div class="topico-meta">
+          <div class="topico-tag">
+            <i data-lucide="${topicoMateria.icone}"></i>
+            ${topicoMateria.nome} · ${conteudo.nome} · ${habilidade.id}
+          </div>
+          <div class="topico-title">${getTopicoTitulo()}</div>
+          <div class="topico-desc">${getTopicoDescricao()}</div>
+        </div>
+        <div class="topico-actions">
+          <button class="btn btn-sm ${isTopicoFeito() ? 'btn-accent' : ''}" id="topico-check-btn" onclick="toggleTopicoDone()">
+            <i data-lucide="${isTopicoFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i>
+            ${isTopicoFeito() ? 'Concluído' : 'Marcar como feito'}
+          </button>
+          <button class="btn btn-sm" onclick="openObsidianNote()">
+            <i data-lucide="external-link" style="width:13px;height:13px;"></i> Obsidian
+          </button>
+          <button class="btn btn-sm" onclick="exportTopicoMarkdown()">
+            <i data-lucide="download" style="width:13px;height:13px;"></i> Exportar .md
+          </button>
+        </div>
+      </section>
+
+      <section class="topico-stats">
+        <div class="tstat">
+          <div class="tstat-lbl">Tempo Estudado</div>
+          <div class="tstat-val" id="tempo-topico-val">${formatTempo(getTempo(topicoMateriaKey, topicoKeyId))}</div>
+        </div>
+        <div class="tstat">
+          <div class="tstat-lbl">Dificuldade</div>
+          <div class="tstat-val" id="dificuldade-topico-val">${formatDificuldadeLabel(getTopicoDificuldade())}</div>
+        </div>
+        <div class="tstat">
+          <div class="tstat-lbl">Progresso da Matéria</div>
+          <div class="tstat-val">${getProgressoMateria(topicoMateriaKey).pct}%</div>
+        </div>
+      </section>
+
+      <section class="topico-card">
+        <div class="tabs">
+          <button class="tab ativo" data-tab="anotacoes" onclick="switchTopicoTab('anotacoes', this)">
+            <i data-lucide="notebook-pen"></i> Anotações
+          </button>
+          <button class="tab" data-tab="videos" onclick="switchTopicoTab('videos', this)">
+            <i data-lucide="youtube"></i> Vídeos
+          </button>
+          <button class="tab" data-tab="questoes" onclick="switchTopicoTab('questoes', this)">
+            <i data-lucide="help-circle"></i> Questões
+          </button>
+          <button class="tab" data-tab="obsidian" onclick="switchTopicoTab('obsidian', this)">
+            <i data-lucide="database"></i> Obsidian
+          </button>
+        </div>
+
+        <div class="tab-panel ativo" id="tab-anotacoes">
+          <div class="editor-tools">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="fmt-btn" onclick="insertFormat('**','**')"><strong>B</strong></button>
+              <button class="fmt-btn" onclick="insertFormat('*','*')"><em>I</em></button>
+              <button class="fmt-btn" onclick="insertFormat('- ','')">Lista</button>
+            </div>
+            <div class="save-status" id="save-status-topico"></div>
+          </div>
+          <textarea class="anotacao-area" id="topico-anotacao" placeholder="Resuma esse tópico, exemplos, fórmulas e dúvidas...">${escapeHtmlForTextarea(getTopicoAnotacao())}</textarea>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button class="btn btn-sm" onclick="setDifficulty(1)">Entendi pouco</button>
+            <button class="btn btn-sm" onclick="setDifficulty(2)">Mais ou menos</button>
+            <button class="btn btn-sm" onclick="setDifficulty(3)">Entendi bem</button>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-videos">
+          <div class="video-add-row">
+            <input class="video-input" type="text" id="video-url" placeholder="Cole um link do YouTube..." />
+            <button class="btn btn-accent btn-sm" onclick="addTopicoVideo()">Salvar vídeo</button>
+          </div>
+          <div class="videos-grid" id="videos-grid"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-questoes">
+          <div class="questao-form">
+            <textarea id="questao-enunciado" placeholder="Enunciado da questão..."></textarea>
+            <textarea id="questao-resposta" placeholder="Resposta ou comentário..."></textarea>
+            <button class="btn btn-accent btn-sm" onclick="addTopicoQuestao()">Adicionar questão</button>
+          </div>
+          <div id="questoes-list"></div>
+        </div>
+
+        <div class="tab-panel" id="tab-obsidian">
+          <div class="obsidian-section">
+            <div class="obsidian-box">
+              <h3>Vault do Obsidian</h3>
+              <p>Defina o nome do seu vault para abrir ou criar notas desse tópico.</p>
+              <div class="obsidian-vault-row">
+                <input class="video-input" type="text" id="vault-name" value="${escapeHtmlForAttr(getVaultName())}" placeholder="Ex: ENEM-Study" />
+                <button class="btn btn-sm" onclick="saveTopicoVault()">Salvar</button>
+              </div>
+            </div>
+            <div class="obsidian-box">
+              <h3>Exportar tópico</h3>
+              <p>Gera um arquivo Markdown com anotações, vídeos e questões desse tópico.</p>
+              <button class="btn btn-accent btn-sm" onclick="exportTopicoMarkdown()">Baixar .md</button>
+            </div>
+            <div class="obsidian-box">
+              <h3>Importar anotação pronta</h3>
+              <p>Cole aqui um texto vindo do Obsidian para substituir suas anotações atuais.</p>
+              <textarea class="obsidian-import-area" id="obsidian-import" placeholder="Cole o conteúdo da nota aqui..."></textarea>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                <button class="btn btn-sm btn-accent" onclick="importFromObsidian()">Importar</button>
+                <button class="btn btn-sm" onclick="document.getElementById('obsidian-import').value=''">Limpar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  `
+
+  setupTopicoListeners()
+  renderTopicoVideos()
+  renderTopicoQuestoes()
+  setNavActive()
+  lucide.createIcons()
+}
+
+function setupTopicoListeners() {
+  const textarea = document.getElementById('topico-anotacao')
+  let timer = null
+  if (!textarea) return
+
+  textarea.addEventListener('input', () => {
+    clearTimeout(timer)
+    const status = document.getElementById('save-status-topico')
+    if (status) status.textContent = 'salvando...'
+    timer = setTimeout(() => {
+      saveTopicoAnotacao(textarea.value)
+      if (status) {
+        status.textContent = 'salvo'
+        setTimeout(() => {
+          if (status) status.textContent = ''
+        }, 1200)
+      }
+    }, 500)
+  })
+}
+
+function switchTopicoTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('ativo'))
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('ativo'))
+  btn.classList.add('ativo')
+  document.getElementById(`tab-${name}`).classList.add('ativo')
+}
+
+function toggleTopicoDone() {
+  toggleTopicoFeitoAtual()
+  updateTopicoHeader()
+}
+
+function updateTopicoHeader() {
+  const button = document.getElementById('topico-check-btn')
+  const tempoEl = document.getElementById('tempo-topico-val')
+  const difEl = document.getElementById('dificuldade-topico-val')
+  if (button) {
+    button.className = `btn btn-sm ${isTopicoFeito() ? 'btn-accent' : ''}`
+    button.innerHTML = `<i data-lucide="${isTopicoFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i> ${isTopicoFeito() ? 'Concluído' : 'Marcar como feito'}`
+  }
+  if (tempoEl) tempoEl.textContent = formatTempo(getTempo(topicoMateriaKey, topicoKeyId))
+  if (difEl) difEl.textContent = formatDificuldadeLabel(getTopicoDificuldade())
+  lucide.createIcons()
+}
+
+function setDifficulty(value) {
+  const current = getTopicoDificuldade()
+  setTopicoDificuldade(current === value ? 0 : value)
+  updateTopicoHeader()
+}
+
+function formatDificuldadeLabel(value) {
+  if (value === 1) return 'Baixa compreensão'
+  if (value === 2) return 'Em andamento'
+  if (value === 3) return 'Bem entendido'
+  return 'Não avaliado'
+}
+
+function ytId(url) {
+  const match = url.match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{11})/)
+  return match ? match[1] : null
+}
+
+async function ytTitle(id) {
+  try {
+    const response = await fetch(`https://www.youtube.com/oembed?url=https://youtu.be/${id}&format=json`)
+    if (!response.ok) return 'Vídeo do YouTube'
+    const data = await response.json()
+    return data.title || 'Vídeo do YouTube'
+  } catch {
+    return 'Vídeo do YouTube'
+  }
+}
+
+async function addTopicoVideo() {
+  const input = document.getElementById('video-url')
+  const url = input.value.trim()
+  if (!url) return
+  const id = ytId(url)
+  if (!id) {
+    alert('Link do YouTube inválido.')
+    return
+  }
+  const videos = getTopicoVideos()
+  videos.push({
+    id,
+    url,
+    titulo: await ytTitle(id),
+  })
+  saveTopicoVideos(videos)
+  input.value = ''
+  renderTopicoVideos()
+}
+
+function renderTopicoVideos() {
+  const grid = document.getElementById('videos-grid')
+  if (!grid) return
+  const videos = getTopicoVideos()
+  if (!videos.length) {
+    grid.innerHTML = '<div class="empty-state">Nenhum vídeo salvo ainda.</div>'
+    return
+  }
+  grid.innerHTML = videos.map((video, index) => `
+    <div class="video-card">
+      <iframe src="https://www.youtube.com/embed/${video.id}" allowfullscreen></iframe>
+      <div class="video-info">
+        <span class="video-title">${escapeHtml(video.titulo)}</span>
+        <button class="icon-btn" onclick="removeTopicoVideo(${index})" title="Remover vídeo">
+          <i data-lucide="x" style="width:14px;height:14px;"></i>
+        </button>
+      </div>
+    </div>
+  `).join('')
+  lucide.createIcons()
+}
+
+function removeTopicoVideo(index) {
+  const videos = getTopicoVideos()
+  videos.splice(index, 1)
+  saveTopicoVideos(videos)
+  renderTopicoVideos()
+}
+
+function addTopicoQuestao() {
+  const enunciadoEl = document.getElementById('questao-enunciado')
+  const respostaEl = document.getElementById('questao-resposta')
+  const enunciado = enunciadoEl.value.trim()
+  const resposta = respostaEl.value.trim()
+  if (!enunciado) return
+
+  const questoes = getTopicoQuestoes()
+  questoes.push({
+    enunciado,
+    resposta,
+    createdAt: new Date().toISOString(),
+  })
+  saveTopicoQuestoes(questoes)
+  enunciadoEl.value = ''
+  respostaEl.value = ''
+  renderTopicoQuestoes()
+}
+
+function renderTopicoQuestoes() {
+  const list = document.getElementById('questoes-list')
+  if (!list) return
+  const questoes = getTopicoQuestoes()
+  if (!questoes.length) {
+    list.innerHTML = '<div class="empty-state">Nenhuma questão salva ainda.</div>'
+    return
+  }
+  list.innerHTML = questoes.map((questao, index) => `
+    <div class="questao-item">
+      <div class="questao-enunciado">${escapeHtml(questao.enunciado).replace(/\n/g, '<br>')}</div>
+      ${questao.resposta ? `<div style="color:var(--text2);font-size:13px;line-height:1.6;">${escapeHtml(questao.resposta).replace(/\n/g, '<br>')}</div>` : ''}
+      <div class="questao-footer">
+        <span class="save-status">Questão ${index + 1}</span>
+        <button class="icon-btn" onclick="removeTopicoQuestao(${index})">remover</button>
+      </div>
+    </div>
+  `).join('')
+}
+
+function removeTopicoQuestao(index) {
+  const questoes = getTopicoQuestoes()
+  questoes.splice(index, 1)
+  saveTopicoQuestoes(questoes)
+  renderTopicoQuestoes()
+}
+
+function saveTopicoVault() {
+  const input = document.getElementById('vault-name')
+  saveVaultName(input.value.trim())
+}
+
+function openObsidianNote() {
+  const vault = getVaultName()
+  if (!vault) {
+    alert('Defina primeiro o nome do vault do Obsidian.')
+    return
+  }
+  const file = `${topicoMateria.nome}/${getTopicoTitulo()}`
+  window.location.href = `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(file)}`
+}
+
+function importFromObsidian() {
+  const importEl = document.getElementById('obsidian-import')
+  const content = importEl.value.trim()
+  if (!content) return
+  if (!confirm('Isso vai substituir suas anotações atuais desse tópico. Continuar?')) return
+  saveTopicoAnotacao(content)
+  const anotacaoEl = document.getElementById('topico-anotacao')
+  if (anotacaoEl) anotacaoEl.value = content
+  importEl.value = ''
+}
+
+function exportTopicoMarkdown() {
+  const markdown = buildTopicoMarkdown()
+  const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${sanitizeFileName(getTopicoTitulo())}.md`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function buildTopicoMarkdown() {
+  const videos = getTopicoVideos()
+  const questoes = getTopicoQuestoes()
+  const anotacao = getTopicoAnotacao()
+  const tempo = getTempo(topicoMateriaKey, topicoKeyId)
+
+  let md = `---\n`
+  md += `materia: "${topicoMateria.nome}"\n`
+  md += `conteudo: "${conteudo.nome}"\n`
+  md += `topico: "${getTopicoTitulo()}"\n`
+  md += `id: "${topicoKeyId}"\n`
+  md += `concluido: ${isTopicoFeito()}\n`
+  md += `tempo_estudado: "${formatTempo(tempo)}"\n`
+  md += `---\n\n`
+  md += `# ${getTopicoTitulo()}\n\n`
+  md += `## Anotações\n\n${anotacao || 'Sem anotações ainda.'}\n\n`
+
+  if (videos.length) {
+    md += `## Vídeos\n\n`
+    videos.forEach(video => {
+      md += `- [${video.titulo}](${video.url})\n`
+    })
+    md += '\n'
+  }
+
+  if (questoes.length) {
+    md += `## Questões\n\n`
+    questoes.forEach((questao, index) => {
+      md += `### Questão ${index + 1}\n\n`
+      md += `${questao.enunciado}\n\n`
+      if (questao.resposta) md += `**Resposta:** ${questao.resposta}\n\n`
+    })
+  }
+
+  return md
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function escapeHtmlForTextarea(value) {
+  return String(value || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
 }
 
-function renderMarkdown(md) {
-  if (!md) return '<p class="md-empty">Nada escrito ainda. Comece a digitar ao lado →</p>'
-  let html = escapeHtml(md)
-
-  // code blocks
-  html = html.replace(/```([\s\S]*?)```/g, (_, c) => `<pre><code>${c}</code></pre>`)
-  // inline code
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
-  // headings
-  html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>')
-  html = html.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>')
-  html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>')
-  html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
-  html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>')
-  html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>')
-  // blockquote
-  html = html.replace(/^&gt;\s?(.+)$/gm, '<blockquote>$1</blockquote>')
-  // bold / italic
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>')
-  html = html.replace(/_([^_]+)_/g, '<em>$1</em>')
-  // links [t](u)
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-  // images ![alt](url)
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
-  // ul
-  html = html.replace(/^(?:- |\* )(.+)$/gm, '<li>$1</li>')
-  html = html.replace(/(<li>[\s\S]*?<\/li>)(?!\s*<li>)/g, m => '<ul>' + m + '</ul>')
-  // paragraphs (quebra dupla)
-  html = html.split(/\n{2,}/).map(block => {
-    if (/^\s*<(h\d|ul|ol|pre|blockquote|img)/.test(block.trim())) return block
-    return '<p>' + block.replace(/\n/g, '<br>') + '</p>'
-  }).join('\n')
-
-  return html
+function escapeHtmlForAttr(value) {
+  return escapeHtml(value)
 }
 
-// ── Página ─────────────────────────────────────────────
-function renderPage() {
-  const uni = getUniverso(topicoId)
-  document.title = `ENEM · ${topico.titulo}`
-
-  document.getElementById('main-content').innerHTML = `
-    <a class="back-link" href="materia.html?m=${materiaKey}">← ${materia.nome}</a>
-
-    <div class="page-header">
-      <p class="date-tag">
-        <i data-lucide="${materia.icone}" style="width:14px;height:14px;display:inline-block;margin-right:4px;vertical-align:text-bottom;"></i>
-        ${materia.nome} · Tópico
-      </p>
-      <h1 style="font-size:26px;">${topico.emoji || '📘'} ${topico.titulo}</h1>
-      <p style="color:var(--text3);font-size:12px;margin-top:8px;font-family:var(--mono);">
-        id: ${topico.id}${uni.ultimaRevisao ? ' · última revisão: ' + uni.ultimaRevisao.slice(0,10) : ''}
-      </p>
-    </div>
-
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;">
-      <button class="btn btn-accent btn-sm" onclick="abrirObsidian()">
-        <i data-lucide="external-link" style="width:13px;height:13px;vertical-align:-2px;"></i>
-        Abrir no Obsidian
-      </button>
-      <button class="btn btn-sm" onclick="exportarTopicoMd()">⬇ Exportar .md</button>
-      <button class="btn btn-sm" onclick="toggleImport()">📥 Importar do Obsidian</button>
-      <button class="btn btn-sm" onclick="marcarRevisao()">✓ Marcar revisão</button>
-    </div>
-
-    <div id="import-box" class="import-box" style="display:none;">
-      <p style="font-size:12px;color:var(--text3);margin-bottom:8px;">
-        Cole o conteúdo Markdown do Obsidian aqui. Suas anotações serão substituídas.
-      </p>
-      <textarea id="import-text" class="anotacao-area" style="min-height:140px;" placeholder="--- &#10;title: ... &#10;--- &#10;Cole o markdown aqui..."></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <button class="btn btn-accent btn-sm" onclick="importarObsidian()">Importar</button>
-        <button class="btn btn-sm" onclick="toggleImport()">Cancelar</button>
-      </div>
-    </div>
-
-    <!-- Pomodoro -->
-    <div class="section-header">
-      <p class="section-title"><i data-lucide="timer" style="width:14px;height:14px;vertical-align:-2px;"></i> Pomodoro deste tópico</p>
-      <span style="font-size:11px;color:var(--text3);" id="tempo-total-txt">Total estudado: ${formatTempo(getTempo(materiaKey, topicoIdx))}</span>
-    </div>
-    <div class="pomodoro-box">
-      <div class="pomo-display" id="pomo-display">25:00</div>
-      <div class="pomo-mode" id="pomo-mode">Foco</div>
-      <div class="pomo-controls">
-        <button class="btn btn-accent btn-sm" id="pomo-start" onclick="pomoStart()">▶ Iniciar</button>
-        <button class="btn btn-sm" id="pomo-pause" onclick="pomoPause()" disabled>⏸ Pausar</button>
-        <button class="btn btn-sm" onclick="pomoReset()">↺ Resetar</button>
-        <select class="pomo-select" id="pomo-min" onchange="pomoChangeMin()">
-          <option value="15">15 min</option>
-          <option value="25" selected>25 min</option>
-          <option value="45">45 min</option>
-          <option value="50">50 min</option>
-        </select>
-      </div>
-    </div>
-
-    <hr class="divider" />
-
-    <!-- Anotações Markdown -->
-    <div class="section-header">
-      <p class="section-title"><i data-lucide="notebook-pen" style="width:14px;height:14px;vertical-align:-2px;"></i> Anotações (Markdown)</p>
-      <span style="font-size:11px;color:var(--text3);" id="save-status"></span>
-    </div>
-    <div class="md-editor">
-      <textarea id="anotacao" class="anotacao-area md-textarea" placeholder="# Título&#10;&#10;Suas anotações em **Markdown**...&#10;&#10;- item&#10;- item&#10;&#10;$$ formula $$">${uni.anotacoes.replace(/</g,'&lt;')}</textarea>
-      <div id="md-preview" class="md-preview">${renderMarkdown(uni.anotacoes)}</div>
-    </div>
-
-    <hr class="divider" />
-
-    <!-- Vídeos -->
-    <div class="section-header">
-      <p class="section-title"><i data-lucide="youtube" style="width:14px;height:14px;vertical-align:-2px;"></i> Vídeos salvos</p>
-      <span style="font-size:11px;color:var(--text3);" id="video-count">${uni.videos.length} vídeo(s)</span>
-    </div>
-    <div class="video-add">
-      <input type="text" id="video-titulo" placeholder="Título (opcional)" class="video-input" />
-      <input type="text" id="video-url" placeholder="Cole o link do YouTube..." class="video-input" />
-      <button class="btn btn-accent btn-sm" onclick="salvarVideo()">+ Salvar</button>
-    </div>
-    <div class="videos-grid" id="videos-grid"></div>
-
-    <hr class="divider" />
-
-    <!-- Questões -->
-    <div class="section-header">
-      <p class="section-title"><i data-lucide="help-circle" style="width:14px;height:14px;vertical-align:-2px;"></i> Minhas questões</p>
-      <span style="font-size:11px;color:var(--text3);" id="q-count">${uni.questoes.length} questão(ões)</span>
-    </div>
-    <div class="questao-add">
-      <textarea id="q-enunciado" placeholder="Enunciado da questão..." class="anotacao-area" style="min-height:80px;"></textarea>
-      <textarea id="q-resposta" placeholder="Resposta / resolução / comentário..." class="anotacao-area" style="min-height:60px;margin-top:6px;"></textarea>
-      <button class="btn btn-accent btn-sm" style="margin-top:6px;" onclick="salvarQuestao()">+ Adicionar questão</button>
-    </div>
-    <div class="questoes-list" id="questoes-list"></div>
-  `
-
-  renderVideos()
-  renderQuestoes()
-  setupListeners()
-  pomoInit()
-  lucide.createIcons()
+function insertFormat(before, after) {
+  const textarea = document.getElementById('topico-anotacao')
+  if (!textarea) return
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const selected = textarea.value.slice(start, end)
+  textarea.value = `${textarea.value.slice(0, start)}${before}${selected}${after}${textarea.value.slice(end)}`
+  textarea.focus()
+  textarea.selectionStart = start + before.length
+  textarea.selectionEnd = end + before.length
+  saveTopicoAnotacao(textarea.value)
 }
 
-// ── Anotações (autosave + preview) ─────────────────────
-let saveTimer = null
-function setupListeners() {
-  const ta = document.getElementById('anotacao')
-  const pv = document.getElementById('md-preview')
-  if (ta) {
-    ta.addEventListener('input', () => {
-      pv.innerHTML = renderMarkdown(ta.value)
-      clearTimeout(saveTimer)
-      const s = document.getElementById('save-status')
-      if (s) s.textContent = 'salvando...'
-      saveTimer = setTimeout(() => {
-        saveUniverso(topicoId, { anotacoes: ta.value })
-        if (s) { s.textContent = 'salvo ✓'; setTimeout(()=>{ if(s) s.textContent=''}, 1500) }
-      }, 600)
-    })
-  }
+function sanitizeFileName(name) {
+  return name.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')
 }
 
-// ── Vídeos ─────────────────────────────────────────────
-function salvarVideo() {
-  const t = document.getElementById('video-titulo').value.trim()
-  const u = document.getElementById('video-url').value.trim()
-  if (!u) return alert('Cole a URL do YouTube.')
-  const v = addVideo(topicoId, t, u)
-  if (!v) return alert('URL do YouTube inválida.')
-  document.getElementById('video-titulo').value = ''
-  document.getElementById('video-url').value = ''
-  renderVideos()
-}
-
-function renderVideos() {
-  const uni = getUniverso(topicoId)
-  const grid = document.getElementById('videos-grid')
-  const count = document.getElementById('video-count')
-  if (count) count.textContent = `${uni.videos.length} vídeo(s)`
-  if (!grid) return
-  if (uni.videos.length === 0) {
-    grid.innerHTML = '<p style="color:var(--text3);font-size:12px;">Nenhum vídeo salvo ainda.</p>'
-    return
-  }
-  grid.innerHTML = uni.videos.map(v => `
-    <div class="video-card">
-      <div class="video-embed">
-        <iframe src="https://www.youtube.com/embed/${v.videoId}" frameborder="0" allowfullscreen></iframe>
-      </div>
-      <div class="video-meta">
-        <span class="video-title" title="${v.titulo}">${v.titulo}</span>
-        <button class="video-del" onclick="deletarVideo('${v.id}')" title="Remover">✕</button>
-      </div>
-    </div>
-  `).join('')
-}
-
-function deletarVideo(vid) {
-  if (!confirm('Remover este vídeo?')) return
-  removeVideo(topicoId, vid)
-  renderVideos()
-}
-
-// ── Questões ───────────────────────────────────────────
-function salvarQuestao() {
-  const e = document.getElementById('q-enunciado').value.trim()
-  const r = document.getElementById('q-resposta').value.trim()
-  if (!e) return alert('Escreva o enunciado.')
-  addQuestao(topicoId, e, r)
-  document.getElementById('q-enunciado').value = ''
-  document.getElementById('q-resposta').value = ''
-  renderQuestoes()
-}
-
-function renderQuestoes() {
-  const uni = getUniverso(topicoId)
-  const list = document.getElementById('questoes-list')
-  const count = document.getElementById('q-count')
-  if (count) count.textContent = `${uni.questoes.length} questão(ões)`
-  if (!list) return
-  if (uni.questoes.length === 0) {
-    list.innerHTML = '<p style="color:var(--text3);font-size:12px;">Nenhuma questão salva.</p>'
-    return
-  }
-  list.innerHTML = uni.questoes.map((q, i) => `
-    <div class="questao-card">
-      <div class="questao-header">
-        <strong>Questão ${i+1}</strong>
-        <button class="video-del" onclick="deletarQuestao('${q.id}')" title="Remover">✕</button>
-      </div>
-      <div class="questao-enunciado">${renderMarkdown(q.enunciado)}</div>
-      ${q.resposta ? `<details class="questao-resp"><summary>Ver resposta</summary>${renderMarkdown(q.resposta)}</details>` : ''}
-    </div>
-  `).join('')
-}
-
-function deletarQuestao(qid) {
-  if (!confirm('Remover esta questão?')) return
-  removeQuestao(topicoId, qid)
-  renderQuestoes()
-}
-
-// ── Obsidian ───────────────────────────────────────────
-function abrirObsidian() {
-  // Tenta abrir a nota usando o protocolo obsidian://
-  // O usuário deve ter um vault chamado ENEM-Study (ou editável abaixo)
-  const vault = localStorage.getItem('obsidian_vault') || (function(){
-    const v = prompt('Nome do seu vault no Obsidian:', 'ENEM-Study')
-    if (v) localStorage.setItem('obsidian_vault', v)
-    return v
-  })()
-  if (!vault) return
-  const file = `${materia.nome}/${topico.titulo}`
-  const uri = `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(file)}`
-  window.location.href = uri
-}
-
-function exportarTopicoMd() {
-  const uni = getUniverso(topicoId)
-  const today = new Date().toISOString().slice(0, 10)
-  const dific = getDificuldades(materiaKey)[topicoIdx] || 0
-  const feitos = getTopicosFeitos(materiaKey)
-  const lines = []
-  lines.push('---')
-  lines.push(`title: ${topico.titulo}`)
-  lines.push(`materia: ${materia.nome}`)
-  lines.push(`topico_id: ${topico.id}`)
-  lines.push(`emoji: ${topico.emoji || ''}`)
-  lines.push(`data_exportacao: ${today}`)
-  lines.push(`concluido: ${feitos.includes(topicoIdx)}`)
-  lines.push(`dificuldade: ${dific}`)
-  lines.push(`tempo_estudado: ${formatTempo(getTempo(materiaKey, topicoIdx))}`)
-  if (uni.ultimaRevisao) lines.push(`ultima_revisao: ${uni.ultimaRevisao}`)
-  lines.push(`tags: [enem, ${materiaKey}, topico]`)
-  lines.push('---\n')
-  lines.push(`# ${topico.emoji || ''} ${topico.titulo}\n`)
-  if (uni.anotacoes) {
-    lines.push('## 📝 Anotações\n')
-    lines.push(uni.anotacoes)
-    lines.push('')
-  }
-  if (uni.videos.length) {
-    lines.push('## 🎬 Vídeos salvos\n')
-    uni.videos.forEach(v => {
-      lines.push(`- [${v.titulo}](${v.url})`)
-      lines.push(`  ![](https://www.youtube.com/watch?v=${v.videoId})`)
-    })
-    lines.push('')
-  }
-  if (uni.questoes.length) {
-    lines.push('## ❓ Questões\n')
-    uni.questoes.forEach((q, i) => {
-      lines.push(`### Questão ${i+1}`)
-      lines.push(q.enunciado)
-      if (q.resposta) {
-        lines.push('\n> **Resposta:**')
-        lines.push('> ' + q.resposta.replace(/\n/g, '\n> '))
-      }
-      lines.push('')
-    })
-  }
-  const content = lines.join('\n')
-  const blob = new Blob([content], { type: 'text/markdown' })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = `${topico.titulo.replace(/[^\w\s-]/g,'').replace(/\s+/g,'-')}.md`
-  a.click()
-  URL.revokeObjectURL(a.href)
-}
-
-function toggleImport() {
-  const box = document.getElementById('import-box')
-  if (!box) return
-  box.style.display = box.style.display === 'none' ? 'block' : 'none'
-}
-
-function importarObsidian() {
-  const txt = document.getElementById('import-text').value
-  if (!txt.trim()) return alert('Cole o markdown primeiro.')
-  // Remove frontmatter (--- ... ---) se houver
-  let body = txt
-  const fm = body.match(/^---\n[\s\S]*?\n---\n?/)
-  if (fm) body = body.slice(fm[0].length)
-  if (!confirm('Isso substituirá suas anotações atuais. Continuar?')) return
-  saveUniverso(topicoId, { anotacoes: body.trim() })
-  alert('Importado! Recarregando...')
-  renderPage()
-}
-
-function marcarRevisao() {
-  touchRevisao(topicoId)
-  alert('Revisão marcada para hoje ✓')
-  renderPage()
-}
-
-// ── Pomodoro ───────────────────────────────────────────
-let pomoState = {
-  running: false,
-  remaining: 25 * 60,
-  duration: 25 * 60,
-  interval: null,
-  mode: 'foco', // foco | pausa
-  tickAccum: 0, // segundos acumulados p/ salvar no getTempo
-}
-
-function pomoInit() {
-  pomoState.duration = parseInt(document.getElementById('pomo-min').value) * 60
-  pomoState.remaining = pomoState.duration
-  pomoUpdateDisplay()
-}
-
-function pomoStart() {
-  if (pomoState.running) return
-  pomoState.running = true
-  document.getElementById('pomo-start').disabled = true
-  document.getElementById('pomo-pause').disabled = false
-  pomoState.interval = setInterval(() => {
-    pomoState.remaining--
-    pomoState.tickAccum++
-    // Salva tempo a cada 10s p/ não perder caso feche a aba
-    if (pomoState.mode === 'foco' && pomoState.tickAccum >= 10) {
-      addTempo(materiaKey, topicoIdx, pomoState.tickAccum)
-      pomoState.tickAccum = 0
-      const t = document.getElementById('tempo-total-txt')
-      if (t) t.textContent = 'Total estudado: ' + formatTempo(getTempo(materiaKey, topicoIdx))
-    }
-    if (pomoState.remaining <= 0) {
-      // Salva o restante
-      if (pomoState.mode === 'foco' && pomoState.tickAccum > 0) {
-        addTempo(materiaKey, topicoIdx, pomoState.tickAccum)
-        pomoState.tickAccum = 0
-      }
-      pomoFinish()
-    }
-    pomoUpdateDisplay()
-  }, 1000)
-}
-
-function pomoPause() {
-  if (!pomoState.running) return
-  // Salva o tempo acumulado antes de pausar
-  if (pomoState.mode === 'foco' && pomoState.tickAccum > 0) {
-    addTempo(materiaKey, topicoIdx, pomoState.tickAccum)
-    pomoState.tickAccum = 0
-    const t = document.getElementById('tempo-total-txt')
-    if (t) t.textContent = 'Total estudado: ' + formatTempo(getTempo(materiaKey, topicoIdx))
-  }
-  clearInterval(pomoState.interval)
-  pomoState.running = false
-  document.getElementById('pomo-start').disabled = false
-  document.getElementById('pomo-pause').disabled = true
-}
-
-function pomoReset() {
-  clearInterval(pomoState.interval)
-  if (pomoState.mode === 'foco' && pomoState.tickAccum > 0) {
-    addTempo(materiaKey, topicoIdx, pomoState.tickAccum)
-    pomoState.tickAccum = 0
-  }
-  pomoState.running = false
-  pomoState.remaining = pomoState.duration
-  document.getElementById('pomo-start').disabled = false
-  document.getElementById('pomo-pause').disabled = true
-  pomoUpdateDisplay()
-}
-
-function pomoFinish() {
-  clearInterval(pomoState.interval)
-  pomoState.running = false
-  document.getElementById('pomo-start').disabled = false
-  document.getElementById('pomo-pause').disabled = true
-  try { new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA').play() } catch(e){}
-  alert(pomoState.mode === 'foco' ? '⏰ Foco concluído! Hora de descansar.' : '✅ Pausa finalizada. Bora voltar!')
-  // alterna modo
-  pomoState.mode = pomoState.mode === 'foco' ? 'pausa' : 'foco'
-  pomoState.duration = pomoState.mode === 'pausa' ? 5 * 60 : parseInt(document.getElementById('pomo-min').value) * 60
-  pomoState.remaining = pomoState.duration
-  document.getElementById('pomo-mode').textContent = pomoState.mode === 'foco' ? 'Foco' : 'Pausa'
-  pomoUpdateDisplay()
-  touchRevisao(topicoId)
-}
-
-function pomoChangeMin() {
-  if (pomoState.running) return
-  pomoState.duration = parseInt(document.getElementById('pomo-min').value) * 60
-  pomoState.remaining = pomoState.duration
-  pomoUpdateDisplay()
-}
-
-function pomoUpdateDisplay() {
-  const m = Math.floor(pomoState.remaining / 60).toString().padStart(2, '0')
-  const s = (pomoState.remaining % 60).toString().padStart(2, '0')
-  const el = document.getElementById('pomo-display')
-  if (el) el.textContent = `${m}:${s}`
-}
-
-// Salva tempo ao sair da página
-window.addEventListener('beforeunload', () => {
-  if (pomoState.mode === 'foco' && pomoState.tickAccum > 0) {
-    addTempo(materiaKey, topicoIdx, pomoState.tickAccum)
-  }
-})
-
-document.addEventListener('DOMContentLoaded', renderPage)
+document.addEventListener('DOMContentLoaded', renderTopicoPage)
