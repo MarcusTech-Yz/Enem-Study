@@ -44,8 +44,7 @@
       <section class="perfil-hero" id="perfil-hero"></section>
 
       <section class="showcase-grid">
-        <div class="showcase-card" id="showcase-card"></div>
-        <div class="showcase-card track-card" id="track-card"></div>
+        <div class="showcase-card achievement-card" id="achievement-card"></div>
         <div class="showcase-card" id="week-spotlight-card"></div>
       </section>
 
@@ -68,20 +67,6 @@
         </div>
       </section>
 
-      <section class="ambient-grid">
-        <div class="ambient-card spotlight-card" id="spotlight-card"></div>
-
-        <div class="ambient-card">
-          <div class="section-row">
-            <div>
-              <p class="section-title">Coleção Equipada</p>
-              <p class="section-copy">O que define a identidade do perfil agora.</p>
-            </div>
-          </div>
-          <div class="collection-list" id="collection-list"></div>
-        </div>
-      </section>
-
       <section class="ambient-card">
         <div class="section-row">
           <div>
@@ -101,24 +86,7 @@
 <script src="js/app.js"></script>
 <script src="js/perfil.js"></script>
 <script>
-renderHero()
-renderShowcase()
-renderStats()
-renderHeroes('tempo')
-renderAmbient()
-renderGrafico()
-setNavActive()
-lucide.createIcons()
-</script>
-
-renderHero()
-renderShowcase()
-renderStats()
-renderHeroes('tempo')
-renderAmbient()
-renderGrafico()
-setNavActive()
-lucide.createIcons()
+initPerfilPage()
 </script>
 </body>
 </html>

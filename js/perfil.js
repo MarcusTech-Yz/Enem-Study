@@ -105,7 +105,7 @@ function renderHero() {
             <span>streak ${streak.count} dia${streak.count !== 1 ? 's' : ''}</span>
             <span>main ${topTempo?.nome || 'em construção'}</span>
           </div>
-          <p class="perfil-frase">Agora o perfil funciona mais como um espaço do estudante. O fundo domina a página, o avatar ganha presença e a identidade vem do que foi realmente estudado.</p>
+          <p class="perfil-frase"></p>
           <div class="hero-progress-row">
             <div class="xp-bar-outer">
               <div class="xp-bar-inner" style="width:${xpPct}%"></div>
@@ -140,33 +140,31 @@ function renderHero() {
 function renderShowcase() {
   const xp = calcXP()
   const { nivel } = getNivel(xp)
-  const perf = buildHeroData().sort((a, b) => b.pct - a.pct)[0]
+  const achievementCard = document.getElementById('achievement-card')
+  const weekSpotlightCard = document.getElementById('week-spotlight-card')
   const weekTop = buildHeroData().sort((a, b) => b.tempo - a.tempo)[0]
 
-  document.getElementById('showcase-card').innerHTML = `
-    <p class="showcase-kicker">Sua vitrine</p>
-    <div class="showcase-title">${perf?.nome || 'Perfil em construção'}</div>
-    <p class="showcase-text">Hoje sua identidade está mais próxima de uma main em <strong>${perf?.nome || 'andamento'}</strong>.</p>
-    <div class="showcase-strip">
-      <span class="strip-pill">Título: Guerreiro ENEM</span>
-      <span class="strip-pill">Cena: Biblioteca neon</span>
-      <span class="strip-pill">Foco: ${perf?.pct || 0}% completo</span>
+  if (achievementCard) {
+    achievementCard.innerHTML = `
+    <p class="showcase-kicker">Conquistas</p>
+    <div class="achievement-head">
+      <div class="achievement-icon"><i data-lucide="trophy"></i></div>
+      <div>
+        <div class="achievement-title">Vitrine em construção</div>
+        <div class="achievement-sub">Seu perfil vai exibir troféus, marcos secretos e recompensas por consistência.</div>
+      </div>
     </div>
-  `
-
-  document.getElementById('track-card').innerHTML = `
-    <p class="showcase-kicker">Trilha equipada</p>
-    <div class="track-art"><i data-lucide="music-4"></i></div>
-    <div class="track-name">Noite de Véspera</div>
-    <div class="track-meta">lo-fi calm · biblioteca neon · foco contínuo</div>
-    <div class="track-timeline">
-      <span class="time">1:23</span>
-      <div class="bar"><span></span></div>
-      <span class="time">3:47</span>
+    <div class="achievement-preview">
+      <span class="achievement-pill">streak</span>
+      <span class="achievement-pill">domínio</span>
+      <span class="achievement-pill">segredo</span>
     </div>
+    <p class="achievement-copy">A próxima etapa do perfil vai transformar progresso real em conquistas exibíveis, sem encher a tela com coisa solta.</p>
   `
+  }
 
-  document.getElementById('week-spotlight-card').innerHTML = `
+  if (weekSpotlightCard) {
+    weekSpotlightCard.innerHTML = `
     <p class="showcase-kicker">Destaque da semana</p>
     <div class="reward-stage">
       <div class="reward-title">${weekTop?.nome || 'Seu foco da semana'}</div>
@@ -178,6 +176,7 @@ function renderShowcase() {
       </div>
     </div>
   `
+  }
 }
 
 function renderStats() {
@@ -281,8 +280,11 @@ function renderAmbient() {
   const { nivel } = getNivel(xp)
   const topTempo = buildHeroData().sort((a, b) => b.tempo - a.tempo)[0]
   const topPerf = buildHeroData().sort((a, b) => b.pct - a.pct)[0]
+  const spotlightCard = document.getElementById('spotlight-card')
+  const collectionList = document.getElementById('collection-list')
 
-  document.getElementById('spotlight-card').innerHTML = `
+  if (spotlightCard) {
+    spotlightCard.innerHTML = `
     <div class="section-row">
       <div>
         <p class="section-title">Quarto Virtual</p>
@@ -309,8 +311,10 @@ function renderAmbient() {
       </div>
     </div>
   `
+  }
 
-  document.getElementById('collection-list').innerHTML = `
+  if (collectionList) {
+    collectionList.innerHTML = `
     <div class="collection-item">
       <div class="collection-icon"><i data-lucide="image"></i></div>
       <div class="collection-text">
@@ -333,6 +337,7 @@ function renderAmbient() {
       <span class="collection-tag">nível ${nivel}</span>
     </div>
   `
+  }
 }
 
 function renderGrafico() {
@@ -381,11 +386,13 @@ function renderGrafico() {
   })
 }
 
-renderHero()
-renderShowcase()
-renderStats()
-renderHeroes('tempo')
-renderAmbient()
-renderGrafico()
-setNavActive()
-lucide.createIcons()
+function initPerfilPage() {
+  renderHero()
+  renderShowcase()
+  renderStats()
+  renderHeroes('tempo')
+  renderAmbient()
+  renderGrafico()
+  setNavActive()
+  lucide.createIcons()
+}
