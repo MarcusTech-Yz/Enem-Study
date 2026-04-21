@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENEM · Conquistas</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/conquistas.css" />
+</head>
+
+<body class="conquistas-page">
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><span></span> enem.study</div>
+    <nav>
+      <p class="nav-label">Menu</p>
+      <ul class="nav-links">
+        <li><a href="index.html"><i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard</a></li>
+        <li><a href="hoje.html"><i data-lucide="play-circle" class="nav-icon"></i> Estudar Hoje</a></li>
+        <li><a href="grade.html"><i data-lucide="calendar-days" class="nav-icon"></i> Grade Semanal</a></li>
+        <li><a href="materias.html"><i data-lucide="book-open" class="nav-icon"></i> Matérias</a></li>
+        <li><a href="conquistas.html"><i data-lucide="medal" class="nav-icon"></i> Conquistas</a></li>
+        <li><a href="exportar.html"><i data-lucide="download" class="nav-icon"></i> Exportar</a></li>
+        <li><a href="perfil.html"><i data-lucide="trophy" class="nav-icon"></i> Perfil</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <p class="date-tag">Coleção</p>
+      <h1>Conquistas</h1>
+      <p>Marcos visíveis para direcionar o estudo e segredos para manter a curiosidade viva.</p>
+    </div>
+
+    <div class="conquistas-shell">
+      <section class="achievement-overview" id="achievement-overview"></section>
+
+      <section class="achievement-panels">
+        <div class="achievement-panel">
+          <div class="achievement-panel-title">Conquistadas</div>
+          <div class="achievement-panel-copy">Os marcos já alcançados aparecem aqui com nome, ícone e descrição completa.</div>
+          <div class="achievement-list" id="achievement-list-unlocked"></div>
+        </div>
+
+        <div class="achievement-panel">
+          <div class="achievement-panel-title">Conquistas Para Alcançar</div>
+          <div class="achievement-panel-copy">As conquistas visíveis mostram logo de cara o que fazer para desbloquear cada uma.</div>
+          <div class="achievement-list" id="achievement-list-locked"></div>
+        </div>
+
+        <div class="achievement-panel">
+          <div class="achievement-panel-title">Conquistas Secretas</div>
+          <div class="achievement-panel-copy">Parte da coleção continua escondida para preservar surpresa e descoberta.</div>
+          <div class="achievement-list" id="achievement-list-secret"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="data/topicos.js"></script>
+<script src="data/conquistas.js"></script>
+<script src="js/app.js"></script>
+<script src="js/conquistas.js"></script>
+<script>
+initConquistasPage()
+</script>
+</body>
+</html>

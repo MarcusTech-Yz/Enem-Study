@@ -64,12 +64,14 @@ function renderHero() {
   const xp = calcXP()
   const { nivel, xpAtual, xpTotal } = getNivel(xp)
   const { feitos, total } = getProgressoGlobal()
+  const conquistas = getConquistasState()
   const pctGeral = total > 0 ? Math.round((feitos / total) * 100) : 0
   const rank = getRank(pctGeral)
   const streak = getStreak()
   const xpPct = Math.min(100, Math.round((xpAtual / xpTotal) * 100))
   const topTempo = buildHeroData().sort((a, b) => b.tempo - a.tempo)[0]
   const scene = getSceneLabel(rank.nome)
+  const secretasRestantes = conquistas.filter(item => !item.unlocked && item.secreta).length
 
   const rain = Array.from({ length: 14 }).map((_, i) => {
     const left = 6 + i * 6.5
@@ -84,7 +86,7 @@ function renderHero() {
     <div class="hero-rain">${rain}</div>
     <div class="hero-topbar">
       <span class="hero-scene-badge">Cena equipada: <strong>${scene}</strong></span>
-      <span class="hero-track">Trilha atual: <strong>Noite de Véspera</strong></span>
+      <span class="hero-track">Segredos restantes: <strong>${secretasRestantes}</strong></span>
     </div>
 
     <div class="hero-content">
@@ -143,24 +145,70 @@ function renderShowcase() {
   const achievementCard = document.getElementById('achievement-card')
   const weekSpotlightCard = document.getElementById('week-spotlight-card')
   const weekTop = buildHeroData().sort((a, b) => b.tempo - a.tempo)[0]
+  const conquistas = getConquistasState()
+  const unlocked = conquistas.filter(item => item.unlocked)
+  const visibleLocked = conquistas.filter(item => !item.unlocked && !item.secreta)
+  const hiddenLocked = conquistas.filter(item => !item.unlocked && item.secreta)
+  const unlockedPreview = unlocked.slice(0, 4)
+  const lockedPreview = [...visibleLocked.slice(0, 2), ...hiddenLocked.slice(0, 1)].slice(0, 3)
+  const totalAchievements = conquistas.length || 1
+  const unlockedPct = Math.round((unlocked.length / totalAchievements) * 100)
 
   if (achievementCard) {
-    achievementCard.innerHTML = `
-    <p class="showcase-kicker">Conquistas</p>
-    <div class="achievement-head">
-      <div class="achievement-icon"><i data-lucide="trophy"></i></div>
-      <div>
-        <div class="achievement-title">Vitrine em construção</div>
-        <div class="achievement-sub">Seu perfil vai exibir troféus, marcos secretos e recompensas por consistência.</div>
+    if (unlocked.length === 0) {
+      achievementCard.innerHTML = `
+      <p class="showcase-kicker">Conquistas</p>
+      <div class="achievement-head">
+        <div class="achievement-icon"><i data-lucide="trophy"></i></div>
+        <div>
+          <div class="achievement-title">Vitrine em construção</div>
+          <div class="achievement-sub">Seu perfil vai exibir troféus, marcos secretos e recompensas por consistência.</div>
+        </div>
       </div>
-    </div>
-    <div class="achievement-preview">
-      <span class="achievement-pill">streak</span>
-      <span class="achievement-pill">domínio</span>
-      <span class="achievement-pill">segredo</span>
-    </div>
-    <p class="achievement-copy">A próxima etapa do perfil vai transformar progresso real em conquistas exibíveis, sem encher a tela com coisa solta.</p>
-  `
+      <div class="achievement-preview">
+        <span class="achievement-pill">streak</span>
+        <span class="achievement-pill">domínio</span>
+        <span class="achievement-pill">segredo</span>
+      </div>
+      <p class="achievement-copy">A próxima etapa do perfil vai transformar progresso real em conquistas exibíveis, sem encher a tela com coisa solta.</p>
+      <a class="achievement-link" href="conquistas.html">Ver coleção</a>
+    `
+    } else {
+      achievementCard.innerHTML = `
+      <p class="showcase-kicker">Conquistas</p>
+      <div class="achievement-summary">
+        <div>
+          <div class="achievement-count">${unlocked.length}/${conquistas.length}</div>
+          <div class="achievement-sub">alcançadas até agora</div>
+        </div>
+        <a class="achievement-link" href="conquistas.html">Ver coleção</a>
+      </div>
+      <div class="achievement-progress"><div style="width:${Math.max(10, unlockedPct)}%"></div></div>
+      <div class="achievement-rows">
+        <div>
+          <p class="achievement-label">Conquistadas</p>
+          <div class="achievement-badge-row">
+            ${unlockedPreview.map(item => `
+              <span class="achievement-badge unlocked" title="${item.nome}">
+                <i data-lucide="${item.icon}"></i>
+              </span>
+            `).join('')}
+            ${unlocked.length > unlockedPreview.length ? `<span class="achievement-more">+${unlocked.length - unlockedPreview.length}</span>` : ''}
+          </div>
+        </div>
+        <div>
+          <p class="achievement-label">A caminho</p>
+          <div class="achievement-badge-row">
+            ${lockedPreview.map(item => `
+              <span class="achievement-badge locked" title="${item.secreta ? 'Conquista secreta' : item.nome}">
+                <i data-lucide="${item.secreta ? 'lock' : item.icon}"></i>
+              </span>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `
+    }
   }
 
   if (weekSpotlightCard) {

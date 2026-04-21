@@ -29,6 +29,7 @@ function toggleTopico(k, idx) {
   f = f.includes(idx) ? f.filter(i => i !== idx) : [...f, idx]
   store.set('topicos_' + k, f)
   bumpStreak()
+  checkConquistas()
   return f
 }
 
@@ -57,6 +58,7 @@ function addTempo(materiaKey, topicoIdx, segundos) {
   const key = `${materiaKey}:${topicoIdx}`
   all[key] = (all[key] || 0) + segundos
   store.set('tempo_topicos', all)
+  checkConquistas()
 }
 
 // Tempo total por matéria (em segundos)
@@ -138,6 +140,7 @@ function bumpStreak() {
   const ontem = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
   const novo  = { count: s.lastDate === ontem ? s.count + 1 : 1, lastDate: hoje }
   store.set('streak', novo)
+  checkConquistas()
   return novo
 }
 
@@ -167,7 +170,122 @@ function getRecomendados(n = 3) {
 function getRegistroHoje() {
   return store.get('registro_' + getTodayStr()) || { nota: '', tempoMin: 0 }
 }
-function saveRegistroHoje(r) { store.set('registro_' + getTodayStr(), r) }
+function saveRegistroHoje(r) {
+  store.set('registro_' + getTodayStr(), r)
+  checkConquistas()
+}
+
+// Achievements
+function getConquistasDefs() {
+  return typeof CONQUISTAS !== 'undefined' ? CONQUISTAS : []
+}
+
+function getConquistasUnlockMap() {
+  return store.get('conquistas_unlock') || {}
+}
+
+function setConquistasUnlockMap(map) {
+  store.set('conquistas_unlock', map)
+}
+
+function unlockConquista(id) {
+  const unlocks = getConquistasUnlockMap()
+  if (unlocks[id]) return false
+  unlocks[id] = { unlockedAt: new Date().toISOString() }
+  setConquistasUnlockMap(unlocks)
+  return true
+}
+
+function getMateriasIniciadasCount() {
+  return Object.keys(ENEM).filter(k => getTempoMateria(k) > 0 || getTopicosFeitos(k).length > 0).length
+}
+
+function calcXPGlobal() {
+  let xp = 0
+  for (const k of Object.keys(ENEM)) {
+    xp += getTopicosFeitos(k).length * 10
+    xp += Math.floor(getTempoMateria(k) / 60)
+  }
+  xp += getStreak().count * 5
+  return xp
+}
+
+function getNivelFromXP(xp) {
+  let nivel = 1
+  let restante = xp
+  while (restante >= nivel * 250) {
+    restante -= nivel * 250
+    nivel++
+  }
+  return { nivel, xpAtual: restante, xpTotal: nivel * 250 }
+}
+
+function getConquistaProgress(def) {
+  const global = getProgressoGlobal()
+  const materiasIniciadas = getMateriasIniciadasCount()
+
+  switch (def.tipo) {
+    case 'tempo_total':
+      return { atual: getTempoTotal(), alvo: def.alvo }
+    case 'streak':
+      return { atual: getStreak().count, alvo: def.alvo }
+    case 'topicos_total':
+      return { atual: global.feitos, alvo: def.alvo }
+    case 'tempo_materia':
+      return { atual: getTempoMateria(def.materiaKey), alvo: def.alvo }
+    case 'progresso_materia':
+      return { atual: getProgressoMateria(def.materiaKey).pct, alvo: def.alvo }
+    case 'materias_iniciadas':
+      return { atual: materiasIniciadas, alvo: def.alvo }
+    case 'todas_materias_iniciadas':
+      return { atual: materiasIniciadas, alvo: Object.keys(ENEM).length }
+    case 'sessao_madrugada': {
+      const registro = getRegistroHoje()
+      const hora = new Date().getHours()
+      const fezHoje = registro?.tempoMin > 0 || global.feitos > 0
+      return { atual: fezHoje && hora < 5 ? 1 : 0, alvo: def.alvo }
+    }
+    case 'nivel':
+      return { atual: getNivelFromXP(calcXPGlobal()).nivel, alvo: def.alvo }
+    default:
+      return { atual: 0, alvo: def.alvo || 1 }
+  }
+}
+
+function isConquistaUnlocked(id) {
+  return !!getConquistasUnlockMap()[id]
+}
+
+function getConquistasState() {
+  return getConquistasDefs().map(def => {
+    const progress = getConquistaProgress(def)
+    const unlockedMeta = getConquistasUnlockMap()[def.id] || null
+    const unlocked = !!unlockedMeta
+    const pct = progress.alvo > 0 ? Math.max(0, Math.min(100, Math.round((progress.atual / progress.alvo) * 100))) : 0
+    return {
+      ...def,
+      unlocked,
+      unlockedAt: unlockedMeta?.unlockedAt || null,
+      progressAtual: progress.atual,
+      progressAlvo: progress.alvo,
+      progressPct: unlocked ? 100 : pct,
+    }
+  })
+}
+
+function checkConquistas() {
+  const defs = getConquistasDefs()
+  if (!defs.length) return []
+  const unlockedNow = []
+  defs.forEach(def => {
+    if (isConquistaUnlocked(def.id)) return
+    const progress = getConquistaProgress(def)
+    if (progress.atual >= progress.alvo) {
+      if (unlockConquista(def.id)) unlockedNow.push(def.id)
+    }
+  })
+  return unlockedNow
+}
 
 // ── Nota por tópico ────────────────────────────────────
 function getNotaTopico(materiaKey, topicoIdx) {
@@ -191,6 +309,7 @@ function setNavActive() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  checkConquistas()
   setNavActive()
   if (typeof lucide !== 'undefined') lucide.createIcons()
 })
