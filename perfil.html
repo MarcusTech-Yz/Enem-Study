@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -7,178 +7,17 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <style>
-    /* ── Hero banner ── */
-    .perfil-hero {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.75rem 2rem;
-      margin-bottom: 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 1.75rem;
-    }
-    .perfil-avatar {
-      width: 72px; height: 72px;
-      border-radius: 50%;
-      background: rgba(200,241,53,.1);
-      border: 2px solid rgba(200,241,53,.25);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .perfil-avatar i { width: 32px; height: 32px; color: var(--accent); }
-    .perfil-meta { flex: 1; min-width: 0; }
-    .perfil-nome { font-size: 22px; font-weight: 600; letter-spacing: -.03em; }
-    .perfil-sub  { font-size: 12px; color: var(--text3); font-family: var(--mono); margin-top: 2px; margin-bottom: 12px; }
-    .xp-row { display: flex; align-items: center; gap: 10px; }
-    .xp-bar-outer { flex: 1; height: 5px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
-    .xp-bar-inner { height: 100%; background: var(--accent); border-radius: 99px; transition: width .6s ease; }
-    .xp-label { font-size: 11px; font-family: var(--mono); color: var(--text3); white-space: nowrap; }
-
-    .rank-col {
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      flex-shrink: 0;
-    }
-    .rank-orb {
-      width: 56px; height: 56px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .rank-orb i { width: 24px; height: 24px; }
-    .rank-name { font-size: 12px; font-family: var(--mono); font-weight: 500; }
-
-    /* ── Heróis (matérias) grid ── */
-    .heroes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-      gap: 10px;
-      margin-bottom: 1.25rem;
-    }
-    .hero-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.1rem 1.25rem;
-      transition: border-color .15s, transform .15s;
-      cursor: default;
-    }
-    .hero-card:hover { border-color: var(--border2); transform: translateY(-2px); }
-    .hero-card-top {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
-    }
-    .hero-icon {
-      width: 38px; height: 38px; border-radius: 9px;
-      background: var(--bg3); border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .hero-icon i { width: 18px; height: 18px; color: var(--text3); }
-    .hero-nome { font-size: 14px; font-weight: 500; }
-    .hero-lvl  { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
-
-    .hero-prog-row {
-      display: flex; align-items: center; gap: 8px; margin: 8px 0 6px;
-    }
-    .hero-prog-bar { flex: 1; height: 3px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
-    .hero-prog-fill { height: 100%; border-radius: 99px; }
-    .hero-prog-pct { font-size: 11px; font-family: var(--mono); color: var(--text3); }
-
-    .hero-stats-row {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
-      font-size: 11px; font-family: var(--mono); color: var(--text3);
-    }
-    .hero-stat span:first-child { display: block; font-size: 13px; color: var(--text); font-weight: 500; }
-
-    .pickrate-section { margin-top: 8px; }
-    .pickrate-bar { height: 3px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
-    .pickrate-fill { height: 100%; background: var(--blue); border-radius: 99px; }
-    .pickrate-lbl { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 3px; }
-
-    /* ── Sort controls ── */
-    .sort-pills { display: flex; gap: 4px; }
-    .sort-pill {
-      font-size: 11px; padding: 4px 12px;
-      border: 1px solid var(--border2); border-radius: 99px;
-      background: none; color: var(--text3);
-      cursor: pointer; font-family: var(--mono); transition: all .15s;
-    }
-    .sort-pill.ativo { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,.08); }
-
-    /* ── Conquistas ── */
-    .conquistas-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-      gap: 8px;
-      margin-bottom: 1.25rem;
-    }
-    .conquista {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: .9rem;
-      text-align: center;
-    }
-    .conquista.earned {
-      border-color: rgba(200,241,53,.25);
-      background: rgba(200,241,53,.04);
-    }
-    .conquista.locked { opacity: .4; }
-    .conquista-icon { font-size: 26px; margin-bottom: 6px; }
-    .conquista-nome { font-size: 12px; font-weight: 500; color: var(--text2); line-height: 1.3; }
-    .conquista-desc { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 3px; }
-    .conquista-badge {
-      display: inline-block; margin-top: 6px;
-      font-size: 9px; font-family: var(--mono);
-      padding: 2px 7px; border-radius: 4px;
-    }
-    .conquista.earned .conquista-badge {
-      background: rgba(200,241,53,.12); color: var(--accent);
-      border: 1px solid rgba(200,241,53,.25);
-    }
-    .conquista.locked .conquista-badge {
-      background: var(--bg3); color: var(--text3);
-      border: 1px solid var(--border);
-    }
-
-    /* ── Insights ── */
-    .insights-list { display: flex; flex-direction: column; gap: 8px; }
-    .insight {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: .8rem 1rem;
-      display: flex; align-items: flex-start; gap: 12px;
-      font-size: 13px;
-    }
-    .insight-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      flex-shrink: 0; margin-top: 5px;
-    }
-
-    /* ── Top list ── */
-    .top-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 7px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .top-item:last-child { border-bottom: none; padding-bottom: 0; }
-    .top-rank { font-size: 11px; font-family: var(--mono); color: var(--text3); width: 18px; text-align: right; flex-shrink: 0; }
-    .top-nome { flex: 1; font-size: 13px; }
-    .top-val  { font-size: 12px; font-family: var(--mono); color: var(--text3); white-space: nowrap; }
-
-    /* ── Chart container ── */
-    .chart-container { position: relative; width: 100%; height: 180px; }
-
-    /* ── Média sessão ── */
-    .media-sessao-val {
-      font-size: 28px; font-weight: 600; letter-spacing: -.04em;
-      color: var(--blue); line-height: 1;
-    }
-  </style>
+  <link rel="stylesheet" href="css/perfil.css" />
 </head>
-<body>
-<div class="layout">
 
+<body class="perfil-page">
+<div class="perfil-wallpaper" aria-hidden="true">
+  <div class="perfil-wallpaper-glow"></div>
+  <div class="perfil-wallpaper-grid"></div>
+  <div class="perfil-wallpaper-orbs"></div>
+</div>
+
+<div class="layout">
   <aside class="sidebar">
     <div class="sidebar-logo"><span></span> enem.study</div>
     <nav>
@@ -190,497 +29,94 @@
         <li><a href="materias.html"><i data-lucide="book-open" class="nav-icon"></i> Matérias</a></li>
         <li><a href="exportar.html"><i data-lucide="download" class="nav-icon"></i> Exportar</a></li>
         <li><a href="perfil.html"><i data-lucide="trophy" class="nav-icon"></i> Perfil</a></li>
-           
       </ul>
     </nav>
   </aside>
 
   <main class="main">
     <div class="page-header">
-      <p class="date-tag">Estatísticas</p>
+      <p class="date-tag">Identidade</p>
       <h1>Perfil</h1>
-      <p>Seu progresso, conquistas e evolução no ENEM.</p>
+      <p>Seu espaço de progresso, coleção e motivação dentro do ENEM.</p>
     </div>
 
-    <!-- Hero banner -->
-    <div class="perfil-hero" id="perfil-hero"></div>
+    <div class="perfil-shell">
+      <section class="perfil-hero" id="perfil-hero"></section>
 
-    <!-- Stats 4 cards -->
-    <div class="stats-row" id="stats4" style="margin-bottom:1.5rem;"></div>
+      <section class="showcase-grid">
+        <div class="showcase-card" id="showcase-card"></div>
+        <div class="showcase-card track-card" id="track-card"></div>
+        <div class="showcase-card" id="week-spotlight-card"></div>
+      </section>
 
-    <!-- Matérias como heróis -->
-    <div class="section-header">
-      <p class="section-title">Matérias</p>
-      <div class="sort-pills">
-        <button class="sort-pill ativo" data-sort="tempo" onclick="sortHeroes(this,'tempo')">Mais estudada</button>
-        <button class="sort-pill" data-sort="perf"  onclick="sortHeroes(this,'perf')">Melhor perf.</button>
-        <button class="sort-pill" data-sort="nome"  onclick="sortHeroes(this,'nome')">A–Z</button>
-      </div>
-    </div>
-    <div class="heroes-grid" id="heroes-grid" style="margin-top:.75rem;"></div>
+      <section class="stats-mosaic" id="stats4"></section>
 
-    <!-- Gráfico + top matérias -->
-    <div class="two-col" style="margin-bottom:1.25rem;">
-      <div class="card">
-        <p class="card-title">Evolução — últimos 7 dias (horas)</p>
+      <section class="lounge-grid">
+        <div class="lounge-card">
+          <div class="section-row">
+            <div>
+              <p class="section-title">Matérias Main</p>
+              <p class="section-copy">As matérias que mais definem seu perfil hoje.</p>
+            </div>
+            <div class="sort-pills">
+              <button class="sort-pill ativo" data-sort="tempo" onclick="sortHeroes(this,'tempo')">Mais estudada</button>
+              <button class="sort-pill" data-sort="perf" onclick="sortHeroes(this,'perf')">Melhor perf.</button>
+              <button class="sort-pill" data-sort="nome" onclick="sortHeroes(this,'nome')">A-Z</button>
+            </div>
+          </div>
+          <div class="heroes-grid" id="heroes-grid"></div>
+        </div>
+      </section>
+
+      <section class="ambient-grid">
+        <div class="ambient-card spotlight-card" id="spotlight-card"></div>
+
+        <div class="ambient-card">
+          <div class="section-row">
+            <div>
+              <p class="section-title">Coleção Equipada</p>
+              <p class="section-copy">O que define a identidade do perfil agora.</p>
+            </div>
+          </div>
+          <div class="collection-list" id="collection-list"></div>
+        </div>
+      </section>
+
+      <section class="ambient-card">
+        <div class="section-row">
+          <div>
+            <p class="section-title">Evolução Recente</p>
+            <p class="section-copy">Suas horas dos últimos 7 dias.</p>
+          </div>
+        </div>
         <div class="chart-container">
           <canvas id="evolChart" role="img" aria-label="Gráfico de horas estudadas por dia nos últimos 7 dias">Horas estudadas nos últimos 7 dias.</canvas>
         </div>
-      </div>
-      <div class="card">
-        <p class="card-title">Top matérias</p>
-        <div id="top-materias"></div>
-        <div class="divider" style="margin:1rem 0 .75rem;"></div>
-        <p class="card-title">Média por sessão</p>
-        <div class="media-sessao-val" id="media-sessao">—</div>
-        <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px;" id="media-sessao-sub"></p>
-      </div>
+      </section>
     </div>
-
-    <!-- Conquistas -->
-    <div class="section-header">
-      <p class="section-title">Conquistas</p>
-      <span style="font-size:11px;color:var(--text3);font-family:var(--mono);" id="conquistas-count"></span>
-    </div>
-    <div class="conquistas-grid" id="conquistas-grid" style="margin-top:.75rem;"></div>
-
-    <!-- Insights -->
-    <div class="section-header" style="margin-top:.25rem;">
-      <p class="section-title">Insights</p>
-    </div>
-    <div class="insights-list" id="insights-list" style="margin-top:.75rem;"></div>
-
   </main>
 </div>
 
 <script src="data/topicos.js"></script>
 <script src="js/app.js"></script>
+<script src="js/perfil.js"></script>
 <script>
-// ─────────────────────────────────────────────
-// XP e Nível
-// ─────────────────────────────────────────────
-function calcXP() {
-  let xp = 0
-  for (const k of Object.keys(ENEM)) {
-    xp += getTopicosFeitos(k).length * 10
-    xp += Math.floor(getTempoMateria(k) / 60)
-  }
-  xp += getStreak().count * 5
-  return xp
-}
-
-function xpParaNivel(n) { return n * 250 }
-
-function getNivel(xp) {
-  let n = 1
-  while (xp >= xpParaNivel(n)) { xp -= xpParaNivel(n); n++ }
-  return { nivel: n, xpAtual: xp, xpTotal: xpParaNivel(n) }
-}
-
-// ─────────────────────────────────────────────
-// Rank ENEM
-// ─────────────────────────────────────────────
-const RANKS = [
-  { nome: 'Calouro',   min: 0,  cor: '#888',    icon: 'circle',         bgCor: 'rgba(136,136,136,.12)', borderCor: 'rgba(136,136,136,.3)' },
-  { nome: 'Bronze',    min: 15, cor: '#cd7f32',  icon: 'shield',         bgCor: 'rgba(205,127,50,.12)',  borderCor: 'rgba(205,127,50,.3)' },
-  { nome: 'Prata',     min: 30, cor: '#9CA3AF',  icon: 'shield-check',   bgCor: 'rgba(156,163,175,.12)', borderCor: 'rgba(156,163,175,.3)' },
-  { nome: 'Ouro',      min: 50, cor: '#F59E0B',  icon: 'award',          bgCor: 'rgba(245,158,11,.12)',  borderCor: 'rgba(245,158,11,.3)' },
-  { nome: 'Diamante',  min: 70, cor: '#60A5FA',  icon: 'gem',            bgCor: 'rgba(96,165,250,.12)',  borderCor: 'rgba(96,165,250,.3)' },
-  { nome: 'Mestre',    min: 85, cor: '#C8F135',  icon: 'crown',          bgCor: 'rgba(200,241,53,.12)',  borderCor: 'rgba(200,241,53,.3)' },
-]
-
-function getRank(pct) {
-  let rank = RANKS[0]
-  for (const r of RANKS) { if (pct >= r.min) rank = r }
-  return rank
-}
-
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
-function barColor(pct) {
-  return pct < 30 ? 'var(--red)' : pct < 60 ? 'var(--amber)' : 'var(--accent)'
-}
-
-function matNivel(seg) {
-  return Math.max(1, Math.floor(seg / 1800) + 1)
-}
-
-// ─────────────────────────────────────────────
-// Render Hero Banner
-// ─────────────────────────────────────────────
-function renderHero() {
-  const xp          = calcXP()
-  const { nivel, xpAtual, xpTotal } = getNivel(xp)
-  const { feitos, total } = getProgressoGlobal()
-  const pctGeral    = total > 0 ? Math.round((feitos / total) * 100) : 0
-  const rank        = getRank(pctGeral)
-  const streak      = getStreak()
-  const xpPct       = Math.min(100, Math.round((xpAtual / xpTotal) * 100))
-
-  document.getElementById('perfil-hero').innerHTML = `
-    <div class="perfil-avatar">
-      <i data-lucide="graduation-cap"></i>
-    </div>
-    <div class="perfil-meta">
-      <div class="perfil-nome">Estudante</div>
-      <div class="perfil-sub">Nível ${nivel} · ${xp.toLocaleString('pt-BR')} XP acumulados</div>
-      <div class="xp-row">
-        <div class="xp-bar-outer">
-          <div class="xp-bar-inner" style="width:${xpPct}%"></div>
-        </div>
-        <span class="xp-label">${xpAtual} / ${xpTotal} XP → Nível ${nivel + 1}</span>
-      </div>
-    </div>
-    <div class="rank-col">
-      <div class="rank-orb" style="background:${rank.bgCor};border:1.5px solid ${rank.borderCor};">
-        <i data-lucide="${rank.icon}" style="color:${rank.cor};"></i>
-      </div>
-      <span class="rank-name" style="color:${rank.cor};">${rank.nome}</span>
-    </div>
-  `
-}
-
-// ─────────────────────────────────────────────
-// Render Stats 4 cards
-// ─────────────────────────────────────────────
-function renderStats() {
-  const tempoTotal  = getTempoTotal()
-  const streak      = getStreak()
-  const streakMax   = store.get('streak_max') || streak.count
-  if (streak.count >= streakMax) store.set('streak_max', streak.count)
-  const { feitos, total } = getProgressoGlobal()
-  const pct = total > 0 ? Math.round((feitos / total) * 100) : 0
-
-  document.getElementById('stats4').innerHTML = `
-    <div class="stat-card">
-      <p class="stat-label">Tempo total</p>
-      <p class="stat-value accent" style="font-size:20px;padding-top:2px;">${formatTempo(tempoTotal)}</p>
-      <p class="stat-sub">estudando</p>
-    </div>
-    <div class="stat-card">
-      <p class="stat-label">Progresso geral</p>
-      <p class="stat-value">${pct}<span style="font-size:14px;font-weight:400;color:var(--text3)">%</span></p>
-      <p class="stat-sub">${feitos} de ${total} tópicos</p>
-    </div>
-    <div class="stat-card">
-      <p class="stat-label">Streak atual</p>
-      <p class="stat-value amber">${streak.count}</p>
-      <p class="stat-sub">dia${streak.count !== 1 ? 's' : ''} seguido${streak.count !== 1 ? 's' : ''}</p>
-    </div>
-    <div class="stat-card">
-      <p class="stat-label">Streak máximo</p>
-      <p class="stat-value blue">${store.get('streak_max') || streak.count}</p>
-      <p class="stat-sub">recorde pessoal</p>
-    </div>
-  `
-}
-
-// ─────────────────────────────────────────────
-// Render Heróis (matérias)
-// ─────────────────────────────────────────────
-const tempoTotal = getTempoTotal()
-
-function buildHeroData() {
-  return Object.keys(ENEM).map(k => {
-    const mat   = ENEM[k]
-    const { feitos, total, pct } = getProgressoMateria(k)
-    const tempo = getTempoMateria(k)
-    return { key: k, nome: mat.nome, icone: mat.icone, feitos, total, pct, tempo }
-  })
-}
-
-function renderHeroes(mode) {
-  let data = buildHeroData()
-  if (mode === 'tempo') data.sort((a,b) => b.tempo - a.tempo)
-  else if (mode === 'perf') data.sort((a,b) => b.pct - a.pct)
-  else data.sort((a,b) => a.nome.localeCompare(b.nome))
-
-  const totalT = tempoTotal || 1
-
-  document.getElementById('heroes-grid').innerHTML = data.map(m => {
-    const pickRate = Math.round((m.tempo / totalT) * 100)
-    const nvl      = matNivel(m.tempo)
-    return `
-      <div class="hero-card">
-        <div class="hero-card-top">
-          <div class="hero-icon"><i data-lucide="${m.icone}"></i></div>
-          <div>
-            <div class="hero-nome">${m.nome}</div>
-            <div class="hero-lvl">Nível ${nvl}</div>
-          </div>
-        </div>
-        <div class="hero-prog-row">
-          <div class="hero-prog-bar">
-            <div class="hero-prog-fill" style="width:${m.pct}%;background:${barColor(m.pct)};"></div>
-          </div>
-          <span class="hero-prog-pct">${m.pct}%</span>
-        </div>
-        <div class="hero-stats-row">
-          <div class="hero-stat"><span>${formatTempo(m.tempo)}</span>tempo total</div>
-          <div class="hero-stat"><span>${m.feitos}/${m.total}</span>tópicos</div>
-        </div>
-        <div class="pickrate-section">
-          <div class="pickrate-bar">
-            <div class="pickrate-fill" style="width:${pickRate}%;"></div>
-          </div>
-          <div class="pickrate-lbl">${pickRate}% do seu tempo total</div>
-        </div>
-      </div>
-    `
-  }).join('')
-  lucide.createIcons()
-}
-
-function sortHeroes(btn, mode) {
-  document.querySelectorAll('.sort-pill').forEach(b => b.classList.remove('ativo'))
-  btn.classList.add('ativo')
-  renderHeroes(mode)
-}
-
-// ─────────────────────────────────────────────
-// Gráfico evolução semanal
-// ─────────────────────────────────────────────
-function renderGrafico() {
-  const labels = []
-  const valores = []
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 86400000)
-    const key = d.toISOString().slice(0, 10)
-    labels.push(d.toLocaleDateString('pt-BR', { weekday: 'short' }))
-    const reg = store.get('registro_' + key)
-    valores.push(reg ? Math.round((reg.tempoMin || 0) / 60 * 10) / 10 : 0)
-  }
-
-  new Chart(document.getElementById('evolChart'), {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Horas',
-        data: valores,
-        borderColor: '#C8F135',
-        backgroundColor: 'rgba(200,241,53,.07)',
-        borderWidth: 1.5,
-        pointBackgroundColor: '#C8F135',
-        pointRadius: 3,
-        fill: true,
-        tension: 0.35
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: {
-          ticks: { font: { size: 11, family: "'DM Mono', monospace" }, color: '#555', autoSkip: false },
-          grid: { display: false }
-        },
-        y: {
-          ticks: { font: { size: 11, family: "'DM Mono', monospace" }, color: '#555', callback: v => v + 'h' },
-          grid: { color: 'rgba(80,80,80,.15)' },
-          min: 0
-        }
-      }
-    }
-  })
-}
-
-// ─────────────────────────────────────────────
-// Top matérias + média sessão
-// ─────────────────────────────────────────────
-function renderTopMaterias() {
-  const data = buildHeroData().sort((a,b) => b.tempo - a.tempo).slice(0,5)
-  const totalT = tempoTotal || 1
-
-  document.getElementById('top-materias').innerHTML = data.map((m, i) => `
-    <div class="top-item">
-      <span class="top-rank">${i + 1}</span>
-      <span class="top-nome">
-        <i data-lucide="${m.icone}" style="width:13px;height:13px;display:inline-block;margin-right:5px;vertical-align:middle;color:var(--text3);"></i>${m.nome}
-      </span>
-      <span class="top-val">${formatTempo(m.tempo)} · ${Math.round((m.tempo / totalT) * 100)}%</span>
-    </div>
-  `).join('')
-
-  // Média por sessão: soma todos registros diários
-  let totalDias = 0, totalSegSessoes = 0
-  for (let i = 0; i < 30; i++) {
-    const d   = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10)
-    const reg = store.get('registro_' + d)
-    if (reg && reg.tempoMin > 0) {
-      totalDias++
-      totalSegSessoes += reg.tempoMin * 60
-    }
-  }
-  const mediaSeg = totalDias > 0 ? Math.round(totalSegSessoes / totalDias) : 0
-  document.getElementById('media-sessao').textContent = mediaSeg > 0 ? formatTempo(mediaSeg) : '—'
-  document.getElementById('media-sessao-sub').textContent = totalDias > 0
-    ? `média dos últimos ${totalDias} dia${totalDias !== 1 ? 's' : ''} com estudo`
-    : 'nenhuma sessão registrada ainda'
-}
-
-// ─────────────────────────────────────────────
-// Conquistas
-// ─────────────────────────────────────────────
-function buildConquistas() {
-  const { feitos, total } = getProgressoGlobal()
-  const pct               = total > 0 ? Math.round((feitos / total) * 100) : 0
-  const streak            = getStreak()
-  const streakMax         = store.get('streak_max') || streak.count
-  const tempoTotalSeg     = getTempoTotal()
-  const tempoTotalMin     = Math.floor(tempoTotalSeg / 60)
-
-  // Por matéria
-  const matPcts  = Object.keys(ENEM).map(k => getProgressoMateria(k).pct)
-  const maxPct   = Math.max(...matPcts, 0)
-  const redacaoPct = getProgressoMateria('redacao')?.pct || 0
-  const matFeitosMap = Object.fromEntries(Object.keys(ENEM).map(k => [k, getTopicosFeitos(k).length]))
-
-  return [
-    {
-      icon: '🔥', nome: 'Semana em chamas',
-      desc: 'Streak de 7 dias',
-      earned: streakMax >= 7
-    },
-    {
-      icon: '⚡', nome: 'Primeiros passos',
-      desc: '1 tópico concluído',
-      earned: feitos >= 1
-    },
-    {
-      icon: '📐', nome: 'Exatas na veia',
-      desc: '50% em Matemática',
-      earned: (getProgressoMateria('matematica')?.pct || 0) >= 50
-    },
-    {
-      icon: '✍️', nome: 'Redator nato',
-      desc: 'Redação 100% concluída',
-      earned: redacaoPct >= 100
-    },
-    {
-      icon: '⏱️', nome: 'Maratonista',
-      desc: '600 min estudando',
-      earned: tempoTotalMin >= 600
-    },
-    {
-      icon: '💯', nome: 'Centenário',
-      desc: '100 tópicos feitos',
-      earned: feitos >= 100
-    },
-    {
-      icon: '🌍', nome: 'Geógrafo',
-      desc: '50% em Geografia',
-      earned: (getProgressoMateria('geografia')?.pct || 0) >= 50
-    },
-    {
-      icon: '🔬', nome: 'Cientista',
-      desc: '50% em Ciências',
-      earned: (getProgressoMateria('ciencias')?.pct || 0) >= 50
-    },
-    {
-      icon: '🌟', nome: 'Quase lá',
-      desc: '80% do conteúdo geral',
-      earned: pct >= 80
-    },
-    {
-      icon: '🏆', nome: 'Campeão ENEM',
-      desc: '100% do conteúdo',
-      earned: pct >= 100
-    },
-    {
-      icon: '🔁', nome: 'Consistente',
-      desc: 'Streak de 30 dias',
-      earned: streakMax >= 30
-    },
-    {
-      icon: '🧠', nome: 'Polímata',
-      desc: '30%+ em todas matérias',
-      earned: matPcts.length > 0 && matPcts.every(p => p >= 30)
-    },
-  ]
-}
-
-function renderConquistas() {
-  const lista = buildConquistas()
-  const earned = lista.filter(c => c.earned).length
-  document.getElementById('conquistas-count').textContent = `${earned} / ${lista.length} desbloqueadas`
-  const sorted = [...lista].sort((a,b) => b.earned - a.earned)
-  document.getElementById('conquistas-grid').innerHTML = sorted.map(c => `
-    <div class="conquista ${c.earned ? 'earned' : 'locked'}">
-      <div class="conquista-icon">${c.icon}</div>
-      <div class="conquista-nome">${c.nome}</div>
-      <div class="conquista-desc">${c.desc}</div>
-      <span class="conquista-badge">${c.earned ? '✓ desbloqueado' : 'bloqueado'}</span>
-    </div>
-  `).join('')
-}
-
-// ─────────────────────────────────────────────
-// Insights automáticos
-// ─────────────────────────────────────────────
-function renderInsights() {
-  const data    = buildHeroData()
-  const sorted  = [...data].sort((a,b) => b.tempo - a.tempo)
-  const insights = []
-
-  // Matéria mais forte
-  const maisFortePct = [...data].sort((a,b) => b.pct - a.pct)
-  if (maisFortePct[0] && maisFortePct[0].pct > 0) {
-    insights.push({ cor: '#C8F135', txt: `Sua matéria mais forte é <strong>${maisFortePct[0].nome}</strong> (${maisFortePct[0].pct}% concluído). Continue assim!` })
-  }
-
-  // Desequilíbrio: mais estudada vs menos estudada
-  if (sorted.length >= 2 && sorted[0].tempo > 0 && sorted[sorted.length-1].tempo < sorted[0].tempo / 3) {
-    const razao = Math.round(sorted[0].tempo / Math.max(sorted[sorted.length-1].tempo, 1))
-    insights.push({ cor: '#F59E0B', txt: `Você estuda <strong>${razao}×</strong> mais ${sorted[0].nome} que ${sorted[sorted.length-1].nome} — talvez seja hora de equilibrar.` })
-  }
-
-  // Matéria mais fraca
-  const maisFraca = [...data].filter(m => m.feitos > 0).sort((a,b) => a.pct - b.pct)
-  if (maisFraca[0]) {
-    insights.push({ cor: '#FF5E5E', txt: `Seu ponto mais fraco é <strong>${maisFraca[0].nome}</strong> (${maisFraca[0].pct}%). Que tal dedicar 30 minutos hoje?` })
-  }
-
-  // Streak
-  const streak = getStreak()
-  if (streak.count >= 3) {
-    insights.push({ cor: '#60A5FA', txt: `Você está em uma sequência de <strong>${streak.count} dias</strong>! Não quebre agora.` })
-  } else if (streak.count === 0) {
-    insights.push({ cor: '#888', txt: `Você ainda não começou ou quebrou sua sequência. Estude qualquer tópico hoje para reiniciar o streak.` })
-  }
-
-  // Progresso geral
-  const { feitos, total } = getProgressoGlobal()
-  const pct = total > 0 ? Math.round((feitos / total) * 100) : 0
-  if (pct > 0 && pct < 100) {
-    const faltam = total - feitos
-    insights.push({ cor: '#9BBF1A', txt: `Faltam <strong>${faltam} tópicos</strong> para você completar todo o conteúdo ENEM (${pct}% feito).` })
-  }
-
-  if (insights.length === 0) {
-    insights.push({ cor: '#555', txt: 'Comece a estudar tópicos para ver insights personalizados sobre o seu progresso.' })
-  }
-
-  document.getElementById('insights-list').innerHTML = insights.map(ins => `
-    <div class="insight">
-      <div class="insight-dot" style="background:${ins.cor};"></div>
-      <span>${ins.txt}</span>
-    </div>
-  `).join('')
-}
-
-// ─────────────────────────────────────────────
-// Init
-// ─────────────────────────────────────────────
 renderHero()
+renderShowcase()
 renderStats()
 renderHeroes('tempo')
+renderAmbient()
 renderGrafico()
-renderTopMaterias()
-renderConquistas()
-renderInsights()
+setNavActive()
+lucide.createIcons()
+</script>
+
+renderHero()
+renderShowcase()
+renderStats()
+renderHeroes('tempo')
+renderAmbient()
+renderGrafico()
 setNavActive()
 lucide.createIcons()
 </script>
