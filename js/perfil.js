@@ -53,6 +53,9 @@ const PERFIL_FRAMES = [
   { id: 'rose', nome: 'Rose Bloom', file: 'Assets/molduras/Rose.png' },
 ]
 
+const PERFIL_VIDEO_THUMBS = new Map()
+const PERFIL_VIDEO_THUMB_TASKS = new Map()
+
 function getRank(pct) {
   let rank = RANKS[0]
   for (const r of RANKS) if (pct >= r.min) rank = r
@@ -173,6 +176,79 @@ function updatePerfilNomePreview(nome) {
   const nomeFinal = nome || 'Estudante'
   if (nomeHero) nomeHero.textContent = nomeFinal
   if (nomeColecao) nomeColecao.textContent = nomeFinal
+}
+
+function applyVideoThumb(file, thumb) {
+  PERFIL_VIDEO_THUMBS.set(file, thumb)
+  document.querySelectorAll(`[data-video-thumb="${file}"]`).forEach(node => {
+    node.style.backgroundImage = `url("${thumb}")`
+    node.classList.add('is-thumb-ready')
+  })
+}
+
+function generateVideoThumb(file) {
+  if (!file) return Promise.resolve('')
+  if (PERFIL_VIDEO_THUMBS.has(file)) return Promise.resolve(PERFIL_VIDEO_THUMBS.get(file))
+  if (PERFIL_VIDEO_THUMB_TASKS.has(file)) return PERFIL_VIDEO_THUMB_TASKS.get(file)
+
+  const task = new Promise((resolve) => {
+    const video = document.createElement('video')
+    video.src = file
+    video.muted = true
+    video.preload = 'metadata'
+    video.playsInline = true
+    video.crossOrigin = 'anonymous'
+
+    const fail = () => {
+      PERFIL_VIDEO_THUMB_TASKS.delete(file)
+      resolve('')
+    }
+
+    video.addEventListener('error', fail, { once: true })
+    video.addEventListener('loadeddata', () => {
+      const capture = () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = 320
+          canvas.height = 180
+          const ctx = canvas.getContext('2d')
+          if (!ctx) return fail()
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          const thumb = canvas.toDataURL('image/jpeg', 0.72)
+          PERFIL_VIDEO_THUMB_TASKS.delete(file)
+          applyVideoThumb(file, thumb)
+          resolve(thumb)
+        } catch {
+          fail()
+        }
+      }
+
+      try {
+        video.currentTime = Math.min(0.15, Math.max(0, (video.duration || 1) / 10))
+      } catch {
+        capture()
+      }
+
+      video.addEventListener('seeked', capture, { once: true })
+    }, { once: true })
+  })
+
+  PERFIL_VIDEO_THUMB_TASKS.set(file, task)
+  return task
+}
+
+function hydrateVideoThumbs() {
+  document.querySelectorAll('[data-video-thumb]').forEach(node => {
+    const file = node.dataset.videoThumb
+    if (!file) return
+    const cached = PERFIL_VIDEO_THUMBS.get(file)
+    if (cached) {
+      node.style.backgroundImage = `url("${cached}")`
+      node.classList.add('is-thumb-ready')
+      return
+    }
+    generateVideoThumb(file)
+  })
 }
 
 function applyPerfilWallpaper() {
@@ -364,18 +440,9 @@ function renderCustomizer() {
   const nome = getPerfilNome()
 
   const renderVideoTile = (item, isActive, label) => {
-    const thumb = `
-      <span class="asset-video-placeholder">
-        <i data-lucide="play"></i>
-        <em>${label}</em>
-      </span>
-    `
-
     return `
       <button class="asset-tile ${isActive ? 'is-active' : ''}" type="button" data-${label === 'bloco' ? 'hero-video' : 'wallpaper'}="${item.id}">
-        <span class="asset-thumb is-video">
-          ${thumb}
-        </span>
+        <span class="asset-thumb is-video" data-video-thumb="${item.file}"></span>
         <span class="asset-meta">
           <strong>${item.nome}</strong>
           <small>${label}</small>
@@ -500,6 +567,7 @@ function renderCustomizer() {
   `
 
   bindPerfilCustomizer()
+  hydrateVideoThumbs()
 }
 
 function renderHero() {
