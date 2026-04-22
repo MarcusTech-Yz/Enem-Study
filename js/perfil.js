@@ -1,4 +1,4 @@
-﻿function calcXP() {
+function calcXP() {
   let xp = 0
   for (const k of Object.keys(ENEM)) {
     xp += getTopicosFeitos(k).length * 10
@@ -23,6 +23,34 @@ const RANKS = [
   { nome: 'Ouro', min: 50, cor: '#F59E0B', icon: 'award', bgCor: 'rgba(245,158,11,.12)', borderCor: 'rgba(245,158,11,.3)' },
   { nome: 'Diamante', min: 70, cor: '#60A5FA', icon: 'gem', bgCor: 'rgba(96,165,250,.12)', borderCor: 'rgba(96,165,250,.3)' },
   { nome: 'Mestre', min: 85, cor: '#C8F135', icon: 'crown', bgCor: 'rgba(200,241,53,.12)', borderCor: 'rgba(200,241,53,.3)' },
+]
+
+const PERFIL_WALLPAPERS = [
+  { id: 'blue-sky', nome: 'Blue Sky', file: 'Assets/background/BlueSky.mp4', tipo: 'video' },
+  { id: 'black', nome: 'Black Flow', file: 'Assets/background/black.mp4', tipo: 'video' },
+  { id: 'ferrari', nome: 'Ferrari', file: 'Assets/background/Ferrari.mp4', tipo: 'video' },
+  { id: 'resident', nome: 'Resident', file: 'Assets/background/Resident.mp4', tipo: 'video' },
+  { id: 'lofi-room', nome: 'Lofi Room', file: 'Assets/back/lofi.mp4', tipo: 'video' },
+  { id: 'girl-cat', nome: 'Girl Cat', file: 'Assets/back/girl-cat.mp4', tipo: 'video' },
+]
+
+const PERFIL_HERO_VIDEOS = [
+  { id: 'none', nome: 'Sem video', file: '' },
+  { id: 'lofi-room', nome: 'Lofi Room', file: 'Assets/back/lofi.mp4' },
+  { id: 'girl-cat', nome: 'Girl Cat', file: 'Assets/back/girl-cat.mp4' },
+]
+
+const PERFIL_FRAMES = [
+  { id: 'white', nome: 'White Sketch', file: 'Assets/molduras/White.png' },
+  { id: 'vision', nome: 'Vision', file: 'Assets/molduras/Vision.png' },
+  { id: 'cat', nome: 'Cat Mood', file: 'Assets/molduras/Cat.png' },
+  { id: 'dark', nome: 'Dark Edge', file: 'Assets/molduras/Dark.png' },
+  { id: 'dragon', nome: 'Dragon', file: 'Assets/molduras/Dragon.png' },
+  { id: 'glitch', nome: 'Glitch', file: 'Assets/molduras/Glitch.png' },
+  { id: 'party', nome: 'Party', file: 'Assets/molduras/Party.png' },
+  { id: 'rainbow', nome: 'Rainbow', file: 'Assets/molduras/Rainbow.png' },
+  { id: 'red', nome: 'Red Pulse', file: 'Assets/molduras/Red.png' },
+  { id: 'rose', nome: 'Rose Bloom', file: 'Assets/molduras/Rose.png' },
 ]
 
 function getRank(pct) {
@@ -60,6 +88,420 @@ function getSceneLabel(rankNome) {
   return labels[rankNome] || 'Base do estudante'
 }
 
+function getPerfilFoto() {
+  return store.get('perfil_foto') || ''
+}
+
+function savePerfilFoto(dataUrl) {
+  store.set('perfil_foto', dataUrl)
+}
+
+function getPerfilNome() {
+  const nome = store.get('perfil_nome')
+  return typeof nome === 'string' ? nome : 'Estudante'
+}
+
+function savePerfilNome(nome) {
+  store.set('perfil_nome', nome)
+}
+
+function sanitizePerfilNome(value) {
+  const semQuebra = String(value).replace(/[\r\n\t]/g, ' ')
+  const limitado = Array.from(semQuebra).slice(0, 32).join('')
+  return limitado.trim()
+}
+
+function getPerfilWallpaper() {
+  return store.get('perfil_wallpaper') || PERFIL_WALLPAPERS[0].id
+}
+
+function savePerfilWallpaper(id) {
+  store.set('perfil_wallpaper', id)
+}
+
+function getPerfilFrame() {
+  return store.get('perfil_frame') || PERFIL_FRAMES[0].id
+}
+
+function savePerfilFrame(id) {
+  store.set('perfil_frame', id)
+}
+
+function getWallpaperDef(id = getPerfilWallpaper()) {
+  return PERFIL_WALLPAPERS.find(item => item.id === id) || PERFIL_WALLPAPERS[0]
+}
+
+function getFrameDef(id = getPerfilFrame()) {
+  return PERFIL_FRAMES.find(item => item.id === id) || PERFIL_FRAMES[0]
+}
+
+function getWallpaperLabel() {
+  return getWallpaperDef().nome
+}
+
+function getPerfilHeroVideo() {
+  return store.get('perfil_hero_video') || PERFIL_HERO_VIDEOS[0].id
+}
+
+function savePerfilHeroVideo(id) {
+  store.set('perfil_hero_video', id)
+}
+
+function getHeroVideoDef(id = getPerfilHeroVideo()) {
+  return PERFIL_HERO_VIDEOS.find(item => item.id === id) || PERFIL_HERO_VIDEOS[0]
+}
+
+function getHeroVideoLabel() {
+  return getHeroVideoDef().nome
+}
+
+function isLofiHeroStyle(id = getPerfilHeroVideo()) {
+  return !!getHeroVideoDef(id).file
+}
+
+function escapeAttr(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function updatePerfilNomePreview(nome) {
+  const nomeHero = document.getElementById('perfil-nome-btn')
+  const nomeColecao = document.getElementById('perfil-collection-name')
+  const nomeFinal = nome || 'Estudante'
+  if (nomeHero) nomeHero.textContent = nomeFinal
+  if (nomeColecao) nomeColecao.textContent = nomeFinal
+}
+
+function applyPerfilWallpaper() {
+  const wallpaper = getWallpaperDef()
+  const video = document.getElementById('perfil-wallpaper-video')
+  const source = document.getElementById('perfil-wallpaper-source')
+  if (!video || !source) return
+
+  if (wallpaper.tipo === 'video') {
+    video.style.display = ''
+    source.src = wallpaper.file
+    source.type = 'video/mp4'
+    video.load()
+    video.play().catch(() => {})
+    document.body.style.setProperty('--perfil-wallpaper-fallback', 'none')
+  } else {
+    video.pause()
+    video.style.display = 'none'
+    source.removeAttribute('src')
+    video.load()
+    document.body.style.setProperty('--perfil-wallpaper-fallback', `url("${wallpaper.file}")`)
+  }
+}
+
+function getAvatarMarkup(isInteractive = true) {
+  const foto = getPerfilFoto()
+  const moldura = getFrameDef()
+  const conteudoAvatar = foto
+    ? `<img class="perfil-avatar-photo" src="${foto}" alt="Foto de perfil do estudante" />`
+    : `<div class="perfil-avatar-placeholder"><i data-lucide="graduation-cap"></i></div>`
+
+  if (!isInteractive) {
+    return `
+      <div class="perfil-avatar perfil-avatar-static" aria-hidden="true">
+        <span class="perfil-avatar-media">
+          ${conteudoAvatar}
+        </span>
+        <img class="perfil-avatar-frame" src="${moldura.file}" alt="" aria-hidden="true" />
+      </div>
+    `
+  }
+
+  return `
+    <button class="perfil-avatar" id="perfil-avatar-btn" type="button" aria-label="Escolher foto de perfil">
+      <span class="perfil-avatar-media">
+        ${conteudoAvatar}
+      </span>
+      <img class="perfil-avatar-frame" src="${moldura.file}" alt="" aria-hidden="true" />
+      <span class="avatar-edit-badge">
+        <i data-lucide="image-plus"></i>
+      </span>
+      <input class="perfil-avatar-input" id="perfil-avatar-input" type="file" accept="image/*" />
+    </button>
+  `
+}
+
+function bindPerfilAvatar() {
+  const avatarBtn = document.getElementById('perfil-avatar-btn')
+  const avatarInput = document.getElementById('perfil-avatar-input')
+  const ctaBtn = document.getElementById('perfil-open-photo-btn')
+  if (!avatarBtn || !avatarInput) return
+
+  const openPicker = () => avatarInput.click()
+
+  avatarBtn.addEventListener('click', openPicker)
+  if (ctaBtn) ctaBtn.addEventListener('click', openPicker)
+
+  avatarInput.addEventListener('change', (event) => {
+    const [file] = event.target.files || []
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      savePerfilFoto(reader.result)
+      renderHero()
+      renderCustomizer()
+      lucide.createIcons()
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function bindPerfilNome() {
+  const nomeBtn = document.getElementById('perfil-nome-btn')
+  const openBtn = document.getElementById('perfil-open-editor-btn')
+
+  if (nomeBtn) nomeBtn.addEventListener('click', () => {
+    toggleCustomizer(true)
+    const nomeInput = document.getElementById('perfil-nome-input')
+    if (nomeInput) nomeInput.focus()
+  })
+
+  if (openBtn) openBtn.addEventListener('click', () => toggleCustomizer())
+}
+
+function toggleCustomizer(force) {
+  const panel = document.getElementById('perfil-customizer')
+  if (!panel) return
+  const shouldOpen = typeof force === 'boolean' ? force : !panel.classList.contains('is-open')
+  panel.classList.toggle('is-open', shouldOpen)
+}
+
+function bindPerfilCustomizer() {
+  const closeBtn = document.getElementById('perfil-customizer-close')
+  const nomeInput = document.getElementById('perfil-nome-input')
+  const fotoInput = document.getElementById('perfil-customizer-photo-input')
+  const fotoBtn = document.getElementById('perfil-customizer-photo-btn')
+  const fotoResetBtn = document.getElementById('perfil-customizer-photo-reset')
+
+  if (closeBtn) closeBtn.addEventListener('click', () => toggleCustomizer(false))
+
+  if (nomeInput) {
+    nomeInput.addEventListener('input', (event) => {
+      const nome = sanitizePerfilNome(event.target.value)
+      event.target.value = nome
+      savePerfilNome(nome)
+      updatePerfilNomePreview(nome)
+    })
+  }
+
+  if (fotoBtn && fotoInput) {
+    fotoBtn.addEventListener('click', () => fotoInput.click())
+    fotoInput.addEventListener('change', (event) => {
+      const [file] = event.target.files || []
+      if (!file) return
+
+      const reader = new FileReader()
+      reader.onload = () => {
+        savePerfilFoto(reader.result)
+        renderHero()
+        renderCustomizer()
+        renderAmbient()
+        lucide.createIcons()
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+  if (fotoResetBtn) {
+    fotoResetBtn.addEventListener('click', () => {
+      savePerfilFoto('')
+      renderHero()
+      renderCustomizer()
+      renderAmbient()
+      lucide.createIcons()
+    })
+  }
+
+  document.querySelectorAll('[data-wallpaper]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      savePerfilWallpaper(btn.dataset.wallpaper)
+      applyPerfilWallpaper()
+      renderHero()
+      renderCustomizer()
+      renderAmbient()
+      lucide.createIcons()
+    })
+  })
+
+  document.querySelectorAll('[data-hero-video]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      savePerfilHeroVideo(btn.dataset.heroVideo)
+      renderHero()
+      renderCustomizer()
+      renderAmbient()
+      lucide.createIcons()
+    })
+  })
+
+  document.querySelectorAll('[data-frame]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      savePerfilFrame(btn.dataset.frame)
+      renderHero()
+      renderCustomizer()
+      renderAmbient()
+      lucide.createIcons()
+    })
+  })
+}
+
+function renderCustomizer() {
+  const root = document.getElementById('perfil-customizer')
+  if (!root) return
+
+  const wallpaperAtivo = getPerfilWallpaper()
+  const heroVideoAtivo = getPerfilHeroVideo()
+  const frameAtiva = getPerfilFrame()
+  const foto = getPerfilFoto()
+  const nome = getPerfilNome()
+
+  const renderVideoTile = (item, isActive, label) => {
+    const thumb = `
+      <span class="asset-video-placeholder">
+        <i data-lucide="play"></i>
+        <em>${label}</em>
+      </span>
+    `
+
+    return `
+      <button class="asset-tile ${isActive ? 'is-active' : ''}" type="button" data-${label === 'bloco' ? 'hero-video' : 'wallpaper'}="${item.id}">
+        <span class="asset-thumb is-video">
+          ${thumb}
+        </span>
+        <span class="asset-meta">
+          <strong>${item.nome}</strong>
+          <small>${label}</small>
+        </span>
+      </button>
+    `
+  }
+
+  root.innerHTML = `
+    <div class="customizer-shell">
+      <div class="customizer-head">
+        <div>
+          <p class="showcase-kicker">Editar perfil</p>
+          <h2 class="customizer-title">Organizar o quarto do estudante</h2>
+          <p class="customizer-copy">Nome, foto, moldura e wallpaper num fluxo só.</p>
+        </div>
+        <button class="customizer-close" id="perfil-customizer-close" type="button" aria-label="Fechar editor">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="customizer-grid">
+        <section class="customizer-block">
+          <p class="mini-kicker">Identidade</p>
+          <div class="customizer-identity">
+            <div class="customizer-avatar-preview">
+              ${getAvatarMarkup(false)}
+            </div>
+            <div class="customizer-fields">
+              <label class="customizer-label" for="perfil-nome-input">Nome do perfil</label>
+              <input class="customizer-input" id="perfil-nome-input" type="text" maxlength="32" value="${escapeAttr(nome)}" placeholder="Seu nome aqui" />
+              <div class="customizer-actions">
+                <button class="btn btn-accent" type="button" id="perfil-customizer-photo-btn">
+                  <i data-lucide="image-plus"></i> Escolher foto
+                </button>
+                <button class="btn btn-ghost" type="button" id="perfil-customizer-photo-reset">
+                  <i data-lucide="rotate-ccw"></i> Remover foto
+                </button>
+              </div>
+              <input class="perfil-avatar-input" id="perfil-customizer-photo-input" type="file" accept="image/*" />
+              <p class="customizer-note">${foto ? 'Foto salva no navegador e equipada no perfil.' : 'Ainda sem foto equipada.'}</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="customizer-block">
+          <div class="customizer-section-head">
+            <div>
+              <p class="mini-kicker">Wallpaper</p>
+              <p class="customizer-copy">Escolha o clima do quarto.</p>
+            </div>
+            <span class="customizer-current">${getWallpaperLabel()}</span>
+          </div>
+          <div class="asset-grid">
+            ${PERFIL_WALLPAPERS.map(item => {
+              const isActive = item.id === wallpaperAtivo
+              if (item.tipo === 'video') return renderVideoTile(item, isActive, 'wallpaper')
+              return `
+                <button class="asset-tile ${isActive ? 'is-active' : ''}" type="button" data-wallpaper="${item.id}">
+                  <span class="asset-thumb is-gif" style="background-image:url('${item.file}')"></span>
+                  <span class="asset-meta">
+                    <strong>${item.nome}</strong>
+                    <small>gif</small>
+                  </span>
+                </button>
+              `
+            }).join('')}
+          </div>
+        </section>
+
+        <section class="customizer-block">
+          <div class="customizer-section-head">
+            <div>
+              <p class="mini-kicker">Video do Bloco</p>
+              <p class="customizer-copy">Defina a cena que roda dentro do bloco do perfil.</p>
+            </div>
+            <span class="customizer-current">${getHeroVideoLabel()}</span>
+          </div>
+          <div class="asset-grid">
+            ${PERFIL_HERO_VIDEOS.map(item => {
+              const isActive = item.id === heroVideoAtivo
+              if (item.file) return renderVideoTile(item, isActive, 'bloco')
+              return `
+                <button class="asset-tile ${isActive ? 'is-active' : ''}" type="button" data-hero-video="${item.id}">
+                  <span class="asset-thumb is-empty" style="background:linear-gradient(135deg, rgba(18,24,31,.95), rgba(9,12,17,.95));display:flex;align-items:center;justify-content:center;">
+                    <strong class="asset-empty-label">Clean</strong>
+                  </span>
+                  <span class="asset-meta">
+                    <strong>${item.nome}</strong>
+                    <small>sem video</small>
+                  </span>
+                </button>
+              `
+            }).join('')}
+          </div>
+        </section>
+
+        <section class="customizer-block">
+          <div class="customizer-section-head">
+            <div>
+              <p class="mini-kicker">Moldura</p>
+              <p class="customizer-copy">Escolha a estética do avatar.</p>
+            </div>
+            <span class="customizer-current">${getFrameDef().nome}</span>
+          </div>
+          <div class="asset-grid frame-grid">
+            ${PERFIL_FRAMES.map(item => `
+              <button class="asset-tile frame-tile ${item.id === frameAtiva ? 'is-active' : ''}" type="button" data-frame="${item.id}">
+                <span class="frame-preview">
+                  <img src="${item.file}" alt="" aria-hidden="true" />
+                </span>
+                <span class="asset-meta">
+                  <strong>${item.nome}</strong>
+                  <small>moldura</small>
+                </span>
+              </button>
+            `).join('')}
+          </div>
+        </section>
+      </div>
+    </div>
+  `
+
+  bindPerfilCustomizer()
+}
+
 function renderHero() {
   const xp = calcXP()
   const { nivel, xpAtual, xpTotal } = getNivel(xp)
@@ -72,18 +514,21 @@ function renderHero() {
   const topTempo = buildHeroData().sort((a, b) => b.tempo - a.tempo)[0]
   const scene = getSceneLabel(rank.nome)
   const secretasRestantes = conquistas.filter(item => !item.unlocked && item.secreta).length
+  const perfilNome = getPerfilNome() || 'Estudante'
+  const wallpaperNome = getWallpaperLabel()
+  const heroVideo = getHeroVideoDef()
+  const isLofi = isLofiHeroStyle()
+  const heroMood = isLofi ? 'is-lofi' : 'is-hud'
+  const heroLofiVideo = heroVideo.file
 
-  const rain = Array.from({ length: 14 }).map((_, i) => {
-    const left = 6 + i * 6.5
-    const height = 18 + (i % 4) * 12
-    const delay = (i * .45).toFixed(2)
-    const duration = (6.2 + (i % 5) * .35).toFixed(2)
-    const opacity = .25 + (i % 4) * .15
-    return `<span style="left:${left}%;height:${height}px;animation-delay:-${delay}s;animation-duration:${duration}s;opacity:${opacity};"></span>`
-  }).join('')
-
+  document.getElementById('perfil-hero').className = `perfil-hero ${heroMood}`
   document.getElementById('perfil-hero').innerHTML = `
-    <div class="hero-rain">${rain}</div>
+    ${isLofi && heroLofiVideo ? `
+      <video class="hero-lofi-video" autoplay muted loop playsinline preload="auto">
+        <source src="${heroLofiVideo}" type="video/mp4" />
+      </video>
+      <div class="hero-lofi-overlay"></div>
+    ` : ''}
     <div class="hero-topbar">
       <span class="hero-scene-badge">Cena equipada: <strong>${scene}</strong></span>
       <span class="hero-track">Segredos restantes: <strong>${secretasRestantes}</strong></span>
@@ -91,14 +536,14 @@ function renderHero() {
 
     <div class="hero-content">
       <div class="hero-identity">
-        <div class="perfil-avatar">
-          <i data-lucide="graduation-cap"></i>
-        </div>
+        ${getAvatarMarkup()}
 
-        <div class="perfil-meta">
+        <div class="perfil-meta ${isLofi ? 'perfil-meta-card' : ''}">
           <span class="hero-kicker">Perfil em evolução</span>
           <div class="perfil-nome-row">
-            <div class="perfil-nome">Estudante</div>
+            <button class="perfil-nome perfil-nome-btn" id="perfil-nome-btn" type="button" title="Abrir editor do perfil">
+              ${escapeHtml(perfilNome)}
+            </button>
             <span class="perfil-titulo">${rank.nome === 'Mestre' ? 'Mente de elite' : 'Guerreiro ENEM'}</span>
           </div>
           <div class="perfil-sub">
@@ -107,7 +552,7 @@ function renderHero() {
             <span>streak ${streak.count} dia${streak.count !== 1 ? 's' : ''}</span>
             <span>main ${topTempo?.nome || 'em construção'}</span>
           </div>
-          <p class="perfil-frase"></p>
+          <p class="perfil-frase">Seu quarto digital vai ganhando personalidade conforme você equipa novas peças e mantém o ritmo.</p>
           <div class="hero-progress-row">
             <div class="xp-bar-outer">
               <div class="xp-bar-inner" style="width:${xpPct}%"></div>
@@ -130,13 +575,27 @@ function renderHero() {
         </div>
 
         <div class="cta-panel">
-          <button class="btn btn-accent">
-            <i data-lucide="sparkles"></i> Personalizar Perfil
+          <div class="cta-panel-copy">
+            <div class="cta-panel-label">Wallpaper atual</div>
+            <div class="cta-panel-value">${wallpaperNome}</div>
+          </div>
+          <div class="cta-panel-copy">
+            <div class="cta-panel-label">Cena do bloco</div>
+            <div class="cta-panel-value">${getHeroVideoLabel()}</div>
+          </div>
+          <button class="btn btn-accent" type="button" id="perfil-open-editor-btn">
+            <i data-lucide="sliders-horizontal"></i> Editar perfil
+          </button>
+          <button class="btn btn-ghost" type="button" id="perfil-open-photo-btn">
+            <i data-lucide="image-plus"></i> Trocar foto
           </button>
         </div>
       </div>
     </div>
   `
+
+  bindPerfilAvatar()
+  bindPerfilNome()
 }
 
 function renderShowcase() {
@@ -364,11 +823,28 @@ function renderAmbient() {
   if (collectionList) {
     collectionList.innerHTML = `
     <div class="collection-item">
+      <div class="collection-icon"><i data-lucide="user-round"></i></div>
+      <div class="collection-text">
+        <div class="collection-name">Nome equipado</div>
+        <div class="collection-desc" id="perfil-collection-name">${getPerfilNome() || 'Estudante'}</div>
+      </div>
+      <span class="collection-tag">ativo</span>
+    </div>
+    <div class="collection-item">
       <div class="collection-icon"><i data-lucide="image"></i></div>
       <div class="collection-text">
         <div class="collection-name">Wallpaper equipado</div>
+        <div class="collection-desc">${getWallpaperLabel()}</div>
       </div>
       <span class="collection-tag">ativo</span>
+    </div>
+    <div class="collection-item">
+      <div class="collection-icon"><i data-lucide="clapperboard"></i></div>
+      <div class="collection-text">
+        <div class="collection-name">Cena do bloco</div>
+        <div class="collection-desc">${getHeroVideoLabel()}</div>
+      </div>
+      <span class="collection-tag">ativa</span>
     </div>
     <div class="collection-item">
       <div class="collection-icon"><i data-lucide="music-4"></i></div>
@@ -381,6 +857,7 @@ function renderAmbient() {
       <div class="collection-icon"><i data-lucide="badge"></i></div>
       <div class="collection-text">
         <div class="collection-name">Título e moldura</div>
+        <div class="collection-desc">${getFrameDef().nome}</div>
       </div>
       <span class="collection-tag">nível ${nivel}</span>
     </div>
@@ -435,7 +912,9 @@ function renderGrafico() {
 }
 
 function initPerfilPage() {
+  applyPerfilWallpaper()
   renderHero()
+  renderCustomizer()
   renderShowcase()
   renderStats()
   renderHeroes('tempo')

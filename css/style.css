@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Symbols+2&display=swap');
 
 :root {
   --bg:       #0F0F0F;
@@ -19,6 +19,7 @@
   --radius:   12px;
   --radius-sm: 8px;
   --font: 'Sora', sans-serif;
+  --font-display: 'Sora', 'Noto Sans JP', 'Noto Sans Symbols 2', sans-serif;
   --mono: 'DM Mono', monospace;
 }
 
