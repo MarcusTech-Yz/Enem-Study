@@ -29,7 +29,8 @@ const PERFIL_WALLPAPERS = [
   { id: 'blue-sky', nome: 'Blue Sky', file: 'Assets/background/BlueSky.mp4', tipo: 'video' },
   { id: 'black', nome: 'Black Flow', file: 'Assets/background/black.mp4', tipo: 'video' },
   { id: 'ferrari', nome: 'Ferrari', file: 'Assets/background/Ferrari.mp4', tipo: 'video' },
-  { id: 'resident', nome: 'Resident', file: 'Assets/background/Resident.mp4', tipo: 'video' },
+  { id: 'resident', nome: 'Resident', file: 'Assets/background/resident.mp4', tipo: 'video' },
+  { id: 'star', nome: 'Star', file: 'Assets/background/Star.mp4', tipo: 'video' },
   { id: 'lofi-room', nome: 'Lofi Room', file: 'Assets/back/lofi.mp4', tipo: 'video' },
   { id: 'girl-cat', nome: 'Girl Cat', file: 'Assets/back/girl-cat.mp4', tipo: 'video' },
 ]
@@ -38,6 +39,8 @@ const PERFIL_HERO_VIDEOS = [
   { id: 'none', nome: 'Sem video', file: '' },
   { id: 'lofi-room', nome: 'Lofi Room', file: 'Assets/back/lofi.mp4' },
   { id: 'girl-cat', nome: 'Girl Cat', file: 'Assets/back/girl-cat.mp4' },
+  { id: 'resident', nome: 'Resident', file: 'Assets/background/resident.mp4', tipo: 'video' },
+  { id: 'star', nome: 'Star', file: 'Assets/background/Star.mp4', tipo: 'video' },
 ]
 
 const PERFIL_FRAMES = [
