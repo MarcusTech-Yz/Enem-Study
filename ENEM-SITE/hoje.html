@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENEM · Estudar Hoje</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .topico-hoje {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px; margin-bottom: 8px;
+      transition: border-color .15s;
+    }
+    .topico-hoje:hover { border-color: var(--border2); }
+    .topico-hoje.done  { opacity: .45; }
+    .topico-hoje.ativo { border-color: var(--accent); background: rgba(200,241,53,.04); }
+
+    .hoje-check {
+      width: 20px; height: 20px;
+      border: 1.5px solid var(--border2); border-radius: 5px;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; cursor: pointer; transition: all .15s;
+    }
+    .topico-hoje.done .hoje-check { background: var(--accent); border-color: var(--accent); color: #0F0F0F; font-weight: 700; }
+
+    .hoje-info   { flex: 1; min-width: 0; }
+    .hoje-nome   { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hoje-mat    { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+
+    .hoje-tempo-badge {
+      font-size: 10px; font-family: var(--mono);
+      color: var(--text3); background: var(--bg3);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 2px 7px; white-space: nowrap;
+      transition: all .15s;
+    }
+    .hoje-tempo-badge.has-time { color: var(--blue); border-color: rgba(96,165,250,.3); background: rgba(96,165,250,.07); }
+    .hoje-tempo-badge.ativo    { color: var(--accent); border-color: rgba(200,241,53,.4); background: rgba(200,241,53,.07); }
+
+    .iniciar-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; flex-shrink: 0;
+      border-radius: 6px; border: 1px solid var(--border2);
+      background: none; color: var(--text3);
+      cursor: pointer; transition: all .15s;
+    }
+    .iniciar-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,.08); }
+    .iniciar-btn.parar { border-color: rgba(255,94,94,.4); color: var(--red); background: rgba(255,94,94,.08); }
+    .iniciar-btn i { width: 13px; height: 13px; pointer-events: none; }
+
+    /* Timer flutuante */
+    .pomodoro-bar {
+      position: fixed; bottom: 0; left: 220px; right: 0;
+      background: var(--bg2); border-top: 1px solid var(--border);
+      padding: 14px 2.5rem;
+      display: flex; align-items: center; gap: 16px;
+      z-index: 50;
+      transform: translateY(100%);
+      transition: transform .3s ease;
+    }
+    .pomodoro-bar.visible { transform: translateY(0); }
+
+    .pomo-display {
+      font-family: var(--mono); font-size: 24px; font-weight: 500;
+      letter-spacing: .04em; min-width: 68px;
+    }
+    .pomo-display.work   { color: var(--accent); }
+    .pomo-display.rest   { color: var(--blue); }
+    .pomo-display.urgent { color: var(--red); }
+
+    .pomo-label  { flex: 1; }
+    .pomo-nome   { font-size: 13px; font-weight: 500; }
+    .pomo-status { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+
+    .pomo-mode {
+      font-size: 11px; font-family: var(--mono);
+      border-radius: 4px; padding: 3px 8px;
+    }
+    .pomo-mode.work { color: var(--accent); background: rgba(200,241,53,.1); border: 1px solid rgba(200,241,53,.3); }
+    .pomo-mode.rest { color: var(--blue);   background: rgba(96,165,250,.1); border: 1px solid rgba(96,165,250,.3); }
+
+    .pomo-seg-selector { display: flex; gap: 4px; }
+    .pomo-seg-btn {
+      font-size: 11px; padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border2); background: none;
+      color: var(--text3); cursor: pointer; font-family: var(--font); transition: all .15s;
+    }
+    .pomo-seg-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,.07); }
+
+    /* Modal conclusão */
+    .conclusao-modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,.8);
+      z-index: 200; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .conclusao-modal.open { opacity: 1; pointer-events: all; }
+    .conclusao-box {
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 2rem;
+      width: 340px; max-width: 90vw; text-align: center;
+    }
+    .conclusao-box h3 { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+    .conclusao-box p  { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
+    .conclusao-box .pomo-icon { font-size: 36px; margin-bottom: 1rem; }
+    .conclusao-btns { display: flex; gap: 8px; justify-content: center; }
+
+    /* Sessões do dia */
+    .sessao-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; background: var(--bg3);
+      border-radius: var(--radius-sm); margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .sessao-mat   { flex: 1; color: var(--text2); }
+    .sessao-dur   { font-family: var(--mono); color: var(--blue); }
+    .sessao-hora  { font-family: var(--mono); color: var(--text3); font-size: 11px; }
+
+    .registro-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-top: 2rem;
+    }
+    textarea.nota-input {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      color: var(--text); font-family: var(--mono); font-size: 13px;
+      line-height: 1.6; resize: vertical; min-height: 80px; outline: none;
+    }
+    textarea.nota-input:focus { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><span></span> enem.study</div>
+    <nav>
+      <p class="nav-label">Menu</p>
+      <ul class="nav-links">
+        <li><a href="index.html"><i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard</a></li>
+        <li><a href="hoje.html"><i data-lucide="play-circle" class="nav-icon"></i> Estudar Hoje</a></li>
+        <li><a href="grade.html"><i data-lucide="calendar-days" class="nav-icon"></i> Grade Semanal</a></li>
+        <li><a href="materias.html"><i data-lucide="book-open" class="nav-icon"></i> Matérias</a></li>
+        <li><a href="exportar.html"><i data-lucide="download" class="nav-icon"></i> Exportar</a></li>
+        <li><a href="perfil.html"><i data-lucide="trophy" class="nav-icon"></i> Perfil</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main" style="padding-bottom:100px;">
+    <div class="page-header">
+      <p class="date-tag" id="data-hoje"></p>
+      <h1>Estudar Hoje</h1>
+      <p>Tópicos do dia. Clique em ▶ para iniciar o timer em qualquer tópico.</p>
+    </div>
+
+    <!-- Modo Pomodoro selector (fora da bar) -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;flex-wrap:wrap;">
+      <span style="font-size:12px;color:var(--text3);">Modo Pomodoro:</span>
+      <div class="pomo-seg-selector" id="modo-selector">
+        <button class="pomo-seg-btn active" data-work="25" data-rest="5">25 / 5 min</button>
+        <button class="pomo-seg-btn" data-work="50" data-rest="10">50 / 10 min</button>
+      </div>
+      <span id="tempo-dia-total" style="font-size:12px;color:var(--blue);font-family:var(--mono);margin-left:auto;"></span>
+    </div>
+
+    <div id="conteudo-hoje"></div>
+
+    <!-- Sessões do dia -->
+    <div id="sessoes-section" style="display:none;margin-top:1.5rem;">
+      <div class="card">
+        <p class="card-title">Sessões de hoje</p>
+        <div id="sessoes-lista"></div>
+      </div>
+    </div>
+
+    <!-- Registro -->
+    <div class="registro-card">
+      <p class="card-title">Registro do dia</p>
+      <textarea class="nota-input" id="nota-dia" placeholder="O que você estudou? Dúvidas, descobertas, resumo rápido..."></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+        <button class="btn btn-accent btn-sm" onclick="salvarRegistro()">Salvar</button>
+        <span id="registro-status" style="font-size:11px;color:var(--text3);"></span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Timer flutuante -->
+<div class="pomodoro-bar" id="pomo-bar">
+  <div class="pomo-display work" id="pomo-display">25:00</div>
+  <div class="pomo-label">
+    <p class="pomo-nome"  id="pomo-nome">—</p>
+    <p class="pomo-status" id="pomo-status">Foco</p>
+  </div>
+  <span class="pomo-mode work" id="pomo-mode-badge">FOCO</span>
+  <button class="btn btn-sm" id="pomo-pausar" onclick="pausarTimer()">Pausar</button>
+  <button class="btn btn-red btn-sm" onclick="pararTimer()">Parar</button>
+</div>
+
+<!-- Modal conclusão -->
+<div class="conclusao-modal" id="conclusao-modal">
+  <div class="conclusao-box">
+    <div class="pomo-icon">⏱</div>
+    <h3 id="conclusao-titulo">Sessão concluída!</h3>
+    <p id="conclusao-texto">Você concluiu esse tópico?</p>
+    <div class="conclusao-btns">
+      <button class="btn btn-sm" onclick="fecharConclusao(false)">Não, continuar</button>
+      <button class="btn btn-accent btn-sm" onclick="fecharConclusao(true)">Sim, marcar como feito</button>
+    </div>
+  </div>
+</div>
+
+<script src="data/topicos.js"></script>
+<script src="data/conquistas.js"></script>
+<script src="data/conquista_toast.js"></script>
+<script src="js/app.js"></script>
+<script>
+// ── Estado do timer ──
+let timerInterval  = null
+let timerSegundos  = 0
+let timerAtivo     = false
+let timerPausado   = false
+let timerFase      = 'work'  // 'work' | 'rest'
+let timerMateriaKey = null
+let timerTopicoKey  = null
+let timerTopicoNome = null
+let workMin = 25, restMin = 5
+let segDecorridos = 0   // segundos acumulados no tópico atual
+
+// Sessões salvas hoje
+function getSessoesHoje() { return store.get('sessoes_' + getTodayStr()) || [] }
+function addSessaoHoje(s) {
+  const arr = getSessoesHoje(); arr.push(s); store.set('sessoes_' + getTodayStr(), arr)
+}
+
+// ── Render página ──
+document.getElementById('data-hoje').textContent =
+  new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })
+
+function renderHoje() {
+  const materias = getMateriaHoje()
+  const el = document.getElementById('conteudo-hoje')
+
+  if (materias.length === 0) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:3rem 1rem;color:var(--text3);">
+        <p style="margin-bottom:1rem;font-size:15px;">Nenhuma matéria programada para hoje.</p>
+        <a href="grade.html" class="btn btn-accent">Configurar grade →</a>
+      </div>
+    `
+    lucide.createIcons(); return
+  }
+
+  let html = ''
+  for (const m of materias) {
+    const dados  = ENEM[m.key]
+    const feitos = getTopicosFeitos(m.key)
+    const dific  = getDificuldades(m.key)
+    const horTxt = m.inicio ? `${m.inicio}${m.duracao ? ' · ' + m.duracao + 'min' : ''}` : ''
+
+    // Extrai todas as habilidades da nova estrutura
+    const todasHabilidades = []
+    if (dados.conteudos) {
+      for (const conteudo of dados.conteudos) {
+        for (const h of conteudo.habilidades) {
+          const tKey = `${conteudo.id}__${h.id}`
+          todasHabilidades.push({ tKey, texto: h.topico, dif: h.prioridade === 'alta' ? 3 : h.prioridade === 'media' ? 2 : 1 })
+        }
+      }
+    } else if (dados.topicos) {
+      // Fallback para estrutura antiga
+      todasHabilidades.push(...dados.topicos.map((t, idx) => ({ tKey: idx, texto: t, dif: dific[idx] || 0 })))
+    }
+
+    const pendentes = todasHabilidades
+      .filter(t => !feitos.includes(t.tKey))
+      .sort((a, b) => a.dif - b.dif)
+      .slice(0, 6)
+
+    html += `
+      <div style="margin-bottom:2rem;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+          <i data-lucide="${dados.icone}" style="width:20px;height:20px;color:var(--text3);"></i>
+          <div>
+            <p style="font-size:15px;font-weight:500;">${dados.nome}</p>
+            ${horTxt ? `<p style="font-size:11px;color:var(--text3);font-family:var(--mono);">${horTxt}</p>` : ''}
+          </div>
+          <a href="materia.html?m=${m.key}" class="btn btn-sm btn-ghost" style="margin-left:auto;">
+            Ver matéria →
+          </a>
+        </div>
+    `
+    if (pendentes.length === 0) {
+      html += `<p style="font-size:13px;color:var(--text3);padding:10px 0;">✓ Todos os tópicos concluídos!</p>`
+    } else {
+      html += pendentes.map(t => {
+        const isDone = feitos.includes(t.tKey)
+        const tempo  = getTempo(m.key, t.tKey)
+        const isAtivo = timerMateriaKey === m.key && timerTopicoKey === t.tKey
+        return `
+          <div class="topico-hoje ${isDone ? 'done' : ''} ${isAtivo ? 'ativo' : ''}"
+               id="th-${m.key}-${t.tKey}">
+            <div class="hoje-check" onclick="toggleHoje('${m.key}','${t.tKey}')">
+              ${isDone ? '✓' : ''}
+            </div>
+            <div class="hoje-info">
+              <p class="hoje-nome">${t.texto}</p>
+              <p class="hoje-mat">${dados.nome}</p>
+            </div>
+            <span class="hoje-tempo-badge ${tempo > 0 ? 'has-time' : ''} ${isAtivo ? 'ativo' : ''}"
+                  id="badge-${m.key}-${t.tKey}">
+              ${isAtivo ? '●' : (tempo > 0 ? formatTempo(tempo) : '—')}
+            </span>
+            <button class="iniciar-btn ${isAtivo ? 'parar' : ''}"
+                    id="btn-${m.key}-${t.tKey}"
+                    onclick="toggleTimer('${m.key}','${t.tKey}','${t.texto.replace(/'/g,"\\'")}')">
+              <i data-lucide="${isAtivo ? 'square' : 'play'}" ></i>
+            </button>
+          </div>
+        `
+      }).join('')
+    }
+    html += `</div>`
+  }
+
+  el.innerHTML = html
+  atualizarTempoTotal()
+  renderSessoes()
+  carregarRegistro()
+  lucide.createIcons()
+}
+
+// ── Timer ──
+function toggleTimer(materiaKey, topicoKey, topicoNome) {
+  if (timerAtivo && timerMateriaKey === materiaKey && timerTopicoKey === topicoKey) {
+    pararTimer(); return
+  }
+  if (timerAtivo) pararTimer(true)
+  iniciarTimer(materiaKey, topicoKey, topicoNome)
+}
+
+function iniciarTimer(materiaKey, topicoKey, topicoNome) {
+  timerMateriaKey = materiaKey
+  timerTopicoKey  = topicoKey
+  timerTopicoNome = topicoNome
+  timerFase       = 'work'
+  timerSegundos   = workMin * 60
+  segDecorridos   = 0
+  timerAtivo      = true
+  timerPausado    = false
+
+  document.getElementById('pomo-bar').classList.add('visible')
+  document.getElementById('pomo-nome').textContent = topicoNome
+  document.getElementById('pomo-pausar').textContent = 'Pausar'
+
+  atualizarBotoesTopic(materiaKey, topicoKey, true)
+  atualizarBarTimer()
+
+  timerInterval = setInterval(tickTimer, 1000)
+}
+
+function tickTimer() {
+  if (timerPausado) return
+  timerSegundos--
+  segDecorridos++
+
+  // Atualiza badge do tópico em tempo real
+  const tempoSalvo = getTempo(timerMateriaKey, timerTopicoKey)
+  const badge = document.getElementById(`badge-${timerMateriaKey}-${timerTopicoKey}`)
+  if (badge) {
+    badge.textContent = formatTempo(tempoSalvo + segDecorridos)
+    badge.className   = 'hoje-tempo-badge ativo'
+  }
+
+  atualizarBarTimer()
+
+  if (timerSegundos <= 0) fimFase()
+}
+
+function fimFase() {
+  clearInterval(timerInterval)
+  // Salva o tempo acumulado
+  addTempo(timerMateriaKey, timerTopicoKey, segDecorridos)
+  segDecorridos = 0
+  tocarSom()
+
+  if (timerFase === 'work') {
+    // Registra sessão
+    addSessaoHoje({
+      materiaKey: timerMateriaKey,
+      matNome: ENEM[timerMateriaKey].nome,
+      topicoNome: timerTopicoNome,
+      durMin: workMin,
+      hora: new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })
+    })
+    renderSessoes()
+
+    // Pergunta se concluiu
+    document.getElementById('conclusao-titulo').textContent = `${workMin} minutos concluídos! 🎉`
+    document.getElementById('conclusao-texto').textContent  = `Você concluiu o tópico "${timerTopicoNome}"?`
+    document.getElementById('conclusao-modal').classList.add('open')
+
+    // Inicia descanso
+    timerFase     = 'rest'
+    timerSegundos = restMin * 60
+    timerInterval = setInterval(tickTimer, 1000)
+    atualizarBarTimer()
+  } else {
+    // Fim do descanso — para tudo
+    pararTimer()
+  }
+}
+
+function fecharConclusao(marcar) {
+  document.getElementById('conclusao-modal').classList.remove('open')
+  if (marcar) {
+    const feitos = toggleTopico(timerMateriaKey, timerTopicoKey)
+    const el    = document.getElementById(`th-${timerMateriaKey}-${timerTopicoKey}`)
+    const check = el?.querySelector('.hoje-check')
+    if (el) { el.classList.add('done'); if (check) check.textContent = '✓' }
+  }
+  atualizarTempoTotal()
+}
+
+function pausarTimer() {
+  timerPausado = !timerPausado
+  document.getElementById('pomo-pausar').textContent = timerPausado ? 'Retomar' : 'Pausar'
+}
+
+function pararTimer(silencioso = false) {
+  clearInterval(timerInterval)
+  if (segDecorridos > 0) {
+    addTempo(timerMateriaKey, timerTopicoKey, segDecorridos)
+    segDecorridos = 0
+  }
+  const mk  = timerMateriaKey, tk = timerTopicoKey
+  timerAtivo = false; timerMateriaKey = null; timerTopicoKey = null; timerTopicoNome = null
+  document.getElementById('pomo-bar').classList.remove('visible')
+  atualizarBotoesTopic(mk, tk, false)
+  atualizarTempoTotal()
+  renderSessoes()
+  if (mk && tk !== null) {
+    const badge = document.getElementById(`badge-${mk}-${tk}`)
+    if (badge) {
+      const t = getTempo(mk, tk)
+      badge.textContent = t > 0 ? formatTempo(t) : '—'
+      badge.className   = `hoje-tempo-badge ${t > 0 ? 'has-time' : ''}`
+    }
+  }
+}
+
+function atualizarBarTimer() {
+  const min = Math.floor(timerSegundos / 60).toString().padStart(2,'0')
+  const seg = (timerSegundos % 60).toString().padStart(2,'0')
+  const display = document.getElementById('pomo-display')
+  const badge   = document.getElementById('pomo-mode-badge')
+  const status  = document.getElementById('pomo-status')
+
+  display.textContent = `${min}:${seg}`
+
+  if (timerFase === 'work') {
+    display.className = `pomo-display ${timerSegundos < 60 ? 'urgent' : 'work'}`
+    badge.textContent = 'FOCO'
+    badge.className   = 'pomo-mode work'
+    status.textContent = 'Foco'
+  } else {
+    display.className  = 'pomo-display rest'
+    badge.textContent  = 'DESCANSO'
+    badge.className    = 'pomo-mode rest'
+    status.textContent = 'Descanso'
+  }
+}
+
+function atualizarBotoesTopic(materiaKey, topicoKey, ativo) {
+  if (!materiaKey && topicoKey == null) return
+  const btn = document.getElementById(`btn-${materiaKey}-${topicoKey}`)
+  const el  = document.getElementById(`th-${materiaKey}-${topicoKey}`)
+  if (btn) {
+    btn.className = `iniciar-btn ${ativo ? 'parar' : ''}`
+    btn.innerHTML = `<i data-lucide="${ativo ? 'square' : 'play'}"></i>`
+    lucide.createIcons()
+  }
+  if (el) el.classList.toggle('ativo', ativo)
+}
+
+function atualizarTempoTotal() {
+  const total = getTempoTotal()
+  const el = document.getElementById('tempo-dia-total')
+  if (el) el.textContent = total > 0 ? `⏱ ${formatTempo(total)} estudados` : ''
+}
+
+function tocarSom() {
+  try {
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain); gain.connect(ctx.destination)
+    osc.frequency.value = 880
+    gain.gain.setValueAtTime(.3, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .6)
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + .6)
+  } catch(e) {}
+}
+
+// ── Sessões ──
+function renderSessoes() {
+  const sessoes = getSessoesHoje()
+  const section = document.getElementById('sessoes-section')
+  const lista   = document.getElementById('sessoes-lista')
+  if (sessoes.length === 0) { section.style.display = 'none'; return }
+  section.style.display = 'block'
+  lista.innerHTML = [...sessoes].reverse().map(s => `
+    <div class="sessao-item">
+      <i data-lucide="${ENEM[s.materiaKey]?.icone || 'book'}" style="width:14px;height:14px;color:var(--text3);flex-shrink:0;"></i>
+      <span class="sessao-mat">${s.matNome} — ${s.topicoNome}</span>
+      <span class="sessao-dur">${s.durMin}min</span>
+      <span class="sessao-hora">${s.hora}</span>
+    </div>
+  `).join('')
+  lucide.createIcons()
+}
+
+// ── Registro ──
+function carregarRegistro() {
+  const r = getRegistroHoje()
+  document.getElementById('nota-dia').value = r.nota || ''
+}
+
+function salvarRegistro() {
+  const nota = document.getElementById('nota-dia').value
+  saveRegistroHoje({ ...getRegistroHoje(), nota })
+  bumpStreak()
+  const s = document.getElementById('registro-status')
+  s.textContent = 'Salvo ✓'
+  setTimeout(() => { s.textContent = '' }, 2000)
+}
+
+// ── Seletor de modo Pomodoro ──
+document.querySelectorAll('.pomo-seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pomo-seg-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    workMin = parseInt(btn.dataset.work)
+    restMin = parseInt(btn.dataset.rest)
+    if (!timerAtivo) {
+      const d = document.getElementById('pomo-display')
+      if (d) d.textContent = `${String(workMin).padStart(2,'0')}:00`
+    }
+  })
+})
+
+// ── Funções globais para toggleHoje ──
+function toggleHoje(materiaKey, tKey) {
+  const feitos = toggleTopico(materiaKey, tKey)
+  const el     = document.getElementById(`th-${materiaKey}-${tKey}`)
+  const check  = el?.querySelector('.hoje-check')
+  const isDone = feitos.includes(tKey)
+  if (el)    el.classList.toggle('done', isDone)
+  if (check) check.textContent = isDone ? '✓' : ''
+  atualizarTempoTotal()
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderHoje()
+  lucide.createIcons()
+})
+</script>
+</body>
+</html>

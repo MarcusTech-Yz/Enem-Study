@@ -6,6 +6,28 @@ if (!materiaKey || !ENEM[materiaKey]) window.location.href = 'materias.html'
 
 const mat = ENEM[materiaKey]
 
+const MATERIA_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAy8HRawioRC-_IOaVj9RqXlU1ASb-vHtU",
+  authDomain: "enem-study.firebaseapp.com",
+  projectId: "enem-study",
+  storageBucket: "enem-study.firebasestorage.app",
+  messagingSenderId: "859828535888",
+  appId: "1:859828535888:web:85d41615dfb88f140e8755",
+  measurementId: "G-N02390WPSK",
+}
+
+let materiaDb = null
+let materiaFirebaseReady = false
+let editorQuestoesBanco = []
+let editorQuizContext = null
+let editorQuizState = {
+  open: false,
+  current: 0,
+  selected: null,
+  answered: false,
+  acertos: 0,
+}
+
 // Helper: extrai todos os tópicos (habilidades) de todos os conteúdos
 function allHabilidades() {
   const result = []
@@ -322,10 +344,16 @@ function abrirEditor(conteudoId, hId) {
       Clique, arraste ou <kbd style="background:var(--bg3);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:11px;">Ctrl+V</kbd> para colar imagem
     </div>
     <div class="uploads-grid" id="editor-uploads-grid" style="margin-top:12px;"></div>
+
+    <hr class="divider" style="margin:1.25rem 0;" />
+
+    <div id="editor-practice-area"></div>
     <input type="file" id="editor-file-input" accept="image/*" style="display:none" multiple />
   `
 
   renderImagensEditor(tKey)
+  renderEditorPracticeArea({ loading: true })
+  loadEditorQuestoes(conteudoId, hId, tKey)
   setupEditorListeners(tKey)
 
   const ta = document.getElementById('editor-textarea')
@@ -376,6 +404,271 @@ function renderImagensEditor(tKey) {
 }
 
 function deletarImagemEditor(tKey, i) { removeImagemTopico(materiaKey, tKey, i); renderImagensEditor(tKey) }
+
+function getEditorQuizProgress(tKey) {
+  return store.get(`quiz_topico_${materiaKey}_${tKey}`) || { tentativas: 0, acertos: 0, ultimaPontuacao: null }
+}
+
+function saveEditorQuizProgress(tKey, progress) {
+  store.set(`quiz_topico_${materiaKey}_${tKey}`, progress)
+}
+
+function initMateriaFirebase() {
+  if (materiaFirebaseReady || typeof firebase === 'undefined') return materiaFirebaseReady
+
+  try {
+    if (!firebase.apps?.length) firebase.initializeApp(MATERIA_FIREBASE_CONFIG)
+    materiaDb = firebase.firestore()
+    materiaFirebaseReady = true
+  } catch (err) {
+    console.warn('Firebase indisponivel na pagina de materia:', err)
+  }
+
+  return materiaFirebaseReady
+}
+
+async function loadEditorQuestoes(conteudoId, hId, tKey) {
+  editorQuizContext = { conteudoId, hId, tKey }
+  editorQuestoesBanco = []
+
+  if (!initMateriaFirebase()) {
+    renderEditorPracticeArea({
+      error: 'Banco de questões indisponível nesta página. Confira a configuração do Firebase.',
+    })
+    return
+  }
+
+  try {
+    const snap = await materiaDb.collection('questoes')
+      .where('status', '==', 'publicado')
+      .where('materiaId', '==', materiaKey)
+      .where('conteudoId', '==', conteudoId)
+      .where('habilidadeId', '==', hId)
+      .get()
+
+    editorQuestoesBanco = snap.docs
+      .map(doc => normalizarQuestaoEditor({ id: doc.id, ...doc.data() }))
+      .filter(Boolean)
+      .sort((a, b) => String(a.dificuldade || '').localeCompare(String(b.dificuldade || '')))
+
+    editorQuizState = {
+      open: false,
+      current: 0,
+      selected: null,
+      answered: false,
+      acertos: 0,
+    }
+    renderEditorPracticeArea()
+  } catch (err) {
+    console.error('Erro ao carregar questões do tópico:', err)
+    renderEditorPracticeArea({
+      error: 'Não consegui carregar as questões publicadas deste tópico agora.',
+    })
+  }
+}
+
+function normalizarQuestaoEditor(q) {
+  const alternativas = q.alternativas || {}
+  const letras = ['A', 'B', 'C', 'D']
+  if (!q.pergunta || !letras.every(letra => alternativas[letra]) || !letras.includes(q.resposta)) {
+    return null
+  }
+
+  return {
+    id: q.id,
+    pergunta: String(q.pergunta),
+    alternativas: letras.reduce((acc, letra) => {
+      acc[letra] = String(alternativas[letra])
+      return acc
+    }, {}),
+    resposta: q.resposta,
+    explicacao: String(q.explicacao || 'Sem explicação cadastrada.'),
+    dificuldade: q.dificuldade || 'facil',
+  }
+}
+
+function renderEditorPracticeArea(options = {}) {
+  const area = document.getElementById('editor-practice-area')
+  if (!area) return
+
+  const tKey = editorQuizContext?.tKey
+  const progress = tKey ? getEditorQuizProgress(tKey) : { tentativas: 0, ultimaPontuacao: null }
+  const count = editorQuestoesBanco.length
+  const statusText = options.loading ? 'carregando...' : `${count} disp.`
+  const canPractice = count > 0 && !options.loading && !options.error
+
+  area.innerHTML = `
+    <section class="practice-card">
+      <div class="practice-head">
+        <div>
+          <div class="practice-kicker">Questões deste tópico</div>
+          <div class="practice-title">
+            <i data-lucide="target" style="width:16px;height:16px;"></i>
+            Praticar questões
+          </div>
+          <div class="practice-sub">${getEditorPracticeSubtitle(options, progress)}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span class="practice-count">
+            <i data-lucide="list-checks" style="width:13px;height:13px;"></i>
+            ${statusText}
+          </span>
+          <button class="btn btn-accent btn-sm" ${canPractice ? '' : 'disabled'} onclick="startEditorQuiz()">
+            <i data-lucide="play" style="width:13px;height:13px;"></i>
+            ${editorQuizState.open ? 'Recomeçar' : 'Praticar agora'}
+          </button>
+        </div>
+      </div>
+      <div class="quiz-shell ${editorQuizState.open ? 'open' : ''}">
+        ${renderEditorQuizContent()}
+      </div>
+    </section>
+  `
+
+  renderEditorQuizMath(area)
+  lucide.createIcons()
+}
+
+function getEditorPracticeSubtitle(options, progress) {
+  if (options.loading) return 'Buscando questões publicadas no banco...'
+  if (options.error) return escapeHtmlMateria(options.error)
+  if (!editorQuestoesBanco.length) return 'Ainda não há questões publicadas para este tópico.'
+  if (progress.tentativas > 0 && progress.ultimaPontuacao) {
+    return `Última prática: ${progress.ultimaPontuacao.acertos}/${progress.ultimaPontuacao.total} acertos.`
+  }
+  return 'Uma questão por vez, com feedback e explicação logo após a resposta.'
+}
+
+function startEditorQuiz() {
+  if (!editorQuestoesBanco.length) return
+  editorQuizState = {
+    open: true,
+    current: 0,
+    selected: null,
+    answered: false,
+    acertos: 0,
+  }
+  renderEditorPracticeArea()
+}
+
+function renderEditorQuizContent() {
+  if (!editorQuestoesBanco.length) return ''
+
+  if (editorQuizState.current >= editorQuestoesBanco.length) {
+    const total = editorQuestoesBanco.length
+    const pct = Math.round((editorQuizState.acertos / total) * 100)
+    return `
+      <div class="quiz-result open">
+        <p style="font-size:14px;margin-bottom:6px;">Você fechou a prática com <strong>${editorQuizState.acertos}/${total}</strong> acertos.</p>
+        <p style="color:var(--text2);font-size:12px;">Aproveitamento de ${pct}%. Dá para repetir quando quiser.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <button class="btn btn-accent btn-sm" onclick="startEditorQuiz()">Refazer</button>
+          <button class="btn btn-sm" onclick="closeEditorQuiz()">Fechar</button>
+        </div>
+      </div>
+    `
+  }
+
+  const q = editorQuestoesBanco[editorQuizState.current]
+  const letras = ['A', 'B', 'C', 'D']
+  const feedbackClass = editorQuizState.selected === q.resposta ? 'correct' : 'wrong'
+  const feedbackTitle = editorQuizState.selected === q.resposta ? 'Acertou.' : `Errou. Resposta correta: ${q.resposta}.`
+
+  return `
+    <div class="quiz-topbar">
+      <div class="quiz-progress-text">Questão ${editorQuizState.current + 1} de ${editorQuestoesBanco.length} · ${formatEditorQuizDifficulty(q.dificuldade)}</div>
+      <button class="btn btn-sm" onclick="closeEditorQuiz()">Fechar</button>
+    </div>
+    <div class="quiz-question quiz-math">${escapeHtmlMateria(q.pergunta).replace(/\n/g, '<br>')}</div>
+    <div class="quiz-options">
+      ${letras.map(letra => renderEditorQuizOption(q, letra)).join('')}
+    </div>
+    <div class="quiz-feedback ${editorQuizState.answered ? 'open' : ''} ${feedbackClass}">
+      ${editorQuizState.answered ? `
+        <strong>${feedbackTitle}</strong>
+        <div class="quiz-math" style="margin-top:6px;">${escapeHtmlMateria(q.explicacao).replace(/\n/g, '<br>')}</div>
+        <button class="btn btn-accent btn-sm" style="margin-top:10px;" onclick="nextEditorQuizQuestion()">
+          ${editorQuizState.current + 1 === editorQuestoesBanco.length ? 'Ver resultado' : 'Próxima questão'}
+        </button>
+      ` : ''}
+    </div>
+  `
+}
+
+function renderEditorQuizOption(q, letra) {
+  let className = ''
+  if (editorQuizState.answered && letra === q.resposta) className = 'correct'
+  if (editorQuizState.answered && letra === editorQuizState.selected && letra !== q.resposta) className = 'wrong'
+
+  return `
+    <button class="quiz-option ${className}" ${editorQuizState.answered ? 'disabled' : ''} onclick="answerEditorQuiz('${letra}')">
+      <span class="quiz-letter">${letra}</span>
+      <span class="quiz-math">${escapeHtmlMateria(q.alternativas[letra]).replace(/\n/g, '<br>')}</span>
+    </button>
+  `
+}
+
+function answerEditorQuiz(letra) {
+  if (editorQuizState.answered || !editorQuestoesBanco[editorQuizState.current]) return
+  const q = editorQuestoesBanco[editorQuizState.current]
+  editorQuizState.selected = letra
+  editorQuizState.answered = true
+  if (letra === q.resposta) editorQuizState.acertos += 1
+  renderEditorPracticeArea()
+}
+
+function nextEditorQuizQuestion() {
+  editorQuizState.current += 1
+  editorQuizState.selected = null
+  editorQuizState.answered = false
+
+  if (editorQuizState.current >= editorQuestoesBanco.length && editorQuizContext?.tKey) {
+    const progress = getEditorQuizProgress(editorQuizContext.tKey)
+    saveEditorQuizProgress(editorQuizContext.tKey, {
+      tentativas: (progress.tentativas || 0) + 1,
+      acertos: (progress.acertos || 0) + editorQuizState.acertos,
+      ultimaPontuacao: {
+        acertos: editorQuizState.acertos,
+        total: editorQuestoesBanco.length,
+        finishedAt: new Date().toISOString(),
+      },
+    })
+  }
+
+  renderEditorPracticeArea()
+}
+
+function closeEditorQuiz() {
+  editorQuizState.open = false
+  renderEditorPracticeArea()
+}
+
+function formatEditorQuizDifficulty(value) {
+  return {
+    facil: 'fácil',
+    medio: 'médio',
+    dificil: 'difícil',
+  }[value] || value || 'nível único'
+}
+
+function renderEditorQuizMath(root) {
+  if (!root || typeof renderMathInElement === 'undefined') return
+  renderMathInElement(root, {
+    delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '$', right: '$', display: false },
+    ],
+    throwOnError: false,
+  })
+}
+
+function escapeHtmlMateria(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
 
 function setupEditorListeners(tKey) {
   const fi = document.getElementById('editor-file-input')

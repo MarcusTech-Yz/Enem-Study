@@ -1,0 +1,276 @@
+{
+  "matematica": {
+    "nome": "Matemática",
+    "conteudos": [
+      {
+        "id": "mat_razao",
+        "nome": "Razão, Proporção e Porcentagem",
+        "habilidades": [
+          { "id": "H1",  "topico": "Razão e proporção",                                     "prioridade": "alta" },
+          { "id": "H3",  "topico": "Regra de três simples e composta",                       "prioridade": "alta" },
+          { "id": "H3b", "topico": "Porcentagem e juros simples",                            "prioridade": "alta" },
+          { "id": "H3c", "topico": "Juros compostos e matemática financeira",                "prioridade": "media" },
+          { "id": "H11", "topico": "Escalas e grandezas",                                    "prioridade": "alta" },
+          { "id": "H16", "topico": "Grandezas diretamente e inversamente proporcionais",     "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "mat_funcoes",
+        "nome": "Funções",
+        "habilidades": [
+          { "id": "H19",  "topico": "Função do 1º grau (linear)",                            "prioridade": "alta" },
+          { "id": "H19b", "topico": "Função do 2º grau (quadrática)",                        "prioridade": "alta" },
+          { "id": "H19c", "topico": "Função exponencial",                                    "prioridade": "alta" },
+          { "id": "H19d", "topico": "Função logarítmica",                                    "prioridade": "media" },
+          { "id": "H20",  "topico": "Leitura e interpretação de gráficos e tabelas",         "prioridade": "alta" },
+          { "id": "H21",  "topico": "Sistemas lineares",                                     "prioridade": "media" }
+        ]
+      },
+      {
+        "id": "mat_combinatoria",
+        "nome": "Combinatória e Probabilidade",
+        "habilidades": [
+          { "id": "H2e", "topico": "Análise combinatória: arranjos e combinações",           "prioridade": "alta" },
+          { "id": "H28", "topico": "Probabilidade",                                          "prioridade": "alta" },
+          { "id": "H27", "topico": "Estatística: média, moda, mediana e desvio padrão",     "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "mat_geometria_plana",
+        "nome": "Geometria Plana",
+        "habilidades": [
+          { "id": "H7",  "topico": "Geometria plana: perímetro e área",                     "prioridade": "alta" },
+          { "id": "H8",  "topico": "Triângulos e teorema de Pitágoras",                     "prioridade": "alta" },
+          { "id": "H9",  "topico": "Trigonometria no triângulo retângulo",                  "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "mat_geometria_espacial",
+        "nome": "Geometria Espacial",
+        "habilidades": [
+          { "id": "H8c", "topico": "Prismas e pirâmides",                                   "prioridade": "alta" },
+          { "id": "H8d", "topico": "Cilindro, cone e esfera",                               "prioridade": "alta" }
+        ]
+      }
+    ]
+  },
+  "portugues": {
+    "nome": "Português",
+    "conteudos": [
+      {
+        "id": "port_interpretacao",
+        "nome": "Interpretação de Texto",
+        "habilidades": [
+          { "id": "H15",  "topico": "Interpretação de texto (inferência e dedução)",        "prioridade": "alta" },
+          { "id": "H18",  "topico": "Coesão e coerência textual",                           "prioridade": "alta" },
+          { "id": "H19",  "topico": "Gêneros textuais",                                     "prioridade": "alta" },
+          { "id": "H23",  "topico": "Intertextualidade e interdiscursividade",              "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "port_linguagem",
+        "nome": "Linguagem e Comunicação",
+        "habilidades": [
+          { "id": "H19b", "topico": "Funções da linguagem",                                 "prioridade": "alta" },
+          { "id": "H15b", "topico": "Figuras de linguagem",                                 "prioridade": "alta" },
+          { "id": "H25",  "topico": "Variedades linguísticas e norma culta",                "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "port_gramatica",
+        "nome": "Gramática",
+        "habilidades": [
+          { "id": "H27c", "topico": "Verbos: conjugação, modo e tempo verbal",              "prioridade": "alta" },
+          { "id": "H27e", "topico": "Concordância verbal",                                  "prioridade": "alta" },
+          { "id": "H27i", "topico": "Período composto: coordenação e subordinação",         "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "port_literatura",
+        "nome": "Literatura",
+        "habilidades": [
+          { "id": "H16c", "topico": "Realismo, naturalismo e parnasianismo",                "prioridade": "alta" },
+          { "id": "H16e", "topico": "Modernismo — Graciliano, Clarice, Guimarães Rosa",     "prioridade": "alta" },
+          { "id": "H17",  "topico": "Figuras de linguagem e intertextualidade literária",   "prioridade": "alta" }
+        ]
+      }
+    ]
+  },
+  "ciencias": {
+    "nome": "Ciências da Natureza",
+    "conteudos": [
+      {
+        "id": "bio_celula",
+        "nome": "Biologia — Citologia e Bioquímica",
+        "habilidades": [
+          { "id": "H13",  "topico": "Célula procariótica e eucariótica",                    "prioridade": "alta" },
+          { "id": "H13c", "topico": "Divisão celular: mitose e meiose",                     "prioridade": "alta" },
+          { "id": "H15",  "topico": "Fotossíntese e respiração celular",                    "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "bio_genetica",
+        "nome": "Biologia — Genética",
+        "habilidades": [
+          { "id": "H13d", "topico": "Leis de Mendel",                                       "prioridade": "alta" },
+          { "id": "H13e", "topico": "Herança ligada ao sexo e não mendeliana",              "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "bio_ecologia",
+        "nome": "Biologia — Ecologia",
+        "habilidades": [
+          { "id": "H9",  "topico": "Cadeias e teias alimentares",                           "prioridade": "alta" },
+          { "id": "H9b", "topico": "Ciclos biogeoquímicos",                                 "prioridade": "alta" },
+          { "id": "H4",  "topico": "Impactos ambientais e ecologia aplicada",               "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "quim_basica",
+        "nome": "Química — Estrutura da Matéria",
+        "habilidades": [
+          { "id": "H24b", "topico": "Ligações químicas",                                    "prioridade": "alta" },
+          { "id": "H24c", "topico": "Funções inorgânicas: ácidos, bases, sais e óxidos",   "prioridade": "alta" },
+          { "id": "H25",  "topico": "Separação de misturas",                                "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "quim_transformacoes",
+        "nome": "Química — Transformações",
+        "habilidades": [
+          { "id": "H21b", "topico": "Estequiometria",                                       "prioridade": "alta" },
+          { "id": "H21e", "topico": "Eletroquímica: pilhas e eletrólise",                   "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "quim_organica",
+        "nome": "Química — Orgânica",
+        "habilidades": [
+          { "id": "H25c", "topico": "Hidrocarbonetos e funções orgânicas",                  "prioridade": "alta" },
+          { "id": "H26b", "topico": "Biocombustíveis e petróleo",                           "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "fis_mecanica",
+        "nome": "Física — Mecânica",
+        "habilidades": [
+          { "id": "H20",  "topico": "Cinemática: MU e MUV",                                 "prioridade": "alta" },
+          { "id": "H20b", "topico": "Dinâmica: leis de Newton",                             "prioridade": "alta" },
+          { "id": "H20c", "topico": "Trabalho, energia e potência",                         "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "fis_eletricidade",
+        "nome": "Física — Eletricidade",
+        "habilidades": [
+          { "id": "H5b", "topico": "Eletrodinâmica: corrente, tensão e resistência",        "prioridade": "alta" },
+          { "id": "H5c", "topico": "Circuitos elétricos: potência e consumo",               "prioridade": "alta" }
+        ]
+      }
+    ]
+  },
+  "historia": {
+    "nome": "História",
+    "conteudos": [
+      {
+        "id": "hist_moderna",
+        "nome": "Idade Moderna",
+        "habilidades": [
+          { "id": "H7",   "topico": "Grandes navegações e expansão marítima",               "prioridade": "alta" },
+          { "id": "H13c", "topico": "Revolução Francesa",                                   "prioridade": "alta" },
+          { "id": "H16",  "topico": "Revolução Industrial",                                 "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "hist_seculo20",
+        "nome": "Século XX",
+        "habilidades": [
+          { "id": "H9",   "topico": "Primeira Guerra Mundial",                              "prioridade": "alta" },
+          { "id": "H9c",  "topico": "Totalitarismos: fascismo, nazismo e stalinismo",       "prioridade": "alta" },
+          { "id": "H13d", "topico": "Era Vargas no Brasil",                                 "prioridade": "alta" },
+          { "id": "H9d",  "topico": "Segunda Guerra Mundial e Holocausto",                  "prioridade": "alta" },
+          { "id": "H9e",  "topico": "Guerra Fria e bipolaridade",                           "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "hist_brasil_republicano",
+        "nome": "Brasil Republicano",
+        "habilidades": [
+          { "id": "H13f", "topico": "Ditadura Militar no Brasil (1964–1985)",               "prioridade": "alta" },
+          { "id": "H13g", "topico": "Redemocratização e Constituição de 1988",              "prioridade": "alta" }
+        ]
+      }
+    ]
+  },
+  "geografia": {
+    "nome": "Geografia",
+    "conteudos": [
+      {
+        "id": "geo_fisica",
+        "nome": "Geografia Física",
+        "habilidades": [
+          { "id": "H26",  "topico": "Relevo: tipos e formação geológica",                   "prioridade": "alta" },
+          { "id": "H26b", "topico": "Hidrografia: bacias hidrográficas",                    "prioridade": "alta" },
+          { "id": "H26c", "topico": "Clima: tipos climáticos e fatores",                    "prioridade": "alta" },
+          { "id": "H27",  "topico": "Biomas brasileiros",                                   "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "geo_humana",
+        "nome": "Geografia Humana",
+        "habilidades": [
+          { "id": "H8",  "topico": "Urbanização brasileira e mundial",                      "prioridade": "alta" },
+          { "id": "H8c", "topico": "Migrações e fluxos populacionais",                     "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "geo_geopolitica",
+        "nome": "Geopolítica",
+        "habilidades": [
+          { "id": "H7",  "topico": "Geopolítica mundial e blocos econômicos",               "prioridade": "alta" },
+          { "id": "H7b", "topico": "Globalização e fluxos econômicos",                     "prioridade": "alta" },
+          { "id": "H7c", "topico": "China e BRICS",                                         "prioridade": "alta" }
+        ]
+      }
+    ]
+  },
+  "filosofia": {
+    "nome": "Filosofia e Sociologia",
+    "conteudos": [
+      {
+        "id": "fil_moderna",
+        "nome": "Filosofia Moderna",
+        "habilidades": [
+          { "id": "H14c", "topico": "Racionalismo e empirismo: Descartes, Locke, Hume",    "prioridade": "alta" },
+          { "id": "H14d", "topico": "Kant e a filosofia crítica",                           "prioridade": "alta" },
+          { "id": "H14f", "topico": "Filosofia política: Maquiavel, Hobbes, Locke",         "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "fil_contemporanea",
+        "nome": "Filosofia Contemporânea",
+        "habilidades": [
+          { "id": "H14g", "topico": "Marx, Nietzsche e Sartre",                             "prioridade": "alta" },
+          { "id": "H23",  "topico": "Ética e moral: teorias éticas",                        "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "soc_classicos",
+        "nome": "Sociologia — Clássicos",
+        "habilidades": [
+          { "id": "H11",  "topico": "Karl Marx: classes sociais e materialismo histórico",  "prioridade": "alta" },
+          { "id": "H11b", "topico": "Max Weber: ação social e burocracia",                  "prioridade": "alta" },
+          { "id": "H11c", "topico": "Émile Durkheim: fato social e solidariedade",          "prioridade": "alta" }
+        ]
+      },
+      {
+        "id": "soc_tematica",
+        "nome": "Sociologia Temática",
+        "habilidades": [
+          { "id": "H25",  "topico": "Movimentos sociais: racismo e questão da mulher",      "prioridade": "alta" },
+          { "id": "H22",  "topico": "Cidadania, democracia e direitos humanos",             "prioridade": "alta" }
+        ]
+      }
+    ]
+  }
+}
