@@ -22,26 +22,7 @@ const TOPICO_SK = {
   vault: 'obsidian_vault',
 }
 
-const TOPICO_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAy8HRawioRC-_IOaVj9RqXlU1ASb-vHtU",
-  authDomain: "enem-study.firebaseapp.com",
-  projectId: "enem-study",
-  storageBucket: "enem-study.firebasestorage.app",
-  messagingSenderId: "859828535888",
-  appId: "1:859828535888:web:85d41615dfb88f140e8755",
-  measurementId: "G-N02390WPSK",
-}
-
-let topicoDb = null
-let topicoFirebaseReady = false
-let bancoQuestoes = []
-let quizState = {
-  open: false,
-  current: 0,
-  selected: null,
-  answered: false,
-  acertos: 0,
-}
+// Firebase e quiz gerenciados por firebase-init.js e quiz.js
 
 function resolveTopicoContext(materia, params) {
   const byId = params.get('id')
@@ -121,28 +102,6 @@ function getTopicoQuizProgress() {
 
 function saveTopicoQuizProgress(progress) {
   store.set(TOPICO_SK.quiz, progress)
-}
-
-function initTopicoFirebase() {
-  if (topicoFirebaseReady || typeof firebase === 'undefined') return topicoFirebaseReady
-
-  try {
-    if (!firebase.apps?.length) firebase.initializeApp(TOPICO_FIREBASE_CONFIG)
-    topicoDb = firebase.firestore()
-    topicoFirebaseReady = true
-  } catch (err) {
-    console.warn('Firebase indisponivel na pagina de topico:', err)
-  }
-
-  return topicoFirebaseReady
-}
-
-function getVaultName() {
-  return store.get(TOPICO_SK.vault) || ''
-}
-
-function saveVaultName(name) {
-  store.set(TOPICO_SK.vault, name)
 }
 
 function isTopicoFeito() {
@@ -303,8 +262,13 @@ function renderTopicoPage() {
 
   setupTopicoListeners()
   renderTopicoVideos()
-  renderPracticeArea({ loading: true })
-  loadBancoQuestoes()
+  iniciarQuiz({
+    containerId:  'practice-area',
+    storageKey:   TOPICO_SK.quiz,
+    materiaId:    topicoMateriaKey,
+    conteudoId:   conteudo.id,
+    habilidadeId: habilidade.id,
+  })
   renderTopicoQuestoes()
   setNavActive()
   lucide.createIcons()
@@ -323,9 +287,7 @@ function setupTopicoListeners() {
       saveTopicoAnotacao(textarea.value)
       if (status) {
         status.textContent = 'salvo'
-        setTimeout(() => {
-          if (status) status.textContent = ''
-        }, 1200)
+        setTimeout(() => { if (status) status.textContent = '' }, 1200)
       }
     }, 500)
   })
@@ -390,16 +352,9 @@ async function addTopicoVideo() {
   const url = input.value.trim()
   if (!url) return
   const id = ytId(url)
-  if (!id) {
-    alert('Link do YouTube inválido.')
-    return
-  }
+  if (!id) { alert('Link do YouTube inválido.'); return }
   const videos = getTopicoVideos()
-  videos.push({
-    id,
-    url,
-    titulo: await ytTitle(id),
-  })
+  videos.push({ id, url, titulo: await ytTitle(id) })
   saveTopicoVideos(videos)
   input.value = ''
   renderTopicoVideos()
@@ -433,246 +388,6 @@ function removeTopicoVideo(index) {
   saveTopicoVideos(videos)
   renderTopicoVideos()
 }
-
-async function loadBancoQuestoes() {
-  const area = document.getElementById('practice-area')
-  if (!area) return
-
-  if (!initTopicoFirebase()) {
-    renderPracticeArea({
-      error: 'Banco de questões indisponível nesta página. Confira a configuração do Firebase.',
-    })
-    return
-  }
-
-  try {
-    const snap = await topicoDb.collection('questoes')
-      .where('status', '==', 'publicado')
-      .where('materiaId', '==', topicoMateriaKey)
-      .where('conteudoId', '==', conteudo.id)
-      .where('habilidadeId', '==', habilidade.id)
-      .get()
-
-    bancoQuestoes = snap.docs
-      .map(doc => normalizarQuestaoBanco({ id: doc.id, ...doc.data() }))
-      .filter(Boolean)
-      .sort((a, b) => String(a.dificuldade || '').localeCompare(String(b.dificuldade || '')))
-
-    quizState = {
-      open: false,
-      current: 0,
-      selected: null,
-      answered: false,
-      acertos: 0,
-    }
-    renderPracticeArea()
-  } catch (err) {
-    console.error('Erro ao carregar questões do tópico:', err)
-    renderPracticeArea({
-      error: 'Não consegui carregar as questões publicadas deste tópico agora.',
-    })
-  }
-}
-
-function normalizarQuestaoBanco(q) {
-  const alternativas = q.alternativas || {}
-  const letras = ['A', 'B', 'C', 'D']
-  if (!q.pergunta || !letras.every(letra => alternativas[letra]) || !letras.includes(q.resposta)) {
-    return null
-  }
-
-  return {
-    id: q.id,
-    pergunta: String(q.pergunta),
-    alternativas: letras.reduce((acc, letra) => {
-      acc[letra] = String(alternativas[letra])
-      return acc
-    }, {}),
-    resposta: q.resposta,
-    explicacao: String(q.explicacao || 'Sem explicação cadastrada.'),
-    dificuldade: q.dificuldade || 'facil',
-  }
-}
-
-function renderPracticeArea(options = {}) {
-  const area = document.getElementById('practice-area')
-  if (!area) return
-
-  const progress = getTopicoQuizProgress()
-  const count = bancoQuestoes.length
-  const statusText = options.loading
-    ? 'carregando...'
-    : `${count} disp.`
-  const canPractice = count > 0 && !options.loading && !options.error
-
-  area.innerHTML = `
-    <section class="practice-card">
-      <div class="practice-head">
-        <div>
-          <div class="practice-kicker">Questões deste tópico</div>
-          <div class="practice-title">
-            <i data-lucide="target" style="width:16px;height:16px;"></i>
-            Praticar questões
-          </div>
-          <div class="practice-sub">
-            ${getPracticeSubtitle(options, progress)}
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <span class="practice-count">
-            <i data-lucide="list-checks" style="width:13px;height:13px;"></i>
-            ${statusText}
-          </span>
-          <button class="btn btn-accent btn-sm" ${canPractice ? '' : 'disabled'} onclick="startTopicoQuiz()">
-            <i data-lucide="play" style="width:13px;height:13px;"></i>
-            ${quizState.open ? 'Recomeçar' : 'Praticar agora'}
-          </button>
-        </div>
-      </div>
-      <div class="quiz-shell ${quizState.open ? 'open' : ''}" id="quiz-shell">
-        ${renderQuizContent()}
-      </div>
-    </section>
-  `
-
-  renderQuizMath(area)
-  lucide.createIcons()
-}
-
-function getPracticeSubtitle(options, progress) {
-  if (options.loading) return 'Buscando questões publicadas no banco...'
-  if (options.error) return escapeHtml(options.error)
-  if (!bancoQuestoes.length) return 'Ainda não há questões publicadas para este tópico.'
-  if (progress.tentativas > 0 && progress.ultimaPontuacao) {
-    return `Última prática: ${progress.ultimaPontuacao.acertos}/${progress.ultimaPontuacao.total} acertos.`
-  }
-  return 'Uma questão por vez, com feedback e explicação logo após a resposta.'
-}
-
-function startTopicoQuiz() {
-  if (!bancoQuestoes.length) return
-  quizState = {
-    open: true,
-    current: 0,
-    selected: null,
-    answered: false,
-    acertos: 0,
-  }
-  renderPracticeArea()
-}
-
-function renderQuizContent() {
-  if (!bancoQuestoes.length) return ''
-
-  if (quizState.current >= bancoQuestoes.length) {
-    const total = bancoQuestoes.length
-    const pct = Math.round((quizState.acertos / total) * 100)
-    return `
-      <div class="quiz-result open">
-        <p style="font-size:14px;margin-bottom:6px;">Você fechou a prática com <strong>${quizState.acertos}/${total}</strong> acertos.</p>
-        <p style="color:var(--text2);font-size:12px;">Aproveitamento de ${pct}%. Dá para repetir quando quiser.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-          <button class="btn btn-accent btn-sm" onclick="startTopicoQuiz()">Refazer</button>
-          <button class="btn btn-sm" onclick="closeTopicoQuiz()">Fechar</button>
-        </div>
-      </div>
-    `
-  }
-
-  const q = bancoQuestoes[quizState.current]
-  const letras = ['A', 'B', 'C', 'D']
-  const feedbackClass = quizState.selected === q.resposta ? 'correct' : 'wrong'
-  const feedbackTitle = quizState.selected === q.resposta ? 'Acertou.' : `Errou. Resposta correta: ${q.resposta}.`
-
-  return `
-    <div class="quiz-topbar">
-      <div class="quiz-progress-text">Questão ${quizState.current + 1} de ${bancoQuestoes.length} · ${formatQuizDifficulty(q.dificuldade)}</div>
-      <button class="btn btn-sm" onclick="closeTopicoQuiz()">Fechar</button>
-    </div>
-    <div class="quiz-question quiz-math">${escapeHtml(q.pergunta).replace(/\n/g, '<br>')}</div>
-    <div class="quiz-options">
-      ${letras.map(letra => renderQuizOption(q, letra)).join('')}
-    </div>
-    <div class="quiz-feedback ${quizState.answered ? 'open' : ''} ${feedbackClass}">
-      ${quizState.answered ? `
-        <strong>${feedbackTitle}</strong>
-        <div class="quiz-math" style="margin-top:6px;">${escapeHtml(q.explicacao).replace(/\n/g, '<br>')}</div>
-        <button class="btn btn-accent btn-sm" style="margin-top:10px;" onclick="nextTopicoQuizQuestion()">
-          ${quizState.current + 1 === bancoQuestoes.length ? 'Ver resultado' : 'Próxima questão'}
-        </button>
-      ` : ''}
-    </div>
-  `
-}
-
-function renderQuizOption(q, letra) {
-  let className = ''
-  if (quizState.answered && letra === q.resposta) className = 'correct'
-  if (quizState.answered && letra === quizState.selected && letra !== q.resposta) className = 'wrong'
-
-  return `
-    <button class="quiz-option ${className}" ${quizState.answered ? 'disabled' : ''} onclick="answerTopicoQuiz('${letra}')">
-      <span class="quiz-letter">${letra}</span>
-      <span class="quiz-math">${escapeHtml(q.alternativas[letra]).replace(/\n/g, '<br>')}</span>
-    </button>
-  `
-}
-
-function answerTopicoQuiz(letra) {
-  if (quizState.answered || !bancoQuestoes[quizState.current]) return
-  const q = bancoQuestoes[quizState.current]
-  quizState.selected = letra
-  quizState.answered = true
-  if (letra === q.resposta) quizState.acertos += 1
-  renderPracticeArea()
-}
-
-function nextTopicoQuizQuestion() {
-  quizState.current += 1
-  quizState.selected = null
-  quizState.answered = false
-
-  if (quizState.current >= bancoQuestoes.length) {
-    const progress = getTopicoQuizProgress()
-    saveTopicoQuizProgress({
-      tentativas: (progress.tentativas || 0) + 1,
-      acertos: (progress.acertos || 0) + quizState.acertos,
-      ultimaPontuacao: {
-        acertos: quizState.acertos,
-        total: bancoQuestoes.length,
-        finishedAt: new Date().toISOString(),
-      },
-    })
-  }
-
-  renderPracticeArea()
-}
-
-function closeTopicoQuiz() {
-  quizState.open = false
-  renderPracticeArea()
-}
-
-function formatQuizDifficulty(value) {
-  return {
-    facil: 'fácil',
-    medio: 'médio',
-    dificil: 'difícil',
-  }[value] || value || 'nível único'
-}
-
-function renderQuizMath(root) {
-  if (!root || typeof renderMathInElement === 'undefined') return
-  renderMathInElement(root, {
-    delimiters: [
-      { left: '$$', right: '$$', display: true },
-      { left: '$', right: '$', display: false },
-    ],
-    throwOnError: false,
-  })
-}
-
-function addTopicoQuestao() {
   const enunciadoEl = document.getElementById('questao-enunciado')
   const respostaEl = document.getElementById('questao-resposta')
   const enunciado = enunciadoEl.value.trim()
