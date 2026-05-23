@@ -76,9 +76,8 @@ dist/
 build/
 .cache/
 
-# Pipeline local files
-pipeline/.env
-pipeline/node_modules/
+# Local pipeline files
+pipeline/
 
 # Large/local assets
 Assets/
