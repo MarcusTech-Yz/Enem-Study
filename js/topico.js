@@ -15,7 +15,8 @@ if (!topicoContext) {
 const { conteudo, habilidade, topicoKeyId, topicoFlatIdx } = topicoContext
 
 const TOPICO_SK = {
-  anotacao: `tuniv_anotacao_${topicoKeyId}`,
+  anotacaoLegada: `tuniv_anotacao_${topicoKeyId}`,
+  anotacaoFocoLegada: `nota_foco_${topicoMateriaKey}_${topicoKeyId}`,
   videos: `tuniv_videos_${topicoKeyId}`,
   questoes: `tuniv_questoes_${topicoKeyId}`,
   quiz: `tuniv_quiz_${topicoKeyId}`,
@@ -25,7 +26,7 @@ const TOPICO_SK = {
 // Firebase e quiz gerenciados por firebase-init.js e quiz.js
 
 function resolveTopicoContext(materia, params) {
-  const byId = params.get('id')
+  const byId = params.get('id') || params.get('t')
   const byConteudo = params.get('conteudo')
   const byHab = params.get('h')
   const byIdx = params.get('idx')
@@ -73,11 +74,17 @@ function getTopicoDescricao() {
 }
 
 function getTopicoAnotacao() {
-  return store.get(TOPICO_SK.anotacao) || ''
+  const notas = getNotasMateria(topicoMateriaKey)
+  const oficial = notas[topicoKeyId]
+  if (typeof oficial === 'string' && oficial.trim()) return oficial
+
+  const legada = store.get(TOPICO_SK.anotacaoLegada) || store.get(TOPICO_SK.anotacaoFocoLegada) || ''
+  if (legada && !oficial) saveNotaTopico(topicoMateriaKey, topicoKeyId, legada)
+  return legada
 }
 
 function saveTopicoAnotacao(text) {
-  store.set(TOPICO_SK.anotacao, text)
+  saveNotaTopico(topicoMateriaKey, topicoKeyId, text)
 }
 
 function getTopicoVideos() {
@@ -104,19 +111,20 @@ function saveTopicoQuizProgress(progress) {
   store.set(TOPICO_SK.quiz, progress)
 }
 
-function isTopicoFeito() {
-  return getTopicosFeitos(topicoMateriaKey).includes(topicoKeyId)
+function getVaultName() {
+  return store.get(TOPICO_SK.vault) || ''
+}
+
+function saveVaultName(name) {
+  store.set(TOPICO_SK.vault, name)
+}
+
+function isTopicoAtualFeito() {
+  return isTopicoFeito(topicoMateriaKey, topicoKeyId)
 }
 
 function toggleTopicoFeitoAtual() {
-  let feitos = getTopicosFeitos(topicoMateriaKey)
-  feitos = feitos.includes(topicoKeyId)
-    ? feitos.filter(item => item !== topicoKeyId)
-    : [...feitos, topicoKeyId]
-  store.set(`topicos_${topicoMateriaKey}`, feitos)
-  bumpStreak()
-  runConquistasCheck()
-  return feitos
+  return toggleTopicoFeito(topicoMateriaKey, topicoKeyId)
 }
 
 function getTopicoDificuldade() {
@@ -148,9 +156,12 @@ function renderTopicoPage() {
           <div class="topico-desc">${getTopicoDescricao()}</div>
         </div>
         <div class="topico-actions">
-          <button class="btn btn-sm ${isTopicoFeito() ? 'btn-accent' : ''}" id="topico-check-btn" onclick="toggleTopicoDone()">
-            <i data-lucide="${isTopicoFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i>
-            ${isTopicoFeito() ? 'Concluído' : 'Marcar como feito'}
+          <button class="btn btn-sm ${isTopicoAtualFeito() ? 'btn-accent' : ''}" id="topico-check-btn" onclick="toggleTopicoDone()">
+            <i data-lucide="${isTopicoAtualFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i>
+            ${isTopicoAtualFeito() ? 'Concluído' : 'Marcar como feito'}
+          </button>
+          <button class="btn btn-sm btn-accent" onclick="startTopicoFocus()">
+            <i data-lucide="play" style="width:13px;height:13px;"></i> Iniciar foco
           </button>
           <button class="btn btn-sm" onclick="openObsidianNote()">
             <i data-lucide="external-link" style="width:13px;height:13px;"></i> Obsidian
@@ -172,7 +183,7 @@ function renderTopicoPage() {
         </div>
         <div class="tstat">
           <div class="tstat-lbl">Progresso da Matéria</div>
-          <div class="tstat-val">${getProgressoMateria(topicoMateriaKey).pct}%</div>
+          <div class="tstat-val" id="progresso-materia-val">${getProgressoMateria(topicoMateriaKey).pct}%</div>
         </div>
       </section>
 
@@ -309,12 +320,14 @@ function updateTopicoHeader() {
   const button = document.getElementById('topico-check-btn')
   const tempoEl = document.getElementById('tempo-topico-val')
   const difEl = document.getElementById('dificuldade-topico-val')
+  const progressoEl = document.getElementById('progresso-materia-val')
   if (button) {
-    button.className = `btn btn-sm ${isTopicoFeito() ? 'btn-accent' : ''}`
-    button.innerHTML = `<i data-lucide="${isTopicoFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i> ${isTopicoFeito() ? 'Concluído' : 'Marcar como feito'}`
+    button.className = `btn btn-sm ${isTopicoAtualFeito() ? 'btn-accent' : ''}`
+    button.innerHTML = `<i data-lucide="${isTopicoAtualFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i> ${isTopicoAtualFeito() ? 'Concluído' : 'Marcar como feito'}`
   }
   if (tempoEl) tempoEl.textContent = formatTempo(getTempo(topicoMateriaKey, topicoKeyId))
   if (difEl) difEl.textContent = formatDificuldadeLabel(getTopicoDificuldade())
+  if (progressoEl) progressoEl.textContent = `${getProgressoMateria(topicoMateriaKey).pct}%`
   lucide.createIcons()
 }
 
@@ -322,6 +335,16 @@ function setDifficulty(value) {
   const current = getTopicoDificuldade()
   setTopicoDificuldade(current === value ? 0 : value)
   updateTopicoHeader()
+}
+
+function startTopicoFocus() {
+  const params = new URLSearchParams({
+    materiaKey: topicoMateriaKey,
+    tKey: topicoKeyId,
+    texto: getTopicoTitulo(),
+    matNome: topicoMateria.nome,
+  })
+  window.location.href = 'modo-foco.html?' + params.toString()
 }
 
 function formatDificuldadeLabel(value) {
@@ -388,6 +411,8 @@ function removeTopicoVideo(index) {
   saveTopicoVideos(videos)
   renderTopicoVideos()
 }
+
+function addTopicoQuestao() {
   const enunciadoEl = document.getElementById('questao-enunciado')
   const respostaEl = document.getElementById('questao-resposta')
   const enunciado = enunciadoEl.value.trim()
@@ -400,6 +425,7 @@ function removeTopicoVideo(index) {
     resposta,
     createdAt: new Date().toISOString(),
   })
+
   saveTopicoQuestoes(questoes)
   enunciadoEl.value = ''
   respostaEl.value = ''
@@ -481,7 +507,7 @@ function buildTopicoMarkdown() {
   md += `conteudo: "${conteudo.nome}"\n`
   md += `topico: "${getTopicoTitulo()}"\n`
   md += `id: "${topicoKeyId}"\n`
-  md += `concluido: ${isTopicoFeito()}\n`
+  md += `concluido: ${isTopicoAtualFeito()}\n`
   md += `tempo_estudado: "${formatTempo(tempo)}"\n`
   md += `---\n\n`
   md += `# ${getTopicoTitulo()}\n\n`

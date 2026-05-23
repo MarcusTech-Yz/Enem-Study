@@ -23,14 +23,73 @@ function getMateriaHoje() {
 }
 
 // ── Tópicos ────────────────────────────────────────────
-function getTopicosFeitos(k)  { return store.get('topicos_' + k) || [] }
-function toggleTopico(k, idx) {
-  let f = getTopicosFeitos(k)
-  f = f.includes(idx) ? f.filter(i => i !== idx) : [...f, idx]
-  store.set('topicos_' + k, f)
+function normalizeTopicosFeitos(value) {
+  return Array.isArray(value)
+    ? [...new Set(value.filter(Boolean).map(String))]
+    : []
+}
+
+function getTopicosFeitos(k) {
+  return normalizeTopicosFeitos(store.get('topicos_' + k))
+}
+
+function saveTopicosFeitos(k, feitos) {
+  const normalizados = normalizeTopicosFeitos(feitos)
+  store.set('topicos_' + k, normalizados)
+  runConquistasCheck()
+  return normalizados
+}
+
+function isTopicoFeito(materiaKey, tKey) {
+  return getTopicosFeitos(materiaKey).includes(String(tKey))
+}
+
+function marcarTopicoFeito(materiaKey, tKey) {
+  const key = String(tKey)
+  const feitos = getTopicosFeitos(materiaKey)
+  if (feitos.includes(key)) return feitos
+
+  feitos.push(key)
+  store.set('topicos_' + materiaKey, feitos)
   bumpStreak()
   runConquistasCheck()
-  return f
+  return feitos
+}
+
+function marcarTopicosFeitos(materiaKey, tKeys) {
+  const feitos = getTopicosFeitos(materiaKey)
+  const novos = normalizeTopicosFeitos(tKeys).filter(k => !feitos.includes(k))
+  if (!novos.length) return feitos
+
+  const todos = [...feitos, ...novos]
+  store.set('topicos_' + materiaKey, todos)
+  bumpStreak()
+  runConquistasCheck()
+  return todos
+}
+
+function desmarcarTopicoFeito(materiaKey, tKey) {
+  const key = String(tKey)
+  const feitos = getTopicosFeitos(materiaKey).filter(k => k !== key)
+  store.set('topicos_' + materiaKey, feitos)
+  runConquistasCheck()
+  return feitos
+}
+
+function desmarcarTodosTopicos(materiaKey) {
+  store.set('topicos_' + materiaKey, [])
+  runConquistasCheck()
+  return []
+}
+
+function toggleTopicoFeito(materiaKey, tKey) {
+  return isTopicoFeito(materiaKey, tKey)
+    ? desmarcarTopicoFeito(materiaKey, tKey)
+    : marcarTopicoFeito(materiaKey, tKey)
+}
+
+function toggleTopico(k, idx) {
+  return toggleTopicoFeito(k, idx)
 }
 
 // ── Dificuldade ────────────────────────────────────────
@@ -46,6 +105,56 @@ function getImagens(k)        { return store.get('imagens_' + k) || [] }
 function addImagem(k, b64)    { const a = getImagens(k); a.push(b64); store.set('imagens_' + k, a); return a }
 function removeImagem(k, idx) { const a = getImagens(k); a.splice(idx,1); store.set('imagens_' + k, a); return a }
 
+function getTopicosMateria(materiaKey) {
+  const mat = ENEM[materiaKey]
+  if (!mat) return []
+
+  if (Array.isArray(mat.conteudos)) {
+    const result = []
+    for (const conteudo of mat.conteudos) {
+      for (const habilidade of conteudo.habilidades || []) {
+        result.push({
+          key: `${conteudo.id}__${habilidade.id}`,
+          conteudoId: conteudo.id,
+          conteudoNome: conteudo.nome,
+          habilidadeId: habilidade.id,
+          titulo: habilidade.topico || habilidade.titulo || String(habilidade.id),
+          descricao: habilidade.descricao || '',
+          prioridade: habilidade.prioridade || '',
+          habilidade,
+          conteudo,
+        })
+      }
+    }
+    return result
+  }
+
+  if (Array.isArray(mat.topicos)) {
+    return mat.topicos.map((topico, idx) => ({
+      key: String(idx),
+      conteudoId: '',
+      conteudoNome: '',
+      habilidadeId: String(idx),
+      titulo: typeof topico === 'string' ? topico : (topico?.titulo || topico?.topico || String(topico)),
+      descricao: '',
+      prioridade: '',
+      habilidade: topico,
+      conteudo: null,
+    }))
+  }
+
+  return []
+}
+
+function getTopicoMateriaInfo(materiaKey, topicoKey) {
+  const key = String(topicoKey)
+  return getTopicosMateria(materiaKey).find(t =>
+    t.key === key ||
+    String(t.habilidadeId) === key ||
+    t.titulo.toLowerCase() === key.toLowerCase()
+  ) || null
+}
+
 // ── Tempo por tópico ───────────────────────────────────
 // Armazena segundos gastos: { "materiaKey:topicoIdx": segundos }
 function getTempo(materiaKey, topicoIdx) {
@@ -58,6 +167,15 @@ function addTempo(materiaKey, topicoIdx, segundos) {
   const key = `${materiaKey}:${topicoIdx}`
   all[key] = (all[key] || 0) + segundos
   store.set('tempo_topicos', all)
+
+  const registro = getRegistroHoje()
+  registro.tempoSeg = (registro.tempoSeg || 0) + segundos
+  registro.tempoMin = Math.floor((registro.tempoSeg || 0) / 60)
+  registro.ultimaMateria = materiaKey
+  registro.updatedAt = new Date().toISOString()
+
+  store.set('registro_' + getTodayStr(), registro)
+
   runConquistasCheck()
 }
 
@@ -97,14 +215,7 @@ function getTempoSemana() {
 function getProgressoGlobal() {
   let total = 0, feitos = 0
   for (const k of Object.keys(ENEM)) {
-    const mat = ENEM[k]
-    // Calcula total de habilidades
-    let topicosTotais = 0
-    if (mat.conteudos) {
-      for (const c of mat.conteudos) topicosTotais += c.habilidades.length
-    } else if (mat.topicos) {
-      topicosTotais = mat.topicos.length
-    }
+    const topicosTotais = getTopicosMateria(k).length
     total  += topicosTotais
     feitos += getTopicosFeitos(k).length
   }
@@ -112,15 +223,9 @@ function getProgressoGlobal() {
 }
 
 function getProgressoMateria(k) {
-  const mat = ENEM[k]
-  if (!mat) return { feitos: 0, total: 0, pct: 0 }
-  const feitos = store.get('topicos_' + k) || []
-  let total = 0
-  if (mat.conteudos) {
-    for (const c of mat.conteudos) total += c.habilidades.length
-  } else if (mat.topicos) {
-    total = mat.topicos.length
-  }
+  if (!ENEM[k]) return { feitos: 0, total: 0, pct: 0 }
+  const feitos = getTopicosFeitos(k)
+  const total = getTopicosMateria(k).length
   return { feitos: feitos.length, total, pct: total ? Math.round((feitos.length / total) * 100) : 0 }
 }
 
@@ -132,13 +237,30 @@ function getMateriasMaisFracas(limit = 4) {
 }
 
 // ── Streak ─────────────────────────────────────────────
-function getTodayStr() { return new Date().toISOString().slice(0, 10) }
+function getLocalDateStr(offsetDays = 0) {
+  const d = new Date()
+  d.setDate(d.getDate() + offsetDays)
+
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+
+  return `${y}-${m}-${day}`
+}
+
+function getTodayStr() { return getLocalDateStr(0) }
 function getStreak()   { return store.get('streak') || { count: 0, lastDate: null } }
 function bumpStreak() {
-  const s = getStreak(), hoje = getTodayStr()
+  const s = getStreak()
+  const hoje = getTodayStr()
   if (s.lastDate === hoje) return s
-  const ontem = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
-  const novo  = { count: s.lastDate === ontem ? s.count + 1 : 1, lastDate: hoje }
+
+  const ontem = getLocalDateStr(-1)
+  const novo = {
+    count: s.lastDate === ontem ? s.count + 1 : 1,
+    lastDate: hoje
+  }
+
   store.set('streak', novo)
   runConquistasCheck()
   return novo
@@ -150,7 +272,7 @@ function getRecomendados(n = 3) {
   const result = []
   for (const mat of fracas) {
     if (result.length >= n) break
-    const feitos = store.get('topicos_' + mat.key) || []
+    const feitos = getTopicosFeitos(mat.key)
     const dific  = store.get('dific_' + mat.key) || {}
     for (const conteudo of ENEM[mat.key].conteudos) {
       if (result.length >= n) break
@@ -295,15 +417,27 @@ function runConquistasCheck() {
 
 // ── Nota por tópico ────────────────────────────────────
 function getNotaTopico(materiaKey, topicoIdx) {
-  return store.get('nota_topico_' + materiaKey) || {}
+  return getNotasMateria(materiaKey)[topicoIdx] || ''
 }
 function saveNotaTopico(materiaKey, topicoIdx, texto) {
-  const all = getNotaTopico(materiaKey)
+  const all = getNotasMateria(materiaKey)
   all[topicoIdx] = texto
   store.set('nota_topico_' + materiaKey, all)
 }
 function getNotasMateria(materiaKey) {
-  return store.get('nota_topico_' + materiaKey) || {}
+  const all = store.get('nota_topico_' + materiaKey) || {}
+  let changed = false
+
+  for (const topico of getTopicosMateria(materiaKey)) {
+    const legacy = store.get(`tuniv_anotacao_${topico.key}`) || store.get(`nota_foco_${materiaKey}_${topico.key}`) || ''
+    if (!(topico.key in all) && legacy) {
+      all[topico.key] = legacy
+      changed = true
+    }
+  }
+
+  if (changed) store.set('nota_topico_' + materiaKey, all)
+  return all
 }
 
 // ── Nav ────────────────────────────────────────────────
