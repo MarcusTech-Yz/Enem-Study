@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <title>ENEM · Plano</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .plano-config {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .config-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .config-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .config-label { font-size: 13px; color: var(--text2); }
+    .config-select {
+      background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text); font-family: var(--font); font-size: 12px;
+      border-radius: 6px; padding: 5px 10px; cursor: pointer; outline: none;
+    }
+    .config-select:focus { border-color: var(--accent); }
+
+    /* Semana */
+    .semana-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+    .dia-col {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px;
+      min-height: 120px;
+    }
+    .dia-col.today { border-color: var(--accent); }
+    .dia-nome {
+      font-size: 10px; font-weight: 500; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text3); margin-bottom: 8px;
+    }
+    .dia-col.today .dia-nome { color: var(--accent); }
+
+    .plano-pill {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 6px; padding: 6px 8px; margin-bottom: 5px;
+      font-size: 11px; gap: 4px;
+    }
+    .plano-pill-nome { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .plano-pill-rm {
+      background: none; border: none; color: var(--text3);
+      cursor: pointer; padding: 0; font-size: 11px; flex-shrink: 0;
+      transition: color .15s;
+    }
+    .plano-pill-rm:hover { color: var(--red); }
+    .dia-add {
+      width: 100%; background: none; border: 1px dashed var(--border);
+      color: var(--text3); border-radius: 6px; padding: 5px;
+      font-size: 11px; cursor: pointer; transition: all .15s; margin-top: 4px;
+      font-family: var(--font);
+    }
+    .dia-add:hover { border-color: var(--border2); color: var(--text2); }
+
+    /* Cronograma */
+    .crono-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .crono-item:last-child { border-bottom: none; }
+    .crono-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border2); flex-shrink: 0; margin-top: 4px;
+    }
+    .crono-dot.hoje { background: var(--accent); }
+    .crono-info { flex: 1; }
+    .crono-hora { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-bottom: 3px; }
+    .crono-nome { font-size: 13px; }
+    .crono-mat  { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+
+    /* Modal */
+    .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s; }
+    .modal-overlay.open { opacity:1;pointer-events:all; }
+    .modal { background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;width:340px;max-width:95vw; }
+    .modal h3 { font-size:15px;font-weight:600;margin-bottom:1rem; }
+    .form-row { margin-bottom:12px; }
+    .form-label { font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);margin-bottom:6px;display:block; }
+    .form-row select, .form-row input {
+      width:100%;background:var(--bg3);border:1px solid var(--border2);
+      color:var(--text);font-family:var(--font);font-size:13px;
+      border-radius:var(--radius-sm);padding:8px 10px;outline:none;
+    }
+    .form-row select:focus, .form-row input:focus { border-color:var(--accent); }
+    .modal-btns { display:flex;gap:8px;justify-content:flex-end;margin-top:1rem; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><span></span> enem.study</div>
+    <nav>
+      <p class="nav-label">Menu</p>
+      <ul class="nav-links">
+        <li><a href="index.html"><i data-lucide="play-circle" class="nav-icon"></i> Estudar</a></li>
+        <li><a href="progresso.html"><i data-lucide="bar-chart-2" class="nav-icon"></i> Progresso</a></li>
+        <li><a href="plano.html" class="active"><i data-lucide="calendar-days" class="nav-icon"></i> Plano</a></li>
+        <li><a href="perfil.html"><i data-lucide="trophy" class="nav-icon"></i> Perfil</a></li>
+      </ul>
+    </nav>
+    <div style="margin-top:auto;padding-top:1rem;display:flex;flex-direction:column;gap:4px;">
+      <a href="materias.html" style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;padding:6px 0;">
+        <i data-lucide="book-open" style="width:13px;height:13px;"></i> Todas as matérias
+      </a>
+      <a href="exportar.html" style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;padding:6px 0;">
+        <i data-lucide="download" style="width:13px;height:13px;"></i> Exportar dados
+      </a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <p class="date-tag">Planejamento</p>
+      <h1>Seu Plano de Estudos</h1>
+      <p>Ajuste conforme sua rotina. A grade se adapta automaticamente.</p>
+    </div>
+
+    <!-- Configurações -->
+    <div class="plano-config">
+      <div class="config-row">
+        <span class="config-label">Tempo por dia</span>
+        <select class="config-select" id="cfg-tempo">
+          <option value="30">30 min</option>
+          <option value="60" selected>1 hora</option>
+          <option value="90">1h30</option>
+          <option value="120">2 horas</option>
+          <option value="180">3 horas+</option>
+        </select>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Meta padrão de sessão</span>
+        <select class="config-select" id="cfg-pomo">
+          <option value="10">10 min</option>
+          <option value="25" selected>25 min</option>
+          <option value="45">45 min</option>
+          <option value="0">Livre</option>
+        </select>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Data do ENEM</span>
+        <span style="font-size:12px;color:var(--text3);font-family:var(--mono);" id="dias-restantes"></span>
+      </div>
+    </div>
+
+    <!-- Botões de ação -->
+    <div style="display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;">
+      <button class="btn btn-accent" onclick="sugestaoAutomatica()">
+        <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Recalcular automaticamente
+      </button>
+      <button class="btn" onclick="confirmarLimpar()">Limpar tudo</button>
+    </div>
+
+    <!-- Grade semanal -->
+    <p class="card-title" style="margin-bottom:12px;">Esta semana</p>
+    <div class="semana-grid" id="semana-grid"></div>
+
+    <!-- Cronograma de hoje -->
+    <div class="card" id="crono-card">
+      <p class="card-title" style="margin-bottom:1rem;">Cronograma de hoje</p>
+      <div id="crono-hoje"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal add -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-titulo">Adicionar ao dia</h3>
+    <div class="form-row">
+      <label class="form-label">Matéria</label>
+      <select id="modal-materia"></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="form-row">
+        <label class="form-label">Início</label>
+        <input type="time" id="modal-inicio" value="09:00" />
+      </div>
+      <div class="form-row">
+        <label class="form-label">Duração (min)</label>
+        <input type="number" id="modal-duracao" value="60" min="15" max="300" step="15" />
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="salvarMateria()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<script src="data/topicos.js"></script>
+<script src="data/conquistas.js"></script>
+<script src="data/conquista_toast.js"></script>
+<script src="js/app.js"></script>
+<script src="js/grade.js"></script>
+<script>
+const DIAS_SEMANA = ['Seg','Ter','Qua','Qui','Sex','Sáb']
+const DIAS_IDX    = [1,2,3,4,5,6]
+const hojeIdx     = new Date().getDay()
+
+// Dias restantes para o ENEM (padrão nov 2026)
+const enem = new Date('2026-11-08')
+const hoje = new Date()
+const diff  = Math.ceil((enem - hoje) / 86400000)
+document.getElementById('dias-restantes').textContent = diff > 0
+  ? `${diff} dias para o ENEM` : 'ENEM chegou!'
+
+function renderSemana() {
+  const grade = getGrade()
+  const grid  = document.getElementById('semana-grid')
+  grid.innerHTML = ''
+
+  DIAS_IDX.forEach((diaIdx, i) => {
+    const isHoje   = diaIdx === hojeIdx
+    const materias = grade[diaIdx] || []
+    const pillsHTML = materias.map((m, idx) => {
+      const dados = ENEM[m.key]
+      return `<div class="plano-pill">
+        <span class="plano-pill-nome">${dados?.nome?.split(' ')[0] || m.key}</span>
+        <button class="plano-pill-rm" onclick="removerMateria(${diaIdx},${idx})">✕</button>
+      </div>`
+    }).join('')
+
+    grid.innerHTML += `
+      <div class="dia-col ${isHoje ? 'today' : ''}">
+        <p class="dia-nome">${DIAS_SEMANA[i]}${isHoje ? ' · hoje' : ''}</p>
+        ${pillsHTML}
+        <button class="dia-add" onclick="abrirModal(${diaIdx})">+ Adicionar</button>
+      </div>
+    `
+  })
+  lucide.createIcons()
+  renderCronoHoje()
+}
+
+function renderCronoHoje() {
+  const grade    = getGrade()
+  const materias = grade[hojeIdx] || []
+  const crono    = document.getElementById('crono-hoje')
+  if (materias.length === 0) {
+    crono.innerHTML = `<p style="font-size:13px;color:var(--text3);">Nenhuma matéria programada para hoje. Adicione acima ou use "Recalcular".</p>`
+    return
+  }
+  crono.innerHTML = materias.map(m => {
+    const dados = ENEM[m.key]
+    return `<div class="crono-item">
+      <div class="crono-dot hoje"></div>
+      <div class="crono-info">
+        <p class="crono-hora">${m.inicio || '—'}${m.duracao ? ' · ' + m.duracao + ' min' : ''}</p>
+        <p class="crono-nome">${dados?.nome || m.key}</p>
+      </div>
+    </div>`
+  }).join('')
+}
+
+// Sobrescreve abrirModal do grade.js para funcionar com o novo layout
+function abrirModal(diaIdx) {
+  window._diaAtivo = diaIdx
+  const sel = document.getElementById('modal-materia')
+  sel.innerHTML = Object.entries(ENEM)
+    .map(([k, m]) => `<option value="${k}">${m.nome}</option>`).join('')
+  document.getElementById('modal-titulo').textContent = `Adicionar — ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][diaIdx]}`
+  document.getElementById('modal').classList.add('open')
+}
+
+function fecharModal() {
+  document.getElementById('modal').classList.remove('open')
+  window._diaAtivo = null
+}
+
+function salvarMateria() {
+  if (window._diaAtivo === null || window._diaAtivo === undefined) return
+  const key     = document.getElementById('modal-materia').value
+  const inicio  = document.getElementById('modal-inicio').value
+  const duracao = document.getElementById('modal-duracao').value
+  const grade   = getGrade()
+  grade[window._diaAtivo].push({ key, inicio, duracao })
+  saveGrade(grade)
+  fecharModal()
+  renderSemana()
+}
+
+function removerMateria(diaIdx, itemIdx) {
+  const grade = getGrade()
+  grade[diaIdx].splice(itemIdx, 1)
+  saveGrade(grade)
+  renderSemana()
+}
+
+function sugestaoAutomatica() {
+  const grade  = getGrade()
+  const fracas = getMateriasMaisFracas(Object.keys(ENEM).length)
+  const horas  = ['08:00','09:30','14:00','15:30','19:00']
+  let fIdx = 0
+  DIAS_IDX.forEach((dia, i) => {
+    if (grade[dia].length === 0 && fIdx < fracas.length) {
+      grade[dia] = [{ key: fracas[fIdx].key, inicio: horas[i % horas.length], duracao: '60' }]
+      fIdx++
+    }
+  })
+  saveGrade(grade)
+  renderSemana()
+}
+
+function confirmarLimpar() {
+  if (!confirm('Limpar toda a grade semanal?')) return
+  saveGrade({ 0:[],1:[],2:[],3:[],4:[],5:[],6:[] })
+  renderSemana()
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) fecharModal()
+})
+
+const cfgMetaSessao = document.getElementById('cfg-pomo')
+if (cfgMetaSessao) {
+  const metaSalva = Number(store.get('focus_meta_min') ?? 25)
+  cfgMetaSessao.value = Number.isFinite(metaSalva) ? String(metaSalva) : '25'
+  cfgMetaSessao.addEventListener('change', () => {
+    store.set('focus_meta_min', Number(cfgMetaSessao.value))
+  })
+}
+
+renderSemana()
+</script>
+</body>
+</html>

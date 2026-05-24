@@ -161,7 +161,7 @@ function renderTopicoPage() {
             ${isTopicoAtualFeito() ? 'Concluído' : 'Marcar como feito'}
           </button>
           <button class="btn btn-sm btn-accent" onclick="startTopicoFocus()">
-            <i data-lucide="play" style="width:13px;height:13px;"></i> Iniciar foco
+            <i data-lucide="play" style="width:13px;height:13px;"></i> Iniciar sessão
           </button>
           <button class="btn btn-sm" onclick="openObsidianNote()">
             <i data-lucide="external-link" style="width:13px;height:13px;"></i> Obsidian
@@ -338,6 +338,9 @@ function setDifficulty(value) {
 }
 
 function startTopicoFocus() {
+  const textarea = document.getElementById('topico-anotacao')
+  if (textarea) saveTopicoAnotacao(textarea.value)
+
   const params = new URLSearchParams({
     materiaKey: topicoMateriaKey,
     tKey: topicoKeyId,

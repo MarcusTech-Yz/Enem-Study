@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <title>ENEM · Modo Foco</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <style>
+    body {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .focus-page {
+      min-height: 100vh;
+      padding: 2rem clamp(1.25rem, 5vw, 5rem) 7rem;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .focus-topbar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      margin-bottom: 2rem;
+      color: var(--text2);
+      font-size: 13px;
+    }
+
+    .focus-topbar a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text2);
+      text-decoration: none;
+    }
+
+    .focus-title-mini {
+      color: var(--text2);
+      font-size: 13px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 420px;
+    }
+
+    .focus-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: clamp(1.5rem, 4vw, 2.5rem);
+      margin-bottom: 1.5rem;
+    }
+
+    .focus-kicker {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text3);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .focus-time {
+      font-family: var(--mono);
+      font-size: clamp(56px, 10vw, 88px);
+      line-height: 1;
+      letter-spacing: 0;
+      color: var(--accent);
+      text-align: center;
+      margin: 1.75rem 0 .4rem;
+    }
+
+    .focus-status {
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      margin-bottom: 2rem;
+    }
+
+    .focus-progress-wrap {
+      margin: 0 auto 1.35rem;
+      max-width: 760px;
+    }
+
+    .focus-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text3);
+      margin-bottom: 8px;
+    }
+
+    .focus-progress {
+      height: 4px;
+      background: var(--bg3);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .focus-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width .25s ease, opacity .25s ease;
+    }
+
+    .focus-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+
+    .focus-actions .btn {
+      align-items: center;
+      display: inline-flex;
+      gap: 7px;
+    }
+
+    .focus-presets {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .focus-preset {
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text3);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .focus-preset:hover {
+      color: var(--text);
+      border-color: var(--border2);
+      background: var(--bg3);
+    }
+
+    .focus-preset.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(200,241,53,.07);
+    }
+
+    .topic-summary {
+      display: grid;
+      gap: 6px;
+    }
+
+    .topic-summary h2 {
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: 0;
+      font-weight: 600;
+    }
+
+    .topic-summary .mat {
+      font-size: 12px;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    .topic-summary .desc {
+      margin-top: 1rem;
+      color: var(--text2);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .focus-bottom {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(22,22,22,.94);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      padding: 14px 1rem;
+      z-index: 20;
+    }
+
+    .focus-bottom-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .focus-bottom-inner .btn {
+      align-items: center;
+      display: inline-flex;
+      gap: 7px;
+    }
+
+    .focus-note {
+      text-align: center;
+      color: var(--text3);
+      font-size: 12px;
+      margin-top: 1rem;
+      min-height: 18px;
+    }
+
+    .session-saved {
+      color: var(--blue);
+    }
+
+    @media (max-width: 700px) {
+      .focus-topbar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .focus-title-mini {
+        text-align: left;
+        max-width: 100%;
+      }
+
+      .focus-progress-meta {
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .focus-bottom-inner {
+        justify-content: stretch;
+      }
+
+      .focus-bottom-inner .btn,
+      .focus-actions .btn {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="focus-page">
+    <div class="focus-topbar">
+      <a href="#" onclick="sairDoFoco(); return false;">
+        <i data-lucide="arrow-left" style="width:14px;height:14px;"></i>
+        Sair
+      </a>
+
+      <div class="focus-title-mini" id="top-title">Modo Foco</div>
+
+      <div></div>
+    </div>
+
+    <section class="focus-card">
+      <p class="focus-kicker">Sessão de estudo</p>
+
+      <div class="focus-time" id="focus-time">00:00</div>
+      <div class="focus-status" id="focus-status">Pronto para começar</div>
+
+      <div class="focus-progress-wrap">
+        <div class="focus-progress-meta">
+          <span id="goal-label">Meta: 25 min</span>
+          <span id="progress-label">0%</span>
+        </div>
+
+        <div class="focus-progress">
+          <div class="focus-progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="focus-actions">
+        <button class="btn btn-accent" id="start-btn" onclick="toggleSessao()">
+          <i data-lucide="play" style="width:14px;height:14px;"></i>
+          Iniciar sessão
+        </button>
+
+        <button class="btn" onclick="salvarSessao()">
+          <i data-lucide="save" style="width:14px;height:14px;"></i>
+          Salvar sessão
+        </button>
+
+        <button class="btn" onclick="adicionarCincoMinutos()">
+          +5 min
+        </button>
+
+        <button class="btn" onclick="resetarSessao()">
+          Reiniciar
+        </button>
+      </div>
+
+      <div class="focus-presets">
+        <button class="focus-preset" data-goal="10" onclick="setMeta(10, this)">Rápido · 10 min</button>
+        <button class="focus-preset active" data-goal="25" onclick="setMeta(25, this)">Padrão · 25 min</button>
+        <button class="focus-preset" data-goal="45" onclick="setMeta(45, this)">Profundo · 45 min</button>
+        <button class="focus-preset" data-goal="0" onclick="setMeta(0, this)">Livre</button>
+      </div>
+
+      <p class="focus-note" id="session-note">
+        O tempo será salvo quando você finalizar a sessão.
+      </p>
+    </section>
+
+    <section class="focus-card topic-summary">
+      <p class="focus-kicker">Conteúdo do tópico</p>
+      <h2 id="topic-name">Tópico</h2>
+      <p class="mat" id="topic-mat">Matéria</p>
+      <p class="desc" id="topic-desc">Use essa sessão para estudar, revisar ou organizar suas anotações.</p>
+    </section>
+  </main>
+
+  <div class="focus-bottom">
+    <div class="focus-bottom-inner">
+      <button class="btn" onclick="verTopicoCompleto()">
+        <i data-lucide="external-link" style="width:14px;height:14px;"></i>
+        Ver tópico completo
+      </button>
+
+      <button class="btn btn-accent" onclick="concluirTopico()">
+        <i data-lucide="check" style="width:14px;height:14px;"></i>
+        Concluí este tópico
+      </button>
+    </div>
+  </div>
+
+  <script src="data/topicos.js"></script>
+  <script src="data/conquistas.js"></script>
+  <script src="data/conquista_toast.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    const params = new URLSearchParams(window.location.search)
+
+    const materiaKey = params.get('materiaKey') || params.get('m') || ''
+    const tKey = params.get('tKey') || params.get('id') || params.get('t') || ''
+    const texto = params.get('texto') || 'Tópico'
+    const matNome = params.get('matNome') || (ENEM[materiaKey]?.nome || 'Matéria')
+
+    let metaMin = Number(store.get('focus_meta_min') ?? 25)
+    if (!Number.isFinite(metaMin)) metaMin = 25
+    let segundosSessao = 0
+    let segundosSalvosNestaTela = 0
+    let rodando = false
+    let intervalo = null
+
+    const SESSION_KEY = `sessao_foco_${getTodayStr()}_${materiaKey}_${tKey}`
+
+    document.getElementById('top-title').textContent = texto
+    document.getElementById('topic-name').textContent = texto
+    document.getElementById('topic-mat').textContent = matNome
+
+    const infoTopico = typeof getTopicoMateriaInfo === 'function'
+      ? getTopicoMateriaInfo(materiaKey, tKey)
+      : null
+
+    const descricaoTopico = infoTopico?.descricao ||
+      infoTopico?.habilidade?.resumo ||
+      infoTopico?.habilidade?.descricao ||
+      infoTopico?.habilidade?.conteudo
+
+    if (descricaoTopico) {
+      document.getElementById('topic-desc').innerHTML = descricaoTopico
+    }
+
+    carregarSessao()
+    aplicarPresetInicial()
+    atualizarTela()
+    lucide.createIcons()
+
+    function formatClock(totalSeg) {
+      const min = Math.floor(totalSeg / 60).toString().padStart(2, '0')
+      const seg = (totalSeg % 60).toString().padStart(2, '0')
+      return `${min}:${seg}`
+    }
+
+    function toggleSessao() {
+      rodando ? pausarSessao() : iniciarSessao()
+    }
+
+    function iniciarSessao() {
+      if (rodando) return
+
+      rodando = true
+      document.getElementById('start-btn').innerHTML = `
+        <i data-lucide="pause" style="width:14px;height:14px;"></i>
+        Pausar
+      `
+
+      intervalo = setInterval(() => {
+        segundosSessao++
+        persistirSessao()
+        atualizarTela()
+      }, 1000)
+
+      atualizarTela()
+      lucide.createIcons()
+    }
+
+    function pausarSessao() {
+      rodando = false
+      clearInterval(intervalo)
+
+      document.getElementById('start-btn').innerHTML = `
+        <i data-lucide="play" style="width:14px;height:14px;"></i>
+        Retomar
+      `
+
+      persistirSessao()
+      atualizarTela()
+      lucide.createIcons()
+    }
+
+    function resetarSessao() {
+      const naoSalvo = segundosSessao - segundosSalvosNestaTela
+      if (naoSalvo > 0 && !confirm('Reiniciar esta sessão? O tempo ainda não salvo será perdido.')) return
+
+      rodando = false
+      clearInterval(intervalo)
+      segundosSessao = 0
+      segundosSalvosNestaTela = 0
+      limparSessao()
+
+      document.getElementById('start-btn').innerHTML = `
+        <i data-lucide="play" style="width:14px;height:14px;"></i>
+        Iniciar sessão
+      `
+
+      atualizarTela()
+      lucide.createIcons()
+    }
+
+    function adicionarCincoMinutos() {
+      if (metaMin === 0) metaMin = 5
+      else metaMin += 5
+
+      store.set('focus_meta_min', metaMin)
+      marcarPresetAtivo()
+      atualizarTela()
+      persistirSessao()
+    }
+
+    function setMeta(min, btn) {
+      metaMin = Number(min)
+      store.set('focus_meta_min', metaMin)
+
+      document.querySelectorAll('.focus-preset').forEach(b => b.classList.remove('active'))
+      if (btn) btn.classList.add('active')
+
+      atualizarTela()
+      persistirSessao()
+    }
+
+    function atualizarTela() {
+      document.getElementById('focus-time').textContent = formatClock(segundosSessao)
+
+      const status = document.getElementById('focus-status')
+      const goalLabel = document.getElementById('goal-label')
+      const progressLabel = document.getElementById('progress-label')
+      const progressFill = document.getElementById('progress-fill')
+
+      if (rodando) {
+        status.textContent = 'Estudando agora'
+      } else if (segundosSessao > 0) {
+        status.textContent = 'Sessão pausada'
+      } else {
+        status.textContent = 'Pronto para começar'
+      }
+
+      if (metaMin === 0) {
+        goalLabel.textContent = 'Meta: Livre'
+        progressLabel.textContent = `${Math.floor(segundosSessao / 60)}min acumulados`
+        progressFill.style.width = '100%'
+        progressFill.style.opacity = segundosSessao > 0 ? '1' : '.25'
+        return
+      }
+
+      const metaSeg = metaMin * 60
+      const pct = Math.min(100, Math.round((segundosSessao / metaSeg) * 100))
+
+      goalLabel.textContent = `Meta: ${metaMin} min`
+      progressLabel.textContent = `${pct}%`
+      progressFill.style.width = `${pct}%`
+      progressFill.style.opacity = '1'
+    }
+
+    function salvarSessao() {
+      if (rodando) pausarSessao()
+
+      const naoSalvo = segundosSessao - segundosSalvosNestaTela
+
+      if (!materiaKey || !tKey) {
+        avisarSessao('Não encontrei o tópico desta sessão.')
+        return
+      }
+
+      if (naoSalvo <= 0) {
+        avisarSessao('Nada novo para salvar.')
+        return
+      }
+
+      addTempo(materiaKey, tKey, naoSalvo)
+      segundosSalvosNestaTela = segundosSessao
+
+      addSessaoFocoHoje({
+        materiaKey,
+        tKey,
+        matNome,
+        topicoNome: texto,
+        durSeg: naoSalvo,
+        hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      })
+
+      persistirSessao()
+      avisarSessao(`Sessão salva: ${formatTempo(naoSalvo)}.`)
+    }
+
+    function concluirTopico() {
+      if (rodando) pausarSessao()
+
+      const naoSalvo = segundosSessao - segundosSalvosNestaTela
+
+      if (!materiaKey || !tKey) {
+        avisarSessao('Não encontrei o tópico para concluir.')
+        return
+      }
+
+      if (segundosSessao <= 0) {
+        const ok = confirm('Você ainda não registrou tempo nesta sessão. Marcar como concluído mesmo assim?')
+        if (!ok) return
+      }
+
+      if (naoSalvo > 0) {
+        addTempo(materiaKey, tKey, naoSalvo)
+        segundosSalvosNestaTela = segundosSessao
+
+        addSessaoFocoHoje({
+          materiaKey,
+          tKey,
+          matNome,
+          topicoNome: texto,
+          durSeg: naoSalvo,
+          hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        })
+      }
+
+      marcarTopicoFeito(materiaKey, tKey)
+      limparSessao()
+
+      alert('Tópico concluído! Progresso registrado.')
+      window.location.href = 'index.html'
+    }
+
+    function verTopicoCompleto() {
+      if (rodando) pausarSessao()
+      persistirSessao()
+
+      if (!materiaKey || !tKey) {
+        window.location.href = 'index.html'
+        return
+      }
+
+      window.location.href = `topico.html?m=${encodeURIComponent(materiaKey)}&id=${encodeURIComponent(tKey)}`
+    }
+
+    function sairDoFoco() {
+      if (rodando) pausarSessao()
+      persistirSessao()
+      window.history.length > 1 ? window.history.back() : window.location.href = 'index.html'
+    }
+
+    function persistirSessao() {
+      store.set(SESSION_KEY, {
+        materiaKey,
+        tKey,
+        texto,
+        matNome,
+        metaMin,
+        segundosSessao,
+        segundosSalvosNestaTela,
+        updatedAt: new Date().toISOString(),
+      })
+    }
+
+    function carregarSessao() {
+      const s = store.get(SESSION_KEY)
+      if (!s) return
+
+      segundosSessao = Number(s.segundosSessao || 0)
+      segundosSalvosNestaTela = Number(s.segundosSalvosNestaTela || 0)
+
+      if (typeof s.metaMin === 'number') {
+        metaMin = s.metaMin
+      }
+    }
+
+    function limparSessao() {
+      localStorage.removeItem(SESSION_KEY)
+    }
+
+    function aplicarPresetInicial() {
+      marcarPresetAtivo()
+    }
+
+    function marcarPresetAtivo() {
+      const botoes = [...document.querySelectorAll('.focus-preset')]
+      botoes.forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.goal) === Number(metaMin))
+      })
+
+      const existePreset = botoes.some(btn => Number(btn.dataset.goal) === Number(metaMin))
+      if (!existePreset) botoes.forEach(btn => btn.classList.remove('active'))
+    }
+
+    function addSessaoFocoHoje(sessao) {
+      const key = 'sessoes_' + getTodayStr()
+      const sessoes = store.get(key) || []
+      sessoes.push(sessao)
+      store.set(key, sessoes)
+    }
+
+    function avisarSessao(msg) {
+      const note = document.getElementById('session-note')
+      note.textContent = msg
+      note.classList.add('session-saved')
+
+      setTimeout(() => {
+        note.textContent = 'O tempo será salvo quando você finalizar a sessão.'
+        note.classList.remove('session-saved')
+      }, 2200)
+    }
+
+    window.addEventListener('beforeunload', () => {
+      if (segundosSessao > 0) persistirSessao()
+    })
+
+    if (typeof renderMathInElement !== 'undefined') {
+      document.addEventListener('DOMContentLoaded', () => {
+        renderMathInElement(document.body, { delimiters: [
+          { left:'$$', right:'$$', display:true },
+          { left:'$', right:'$', display:false }
+        ]})
+      })
+    }
+  </script>
+</body>
+</html>

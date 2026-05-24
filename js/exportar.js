@@ -2,47 +2,52 @@
 // Depende de: app.js, topicos.js, JSZip (carregado no HTML)
 
 // ── Formata uma matéria como Markdown ──────────────────
+function getTopicosExportMateria(key) {
+  return typeof getTopicosMateria === 'function' ? getTopicosMateria(key) : []
+}
+
 function materiaParaMd(key, incluirImagens = true) {
-  const mat     = ENEM[key]
-  const feitos  = getTopicosFeitos(key)
-  const dific   = getDificuldades(key)
+  const mat      = ENEM[key]
+  const feitos   = getTopicosFeitos(key)
+  const dific    = getDificuldades(key)
   const anotacao = getAnotacao(key)
   const notas    = getNotasMateria(key)
+  const topicos  = getTopicosExportMateria(key)
   const { pct, total } = getProgressoMateria(key)
-  const tempo   = getTempoMateria(key)
-  const hoje    = new Date().toLocaleDateString('pt-BR')
+  const tempo    = getTempoMateria(key)
+  const hoje     = new Date().toLocaleDateString('pt-BR')
 
-  const DIFIC_LABEL = { 1: '😕 pouco', 2: '😐 médio', 3: '😊 bem' }
+  const DIFIC_LABEL = { 1: 'pouco', 2: 'medio', 3: 'bem' }
 
-  // Cabeçalho
   let md = `# ${mat.nome}\n\n`
   md += `> **Atualizado em:** ${hoje}  \n`
-  md += `> **Progresso:** ${feitos.length}/${total} tópicos · ${pct}%  \n`
+  md += `> **Progresso:** ${feitos.length}/${total} topicos - ${pct}%  \n`
   if (tempo > 0) md += `> **Tempo estudado:** ${formatTempo(tempo)}  \n`
   md += `\n---\n\n`
 
-  // Tópicos
-  md += `## Tópicos\n\n`
-  mat.topicos.forEach((topico, idx) => {
-    const feito    = feitos.includes(idx)
-    const dificVal = dific[idx] || 0
-    const dificStr = dificVal ? ` — *${DIFIC_LABEL[dificVal]}*` : ''
-    const texto    = tituloTopico(topico)
-    md += `- [${feito ? 'x' : ' '}] ${texto}${dificStr}\n`
-    if (notas[idx] && notas[idx].trim()) {
-      // Indenta a nota como bloco citação abaixo do tópico
-      const linhasNota = notas[idx].trim().split('\n')
+  md += `## Topicos\n\n`
+  let conteudoAtual = null
+  topicos.forEach(topico => {
+    if (topico.conteudoNome && topico.conteudoNome !== conteudoAtual) {
+      conteudoAtual = topico.conteudoNome
+      md += `\n### ${conteudoAtual}\n\n`
+    }
+
+    const feito    = feitos.includes(String(topico.key))
+    const dificVal = dific[topico.key] || 0
+    const dificStr = dificVal ? ` - *${DIFIC_LABEL[dificVal]}*` : ''
+    md += `- [${feito ? 'x' : ' '}] ${topico.titulo}${dificStr}\n`
+    if (notas[topico.key] && notas[topico.key].trim()) {
+      const linhasNota = notas[topico.key].trim().split('\n')
       linhasNota.forEach(l => { md += `  > ${l}\n` })
     }
   })
   md += `\n`
 
-  // Anotações
   if (anotacao.trim()) {
-    md += `## Anotações\n\n${anotacao.trim()}\n\n`
+    md += `## Anotacoes gerais antigas\n\n${anotacao.trim()}\n\n`
   }
 
-  // Imagens
   if (incluirImagens) {
     const imgs = getImagens(key)
     if (imgs.length > 0) {
@@ -239,26 +244,66 @@ function extrairTopicos(conteudo) {
   const linhas = conteudo.match(/^- \[(x| )\] .+$/gm) || []
   linhas.forEach(l => {
     const marcado = l.startsWith('- [x]')
-    const texto   = l.replace(/^- \[.\] /, '').replace(/ — \*.+\*$/, '').trim()
+    const texto   = limparTituloTopicoImport(l.replace(/^- \[.\] /, ''))
     if (marcado) feitos.push(texto)
     else naoFeitos.push(texto)
   })
   return { feitos, naoFeitos }
 }
 
+function findTopicoExportByTitulo(materiaKey, texto) {
+  const alvo = String(texto || '').toLowerCase()
+  return getTopicosExportMateria(materiaKey).find(t => t.titulo.toLowerCase() === alvo) || null
+}
+
+function limparTituloTopicoImport(texto) {
+  return String(texto || '')
+    .replace(/\s+[—-]\s+\*.+\*$/, '')
+    .trim()
+}
+
+function importarNotasTopicos(conteudo, materiaKey) {
+  const linhas = conteudo.split('\n')
+  let atual = null
+  let buffer = []
+  let total = 0
+
+  function flush() {
+    if (!atual || !buffer.length) return
+    saveNotaTopico(materiaKey, atual.key, buffer.join('\n').trim())
+    total++
+    buffer = []
+  }
+
+  linhas.forEach(linha => {
+    const topicoMatch = linha.match(/^- \[(x| )\] (.+)$/)
+    if (topicoMatch) {
+      flush()
+      atual = findTopicoExportByTitulo(materiaKey, limparTituloTopicoImport(topicoMatch[2]))
+      return
+    }
+
+    const notaMatch = linha.match(/^  > ?(.*)$/)
+    if (atual && notaMatch) buffer.push(notaMatch[1])
+  })
+
+  flush()
+  return total
+}
+
 function extrairDificuldades(conteudo, materiaKey) {
   const MAP = { 'pouco': 1, 'médio': 2, 'medio': 2, 'bem': 3 }
   const dific = getDificuldades(materiaKey)
-  const linhas = conteudo.match(/^- \[.\] .+ — \*.+\*$/gm) || []
+  const linhas = conteudo.match(/^- \[.\] .+ (?:-|—) \*.+\*$/gm) || []
   linhas.forEach(l => {
-    const textoMatch = l.match(/^- \[.\] (.+?) — \*/)
+    const textoMatch = l.match(/^- \[.\] (.+?) (?:-|—) \*/)
     const dificMatch = l.match(/\*[^ ]+ (\w+)\*$/)
     if (!textoMatch || !dificMatch) return
-    const texto = textoMatch[1].trim()
+    const texto = limparTituloTopicoImport(textoMatch[1])
     const nivel = MAP[dificMatch[1].toLowerCase()]
     if (!nivel) return
-    const idx = ENEM[materiaKey].topicos.findIndex(t => t.toLowerCase() === texto.toLowerCase())
-    if (idx >= 0) dific[idx] = nivel
+    const topico = findTopicoExportByTitulo(materiaKey, texto)
+    if (topico) dific[topico.key] = nivel
   })
   store.set('dific_' + materiaKey, dific)
 }
@@ -280,11 +325,12 @@ function importarAppMd(conteudo, materiaKey, nomeArquivo) {
   if (anotacoes) saveAnotacao(materiaKey, anotacoes)
   const { feitos } = extrairTopicos(conteudo)
   if (feitos.length > 0) {
-    const indices = feitos
-      .map(texto => ENEM[materiaKey].topicos.findIndex(t => t.toLowerCase() === texto.toLowerCase()))
-      .filter(i => i >= 0)
-    if (indices.length > 0) store.set('topicos_' + materiaKey, indices)
+    const keys = feitos
+      .map(texto => findTopicoExportByTitulo(materiaKey, limparTituloTopicoImport(texto))?.key)
+      .filter(Boolean)
+    if (keys.length > 0) marcarTopicosFeitos(materiaKey, keys)
   }
+  importarNotasTopicos(conteudo, materiaKey)
   extrairDificuldades(conteudo, materiaKey)
   const total = feitos.length
   setStatus(`✓ ${ENEM[materiaKey].nome} atualizada — ${total} tópico${total !== 1 ? 's' : ''} importado${total !== 1 ? 's' : ''}`)

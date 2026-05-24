@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
   <title>ENEM · Perfil</title>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -13,7 +14,7 @@
 <body class="perfil-page">
 <div class="perfil-wallpaper" aria-hidden="true">
   <video class="perfil-wallpaper-video" id="perfil-wallpaper-video" autoplay muted loop playsinline preload="auto">
-    <source id="perfil-wallpaper-source" src="Assets/background/BlueSky.mp4" type="video/mp4" />
+    <source id="perfil-wallpaper-source" src="Assets/back/lofi.mp4" type="video/mp4" />
   </video>
   <div class="perfil-wallpaper-overlay"></div>
   <div class="perfil-wallpaper-glow"></div>
@@ -23,19 +24,24 @@
 
 <div class="layout">
   <aside class="sidebar">
-    <div class="sidebar-logo"><span></span> enem.study</div>
+        <div class="sidebar-logo"><span></span> enem.study</div>
     <nav>
       <p class="nav-label">Menu</p>
       <ul class="nav-links">
-        <li><a href="index.html"><i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard</a></li>
-        <li><a href="hoje.html"><i data-lucide="play-circle" class="nav-icon"></i> Estudar Hoje</a></li>
-        <li><a href="grade.html"><i data-lucide="calendar-days" class="nav-icon"></i> Grade Semanal</a></li>
-        <li><a href="materias.html"><i data-lucide="book-open" class="nav-icon"></i> Matérias</a></li>
-        <li><a href="conquistas.html"><i data-lucide="medal" class="nav-icon"></i> Conquistas</a></li>
-        <li><a href="exportar.html"><i data-lucide="download" class="nav-icon"></i> Exportar</a></li>
-        <li><a href="perfil.html"><i data-lucide="trophy" class="nav-icon"></i> Perfil</a></li>
+        <li><a href="index.html"><i data-lucide="play-circle" class="nav-icon"></i> Estudar</a></li>
+        <li><a href="progresso.html"><i data-lucide="bar-chart-2" class="nav-icon"></i> Progresso</a></li>
+        <li><a href="plano.html"><i data-lucide="calendar-days" class="nav-icon"></i> Plano</a></li>
+        <li><a href="perfil.html" class="active"><i data-lucide="trophy" class="nav-icon"></i> Perfil</a></li>
       </ul>
     </nav>
+    <div style="margin-top:auto;padding-top:1rem;display:flex;flex-direction:column;gap:4px;">
+      <a href="materias.html" style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;padding:6px 0;">
+        <i data-lucide="book-open" style="width:13px;height:13px;"></i> Todas as matérias
+      </a>
+      <a href="exportar.html" style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;padding:6px 0;">
+        <i data-lucide="download" style="width:13px;height:13px;"></i> Exportar dados
+      </a>
+    </div>
   </aside>
 
   <main class="main">

@@ -21,15 +21,8 @@ function allHabilidades() {
 // Helper: chave única pra cada tópico (materiaKey + conteudoId + habilidade id)
 function topicoKey(conteudoId, hId) { return `${conteudoId}__${hId}` }
 
-// localStorage keys usam o topicoKey
-function getTopicosFeitos(mKey) { return store.get('topicos_' + mKey) || [] }
-
 function toggleTopicoH(mKey, tKey) {
-  let f = getTopicosFeitos(mKey)
-  f = f.includes(tKey) ? f.filter(k => k !== tKey) : [...f, tKey]
-  store.set('topicos_' + mKey, f)
-  bumpStreak()
-  return f
+  return toggleTopicoFeito(mKey, tKey)
 }
 
 function getDificuldades(mKey)       { return store.get('dific_' + mKey) || {} }
@@ -95,18 +88,6 @@ function renderPage() {
     <div id="conteudos-list">
       ${renderConteudos(feitos, dific)}
     </div>
-
-    <hr class="divider" />
-
-    <div class="section-header">
-      <p class="section-title">Anotações gerais</p>
-      <span style="font-size:11px;color:var(--text3);" id="save-status"></span>
-    </div>
-    <textarea class="anotacao-area" id="anotacao"
-      placeholder="Resumos gerais da matéria, links, observações...&#10;Para anotar sobre um tópico específico, use o botão + em cada tópico."
-    >${getAnotacao(materiaKey)}</textarea>
-
-    <hr class="divider" />
 
     <div class="section-header">
       <p class="section-title">Materiais e prints</p>
@@ -193,11 +174,11 @@ function renderHabilidade(conteudoId, h, feitos, dific) {
             <i data-lucide="thumbs-up" style="width:14px;height:14px;pointer-events:none;"></i>
           </button>
         </div>
-        <button class="nota-toggle ${temNota ? 'has-nota' : ''}"
-                onclick="abrirEditor('${conteudoId}','${h.id}')"
+        <a class="nota-toggle ${temNota ? 'has-nota' : ''}"
+                href="topico.html?m=${materiaKey}&id=${encodeURIComponent(tKey)}"
                 title="${temNota ? 'Ver anotação' : 'Adicionar anotação'}">
           <i data-lucide="${temNota ? 'file-text' : 'plus'}" style="width:12px;height:12px;pointer-events:none;"></i>
-        </button>
+        </a>
       </div>
     </div>
   `
@@ -247,10 +228,10 @@ function avaliarH(conteudoId, hId, val) {
 
 function marcarTodos() {
   const todas = allHabilidades().map(h => topicoKey(h.conteudoId, h.id))
-  store.set('topicos_' + materiaKey, todas)
+  marcarTopicosFeitos(materiaKey, todas)
   renderPage()
 }
-function desmarcarTodos() { store.set('topicos_' + materiaKey, []); renderPage() }
+function desmarcarTodos() { desmarcarTodosTopicos(materiaKey); renderPage() }
 
 function atualizarProgresso() {
   const feitos = getTopicosFeitos(materiaKey).length
@@ -260,173 +241,6 @@ function atualizarProgresso() {
   const txt    = document.getElementById('prog-txt')
   if (bar) bar.style.width = p + '%'
   if (txt) txt.textContent = `${feitos} / ${total} tópicos · ${p}%`
-}
-
-// ── Editor fullscreen ─────────────────────────────────
-let _pasteHandler = null
-
-function voltarDaEditor() {
-  if (_pasteHandler) { document.removeEventListener('paste', _pasteHandler); _pasteHandler = null }
-  renderPage()
-}
-
-function abrirEditor(conteudoId, hId) {
-  const tKey   = topicoKey(conteudoId, hId)
-  const h      = mat.conteudos.find(c => c.id === conteudoId)?.habilidades.find(h => h.id === hId)
-  if (!h) return
-  const notas  = getNotasMateria(materiaKey)
-  const nota   = notas[tKey] || ''
-  const feitos = getTopicosFeitos(materiaKey)
-  const isDone = feitos.includes(tKey)
-  const PRIO_COLOR = { alta: 'var(--red)', media: 'var(--amber)', baixa: 'var(--green)' }
-
-  document.getElementById('main-content').innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;">
-      <button class="btn btn-sm btn-ghost" onclick="voltarDaEditor()">
-        <i data-lucide="arrow-left" style="width:14px;height:14px;"></i> Voltar
-      </button>
-      <div style="flex:1;min-width:0;">
-        <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:2px;">
-          <i data-lucide="${mat.icone}" style="width:11px;height:11px;vertical-align:middle;"></i>
-          ${mat.nome} · ${mat.conteudos.find(c=>c.id===conteudoId)?.nome || ''}
-          <span style="color:${PRIO_COLOR[h.prioridade]};margin-left:6px;">${h.id}</span>
-        </p>
-        <p style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.topico}</p>
-        <p style="font-size:11px;color:var(--text3);margin-top:2px;line-height:1.4;">${h.descricao}</p>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-        <span id="editor-save-status" style="font-size:11px;color:var(--text3);font-family:var(--mono);"></span>
-        <div id="editor-check" onclick="toggleTopicoEditor('${conteudoId}','${hId}')" title="Marcar como feito"
-          style="width:22px;height:22px;border-radius:5px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0;${isDone?'background:var(--accent);border-color:var(--accent);color:#0F0F0F;font-weight:700;':''}">
-          ${isDone ? '✓' : ''}
-        </div>
-      </div>
-    </div>
-
-    <textarea id="editor-textarea"
-      style="width:100%;min-height:calc(100vh - 400px);background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.8;resize:none;outline:none;transition:border-color .15s;"
-      placeholder="Escreva aqui...&#10;&#10;Fórmulas, exemplos resolvidos, dúvidas, resumos.&#10;Tudo que escrever aqui é exportado pro Obsidian junto com esse tópico."
-      oninput="autoSaveEditor('${tKey}')"
-      onfocus="this.style.borderColor='var(--accent)'"
-      onblur="this.style.borderColor='var(--border)'"
-    >${nota}</textarea>
-
-    <hr class="divider" style="margin:1.25rem 0;" />
-
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <p class="section-title">Imagens deste tópico</p>
-      <button class="btn btn-sm btn-accent" onclick="document.getElementById('editor-file-input').click()">+ Imagem</button>
-    </div>
-    <div id="editor-upload-drop"
-      style="border:1px dashed var(--border2);border-radius:var(--radius);padding:1.25rem;text-align:center;cursor:pointer;color:var(--text3);font-size:13px;transition:all .2s;"
-      onclick="document.getElementById('editor-file-input').click()">
-      Clique, arraste ou <kbd style="background:var(--bg3);border:1px solid var(--border2);border-radius:3px;padding:1px 5px;font-size:11px;">Ctrl+V</kbd> para colar imagem
-    </div>
-    <div class="uploads-grid" id="editor-uploads-grid" style="margin-top:12px;"></div>
-
-    <hr class="divider" style="margin:1.25rem 0;" />
-
-    <div id="editor-practice-area"></div>
-    <input type="file" id="editor-file-input" accept="image/*" style="display:none" multiple />
-  `
-
-  renderImagensEditor(tKey)
-  iniciarQuiz({
-    containerId:  'editor-practice-area',
-    storageKey:   `quiz_topico_${materiaKey}_${tKey}`,
-    materiaId:    materiaKey,
-    conteudoId,
-    habilidadeId: hId,
-  })
-  setupEditorListeners(tKey)
-
-  const ta = document.getElementById('editor-textarea')
-  if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length) }
-  lucide.createIcons()
-}
-
-function toggleTopicoEditor(conteudoId, hId) {
-  const tKey   = topicoKey(conteudoId, hId)
-  const feitos = toggleTopicoH(materiaKey, tKey)
-  const isDone = feitos.includes(tKey)
-  const check  = document.getElementById('editor-check')
-  if (!check) return
-  check.textContent = isDone ? '✓' : ''
-  check.style.background   = isDone ? 'var(--accent)' : 'none'
-  check.style.borderColor  = isDone ? 'var(--accent)' : 'var(--border2)'
-  check.style.color        = isDone ? '#0F0F0F' : 'inherit'
-  check.style.fontWeight   = isDone ? '700' : 'normal'
-}
-
-let editorTimer = null
-function autoSaveEditor(tKey) {
-  clearTimeout(editorTimer)
-  const statusEl = document.getElementById('editor-save-status')
-  if (statusEl) statusEl.textContent = 'salvando...'
-  editorTimer = setTimeout(() => {
-    const ta = document.getElementById('editor-textarea')
-    if (!ta) return
-    saveNotaTopico(materiaKey, tKey, ta.value)
-    if (statusEl) { statusEl.textContent = 'salvo ✓'; setTimeout(() => { if(statusEl) statusEl.textContent = '' }, 1500) }
-  }, 700)
-}
-
-// ── Imagens por tópico (via IndexedDB — idb-imagens.js) ───────
-async function renderImagensEditor(tKey) {
-  const grid = document.getElementById('editor-uploads-grid')
-  if (!grid) return
-  const imgs = await getImagensIDB(materiaKey, tKey)
-  grid.innerHTML = imgs.length
-    ? imgs.map((src, i) => `
-        <div class="upload-thumb">
-          <img src="${src}" onclick="window.open('${src}','_blank')" />
-          <button class="upload-del" onclick="deletarImagemEditor('${tKey}',${i})">✕</button>
-        </div>`).join('')
-    : ''
-}
-
-async function deletarImagemEditor(tKey, i) {
-  await removeImagemIDB(materiaKey, tKey, i)
-  renderImagensEditor(tKey)
-}
-
-
-function setupEditorListeners(tKey) {
-  const fi = document.getElementById('editor-file-input')
-  if (fi) fi.addEventListener('change', e => {
-    Array.from(e.target.files).forEach(async file => {
-      if (!file.type.startsWith('image/')) return
-      await addImagemIDB(materiaKey, tKey, file)
-      renderImagensEditor(tKey)
-    }); e.target.value = ''
-  })
-
-  const drop = document.getElementById('editor-upload-drop')
-  if (drop) {
-    drop.addEventListener('dragover',  e => { e.preventDefault(); drop.style.borderColor='var(--accent)' })
-    drop.addEventListener('dragleave', () => { drop.style.borderColor='' })
-    drop.addEventListener('drop', async e => {
-      e.preventDefault(); drop.style.borderColor=''
-      for (const file of Array.from(e.dataTransfer.files)) {
-        if (!file.type.startsWith('image/')) continue
-        await addImagemIDB(materiaKey, tKey, file)
-      }
-      renderImagensEditor(tKey)
-    })
-  }
-
-  function pasteHandler(e) {
-    const item = Array.from(e.clipboardData?.items || []).find(i => i.type.startsWith('image/'))
-    if (!item) return
-    e.preventDefault()
-    addImagemIDB(materiaKey, tKey, item.getAsFile()).then(() => renderImagensEditor(tKey))
-  }
-  _pasteHandler = pasteHandler
-  document.addEventListener('paste', pasteHandler)
-
-  document.addEventListener('keydown', function escHandler(e) {
-    if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); voltarDaEditor() }
-  })
 }
 
 // ── Imagens gerais ────────────────────────────────────
@@ -442,18 +256,7 @@ function renderImagens() {
 }
 function deletarImagem(i) { removeImagem(materiaKey, i); renderImagens() }
 
-let saveTimer = null
 function setupListeners() {
-  const ta = document.getElementById('anotacao')
-  if (ta) ta.addEventListener('input', () => {
-    clearTimeout(saveTimer)
-    document.getElementById('save-status').textContent = 'salvando...'
-    saveTimer = setTimeout(() => {
-      saveAnotacao(materiaKey, ta.value)
-      const s = document.getElementById('save-status')
-      if (s) { s.textContent = 'salvo ✓'; setTimeout(() => { if(s) s.textContent='' }, 2000) }
-    }, 800)
-  })
   const fi = document.getElementById('file-input')
   if (fi) fi.addEventListener('change', handleFiles)
   const drop = document.getElementById('upload-drop')

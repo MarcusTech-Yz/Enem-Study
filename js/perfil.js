@@ -26,11 +26,6 @@ const RANKS = [
 ]
 
 const PERFIL_WALLPAPERS = [
-  { id: 'blue-sky', nome: 'Blue Sky', file: 'Assets/background/BlueSky.mp4', tipo: 'video' },
-  { id: 'black', nome: 'Black Flow', file: 'Assets/background/black.mp4', tipo: 'video' },
-  { id: 'ferrari', nome: 'Ferrari', file: 'Assets/background/Ferrari.mp4', tipo: 'video' },
-  { id: 'resident', nome: 'Resident', file: 'Assets/background/resident.mp4', tipo: 'video' },
-  { id: 'star', nome: 'Star', file: 'Assets/background/Star.mp4', tipo: 'video' },
   { id: 'lofi-room', nome: 'Lofi Room', file: 'Assets/back/lofi.mp4', tipo: 'video' },
   { id: 'girl-cat', nome: 'Girl Cat', file: 'Assets/back/girl-cat.mp4', tipo: 'video' },
 ]
@@ -39,8 +34,6 @@ const PERFIL_HERO_VIDEOS = [
   { id: 'none', nome: 'Sem video', file: '' },
   { id: 'lofi-room', nome: 'Lofi Room', file: 'Assets/back/lofi.mp4' },
   { id: 'girl-cat', nome: 'Girl Cat', file: 'Assets/back/girl-cat.mp4' },
-  { id: 'resident', nome: 'Resident', file: 'Assets/background/resident.mp4', tipo: 'video' },
-  { id: 'star', nome: 'Star', file: 'Assets/background/Star.mp4', tipo: 'video' },
 ]
 
 const PERFIL_FRAMES = [
@@ -118,7 +111,8 @@ function sanitizePerfilNome(value) {
 }
 
 function getPerfilWallpaper() {
-  return store.get('perfil_wallpaper') || PERFIL_WALLPAPERS[0].id
+  const saved = store.get('perfil_wallpaper')
+  return PERFIL_WALLPAPERS.some(item => item.id === saved) ? saved : PERFIL_WALLPAPERS[0].id
 }
 
 function savePerfilWallpaper(id) {
@@ -146,7 +140,8 @@ function getWallpaperLabel() {
 }
 
 function getPerfilHeroVideo() {
-  return store.get('perfil_hero_video') || PERFIL_HERO_VIDEOS[0].id
+  const saved = store.get('perfil_hero_video')
+  return PERFIL_HERO_VIDEOS.some(item => item.id === saved) ? saved : PERFIL_HERO_VIDEOS[0].id
 }
 
 function savePerfilHeroVideo(id) {

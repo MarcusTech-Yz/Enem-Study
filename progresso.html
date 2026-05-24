@@ -1,0 +1,522 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <title>ENEM · Progresso</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── Insights ── */
+    .insight-card {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      border: 1px solid;
+    }
+    .insight-card.warn {
+      background: rgba(245,166,35,.06);
+      border-color: rgba(245,166,35,.2);
+    }
+    .insight-card.ok {
+      background: rgba(200,241,53,.06);
+      border-color: rgba(200,241,53,.2);
+    }
+    .insight-card.info {
+      background: rgba(96,165,250,.06);
+      border-color: rgba(96,165,250,.2);
+    }
+    .insight-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .insight-titulo { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .insight-sub    { font-size: 12px; color: var(--text2); line-height: 1.5; }
+    .insight-link {
+      font-size: 11px; color: var(--accent);
+      text-decoration: none; margin-top: 4px; display: inline-block;
+    }
+    .insight-link:hover { text-decoration: underline; }
+
+    /* ── Projeção ── */
+    .projecao-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .projecao-label {
+      font-size: 10px; font-weight: 600; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text3); font-family: var(--mono);
+      margin-bottom: 12px;
+    }
+    .projecao-linha {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 10px;
+    }
+    .projecao-num {
+      font-size: 28px; font-weight: 600; letter-spacing: -.03em;
+      color: var(--accent);
+    }
+    .projecao-desc { font-size: 13px; color: var(--text2); }
+    .projecao-barra-wrap {
+      height: 6px; background: var(--bg3);
+      border-radius: 3px; overflow: hidden; margin-bottom: 8px;
+    }
+    .projecao-barra-fill {
+      height: 100%; border-radius: 3px;
+      transition: width .6s ease;
+    }
+    .projecao-meta {
+      font-size: 11px; color: var(--text3); font-family: var(--mono);
+    }
+
+    /* ── Por matéria ── */
+    .mat-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 0; border-bottom: 1px solid var(--border);
+      cursor: pointer; text-decoration: none; color: var(--text);
+      transition: opacity .15s;
+    }
+    .mat-row:last-child { border-bottom: none; }
+    .mat-row:hover { opacity: .75; }
+    .mat-info { flex: 1; }
+    .mat-nome { font-size: 13px; font-weight: 500; }
+    .mat-detalhe { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+    .mat-pct  { font-size: 11px; color: var(--text3); font-family: var(--mono); width: 36px; text-align: right; }
+    .mat-bar  { width: 120px; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+    .mat-fill { height: 100%; border-radius: 2px; transition: width .4s; }
+    .mat-tag  {
+      font-size: 10px; padding: 2px 7px; border-radius: 99px;
+      font-family: var(--mono); flex-shrink: 0;
+    }
+    .mat-tag.fraca  { background: rgba(245,  80, 80,.1); color: var(--red);   }
+    .mat-tag.media  { background: rgba(245,166, 35,.1); color: var(--amber);  }
+    .mat-tag.forte  { background: rgba(200,241, 53,.1); color: var(--accent); }
+    .mat-tag.inicio { background: var(--bg3); color: var(--text3); }
+
+    /* ── Distribuição de tempo ── */
+    .tempo-barra-item {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    }
+    .tempo-barra-nome { font-size: 12px; color: var(--text2); width: 140px; flex-shrink: 0; }
+    .tempo-barra-wrap { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+    .tempo-barra-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width .5s; }
+    .tempo-barra-val  { font-size: 11px; color: var(--text3); font-family: var(--mono); width: 48px; text-align: right; }
+
+    /* ── Conquistas ── */
+    .conquista-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+    .conquista-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; font-size: 12px; color: var(--text3);
+      transition: border-color .15s;
+    }
+    .conquista-badge.unlocked {
+      background: rgba(200,241,53,.08); border-color: rgba(200,241,53,.25);
+      color: var(--text);
+    }
+    .cb-icon { font-size: 16px; }
+
+    /* ── Streak visual ── */
+    .streak-visual {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .streak-dia {
+      width: 22px; height: 22px; border-radius: 4px;
+      background: var(--bg3); border: 1px solid var(--border);
+      font-size: 9px; display: flex; align-items: center; justify-content: center;
+    }
+    .streak-dia.feito { background: rgba(200,241,53,.15); border-color: rgba(200,241,53,.4); }
+    .streak-dia.hoje  { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><span></span> enem.study</div>
+    <nav>
+      <p class="nav-label">Menu</p>
+      <ul class="nav-links">
+        <li><a href="index.html"><i data-lucide="play-circle" class="nav-icon"></i> Estudar</a></li>
+        <li><a href="progresso.html" class="active"><i data-lucide="bar-chart-2" class="nav-icon"></i> Progresso</a></li>
+        <li><a href="plano.html"><i data-lucide="calendar-days" class="nav-icon"></i> Plano</a></li>
+        <li><a href="perfil.html"><i data-lucide="trophy" class="nav-icon"></i> Perfil</a></li>
+      </ul>
+    </nav>
+    <div style="margin-top:auto;padding-top:1rem;display:flex;flex-direction:column;gap:4px;">
+      <a href="materias.html" style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;padding:6px 0;">
+        <i data-lucide="book-open" style="width:13px;height:13px;"></i> Todas as matérias
+      </a>
+      <a href="exportar.html" style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;padding:6px 0;">
+        <i data-lucide="download" style="width:13px;height:13px;"></i> Exportar dados
+      </a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <p class="date-tag">Seu avanço no ENEM</p>
+      <h1>Progresso</h1>
+      <p id="prog-motivacao" style="color:var(--text2);font-size:14px;margin-top:4px;"></p>
+    </div>
+
+    <!-- Stats topo -->
+    <div class="stats-row" id="stats-row" style="margin-bottom:1.5rem;"></div>
+
+    <!-- Projeção de cobertura -->
+    <div class="projecao-card" id="projecao-wrap"></div>
+
+    <div class="two-col" style="align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+
+        <!-- Insights inteligentes -->
+        <div class="card">
+          <p class="card-title" style="margin-bottom:1rem;">Diagnóstico</p>
+          <div id="insights-wrap">
+            <p style="font-size:13px;color:var(--text3);">Comece a estudar para ver seu diagnóstico personalizado.</p>
+          </div>
+        </div>
+
+        <!-- Por matéria -->
+        <div class="card">
+          <p class="card-title" style="margin-bottom:1rem;">Por matéria</p>
+          <div id="materias-list"></div>
+        </div>
+
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+
+        <!-- Distribuição de tempo -->
+        <div class="card">
+          <p class="card-title" style="margin-bottom:1rem;">Onde você passa mais tempo</p>
+          <div id="tempo-dist"></div>
+        </div>
+
+        <!-- Streak detalhado -->
+        <div class="card">
+          <p class="card-title" style="margin-bottom:6px;">Sequência de estudo</p>
+          <div id="streak-detalhe"></div>
+        </div>
+
+        <!-- Conquistas -->
+        <div class="card">
+          <p class="card-title" style="margin-bottom:1rem;">Conquistas</p>
+          <div class="conquista-grid" id="conquistas-mini"></div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="data/topicos.js"></script>
+<script src="data/conquistas.js"></script>
+<script src="data/conquista_toast.js"></script>
+<script src="js/app.js"></script>
+<script>
+const prog   = getProgressoGlobal()
+const pct    = prog.total > 0 ? Math.round(prog.feitos / prog.total * 100) : 0
+const streak = getStreak()
+const tempo  = getTempoTotal()
+
+// ── Motivação ──
+const motivacoes = {
+  0:  'Dê o primeiro passo. Cada tópico conta.',
+  5:  'Bom começo! A sequência é o segredo.',
+  15: 'Você já cobriu bastante. Continue assim.',
+  30: 'Um terço do caminho feito. Consistência vence.',
+  50: 'Mais da metade! O ENEM está ao seu alcance.',
+  75: 'Reta final. Você está pronto para o ENEM.',
+  90: 'Impressionante. Quase lá.',
+}
+const motivKey = Object.keys(motivacoes).reverse().find(k => pct >= parseInt(k)) || 0
+document.getElementById('prog-motivacao').textContent = motivacoes[motivKey]
+
+// ── Stats ──
+document.getElementById('stats-row').innerHTML = `
+  <div class="stat-card">
+    <p class="stat-label">Tópicos feitos</p>
+    <p class="stat-value accent">${prog.feitos}</p>
+    <p class="stat-sub">de ${prog.total} tópicos</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Cobertura ENEM</p>
+    <p class="stat-value">${pct}<span style="font-size:16px;font-weight:400;color:var(--text3)">%</span></p>
+    <p class="stat-sub">do conteúdo total</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Streak atual</p>
+    <p class="stat-value amber">${streak.count}</p>
+    <p class="stat-sub">dia${streak.count !== 1 ? 's' : ''} seguido${streak.count !== 1 ? 's' : ''}</p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Tempo total</p>
+    <p class="stat-value blue" style="font-size:20px;padding-top:3px;">${formatTempo(tempo)}</p>
+    <p class="stat-sub">estudando</p>
+  </div>
+`
+
+// ── Projeção de cobertura ──
+const projecaoWrap = document.getElementById('projecao-wrap')
+const topicosRestantes = prog.total - prog.feitos
+// Velocidade: tópicos por semana (baseado nos últimos 7 dias via tempo — estimativa 25min/tópico)
+const tempoSemana = tempo // simplificado: usa tempo total / semanas ativas
+const semanasAtivas = Math.max(1, Math.ceil(streak.count / 7))
+const topicosSemanais = prog.feitos > 0 ? Math.max(1, Math.round(prog.feitos / Math.max(1, semanasAtivas))) : 0
+const semanasParaTerminar = topicosSemanais > 0 ? Math.ceil(topicosRestantes / topicosSemanais) : null
+
+// Referencia aproximada para novembro. A data oficial pode virar configuracao no plano.
+const hoje       = new Date()
+const proximoEnem = new Date(hoje.getFullYear(), 10, 1) // Nov 1
+if (proximoEnem < hoje) proximoEnem.setFullYear(hoje.getFullYear() + 1)
+const diasParaEnem  = Math.ceil((proximoEnem - hoje) / 86400000)
+const semanasParaEnem = Math.ceil(diasParaEnem / 7)
+
+let projecaoPct = 0
+let projecaoTxt = ''
+let projecaoMeta = ''
+let projecaoCor  = 'var(--accent)'
+
+if (prog.feitos === 0) {
+  projecaoPct  = 0
+  projecaoTxt  = 'Comece a estudar para ver sua projeção.'
+  projecaoMeta = `${diasParaEnem} dias para o ENEM · ${semanasParaEnem} semanas`
+  projecaoCor  = 'var(--border2)'
+} else if (semanasParaTerminar && semanasParaTerminar <= semanasParaEnem) {
+  projecaoPct  = Math.min(100, Math.round((semanasParaEnem - semanasParaTerminar) / semanasParaEnem * 100 + pct))
+  projecaoTxt  = `No ritmo atual, você cobre ~${Math.min(100, pct + Math.round(topicosSemanais * semanasParaEnem / prog.total * 100))}% do conteúdo até novembro.`
+  projecaoMeta = `${diasParaEnem} dias para o ENEM · ${topicosSemanais} tópicos/semana no seu ritmo atual`
+  projecaoCor  = 'var(--accent)'
+} else {
+  const coberturaEnem = Math.min(100, Math.round(pct + (topicosSemanais * semanasParaEnem / prog.total * 100)))
+  projecaoPct  = coberturaEnem
+  projecaoTxt  = `No ritmo atual, você vai cobrir ~${coberturaEnem}% até novembro. Aumente o ritmo para chegar em mais matérias.`
+  projecaoMeta = `${diasParaEnem} dias para o ENEM · Precisa de ~${Math.ceil(topicosRestantes / semanasParaEnem)} tópicos/semana para cobrir tudo`
+  projecaoCor  = coberturaEnem < 50 ? 'var(--amber)' : 'var(--accent)'
+}
+
+projecaoWrap.innerHTML = `
+  <p class="projecao-label">Projeção aproximada até novembro</p>
+  <div class="projecao-linha">
+    <div>
+      <div class="projecao-num">${Math.max(pct, projecaoPct)}%</div>
+      <div class="projecao-desc">${projecaoTxt}</div>
+    </div>
+  </div>
+  <div class="projecao-barra-wrap">
+    <div class="projecao-barra-fill" style="width:${pct}%;background:${projecaoCor};"></div>
+  </div>
+  <p class="projecao-meta">${projecaoMeta}</p>
+`
+
+// ── Insights inteligentes ──
+const insightsWrap = document.getElementById('insights-wrap')
+const insights = []
+
+// Analisa distribuição de tempo
+const temposPorMat = Object.keys(ENEM).map(k => ({
+  key: k, nome: ENEM[k].nome, tempo: getTempoMateria(k), pct: getProgressoMateria(k).pct
+})).filter(m => m.tempo > 0).sort((a, b) => b.tempo - a.tempo)
+
+if (temposPorMat.length > 0) {
+  const maisEstudada  = temposPorMat[0]
+  const menosEstudada = temposPorMat[temposPorMat.length - 1]
+  const tempoTotal    = temposPorMat.reduce((s, m) => s + m.tempo, 0)
+  const pctMais       = Math.round(maisEstudada.tempo / tempoTotal * 100)
+
+  if (pctMais > 50 && temposPorMat.length > 1) {
+    insights.push({
+      tipo: 'warn',
+      icone: '⚠️',
+      titulo: `${pctMais}% do seu tempo foi em ${maisEstudada.nome}`,
+      sub: `Você está concentrando muito em uma matéria. ${menosEstudada.nome} ficou com ${Math.round(menosEstudada.tempo / tempoTotal * 100)}% do tempo — equilibre para cobrir mais área no ENEM.`,
+      link: `materia.html?m=${menosEstudada.key}`,
+      linkTxt: `Estudar ${menosEstudada.nome} →`
+    })
+  }
+}
+
+// Matérias com 0% de progresso
+const matsZero = Object.keys(ENEM).filter(k => getProgressoMateria(k).pct === 0 && k !== 'redacao')
+if (matsZero.length > 0 && prog.feitos > 0) {
+  const nomes = matsZero.slice(0, 3).map(k => ENEM[k].nome).join(', ')
+  insights.push({
+    tipo: 'warn',
+    icone: '📌',
+    titulo: `${matsZero.length} matéria${matsZero.length > 1 ? 's' : ''} sem nenhum tópico feito`,
+    sub: `${nomes}${matsZero.length > 3 ? ' e mais' : ''} ainda não foram tocadas. O ENEM cobra todas as áreas — uma matéria zerada pode custar pontos importantes.`,
+    link: `materia.html?m=${matsZero[0]}`,
+    linkTxt: `Começar ${ENEM[matsZero[0]].nome} →`
+  })
+}
+
+// Streak em risco
+const hoje2  = new Date().toISOString().slice(0, 10)
+const ontem2 = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+if (streak.count >= 3 && streak.lastDate === ontem2) {
+  insights.push({
+    tipo: 'warn',
+    icone: '🔥',
+    titulo: `Streak de ${streak.count} dias em risco`,
+    sub: `Você ainda não estudou hoje. Faça qualquer tópico antes da meia-noite para não perder sua sequência.`,
+    link: 'index.html',
+    linkTxt: 'Estudar agora →'
+  })
+}
+
+// Positivo: matéria forte
+const matsFortes = Object.keys(ENEM).filter(k => getProgressoMateria(k).pct >= 50)
+if (matsFortes.length > 0) {
+  insights.push({
+    tipo: 'ok',
+    icone: '✅',
+    titulo: `${matsFortes.map(k => ENEM[k].nome).join(', ')} já ${matsFortes.length === 1 ? 'está' : 'estão'} com mais de 50%`,
+    sub: `Bom trabalho nessa${matsFortes.length > 1 ? 's' : ''} área${matsFortes.length > 1 ? 's' : ''}. Agora foque nas mais fracas para maximizar sua nota no ENEM.`,
+  })
+}
+
+// Ritmo positivo
+if (streak.count >= 7) {
+  insights.push({
+    tipo: 'ok',
+    icone: '🏆',
+    titulo: `${streak.count} dias seguidos — ritmo excelente`,
+    sub: 'Consistência é o maior diferencial no ENEM. Você está no caminho certo.',
+  })
+}
+
+// Nenhum insight ainda
+if (insights.length === 0 && prog.feitos === 0) {
+  insightsWrap.innerHTML = `<p style="font-size:13px;color:var(--text3);">Comece a estudar para ver seu diagnóstico personalizado.</p>`
+} else {
+  insightsWrap.innerHTML = insights.map(i => `
+    <div class="insight-card ${i.tipo}">
+      <span class="insight-icon">${i.icone}</span>
+      <div>
+        <p class="insight-titulo">${i.titulo}</p>
+        <p class="insight-sub">${i.sub}</p>
+        ${i.link ? `<a href="${i.link}" class="insight-link">${i.linkTxt}</a>` : ''}
+      </div>
+    </div>
+  `).join('')
+}
+
+// ── Por matéria ──
+const matList = document.getElementById('materias-list')
+const todasMats = Object.entries(ENEM).map(([key, mat]) => {
+  const { feitos, total, pct: p } = getProgressoMateria(key)
+  const tempoMat = getTempoMateria(key)
+  return { key, mat, feitos, total, p, tempoMat }
+}).sort((a, b) => a.p - b.p) // ordena das mais fracas para as mais fortes
+
+for (const { key, mat, feitos, total, p, tempoMat } of todasMats) {
+  const cor   = p === 0 ? 'var(--border2)' : p < 20 ? 'var(--red)' : p < 50 ? 'var(--amber)' : 'var(--accent)'
+  const tag   = p === 0 ? 'início' : p < 20 ? 'fraca' : p < 50 ? 'média' : 'forte'
+  const cls   = p === 0 ? 'inicio' : p < 20 ? 'fraca' : p < 50 ? 'media' : 'forte'
+  const tempoStr = tempoMat > 0 ? formatTempo(tempoMat) : '—'
+  matList.innerHTML += `
+    <a class="mat-row" href="materia.html?m=${key}">
+      <i data-lucide="${mat.icone}" style="width:15px;height:15px;color:var(--text3);flex-shrink:0;"></i>
+      <div class="mat-info">
+        <div class="mat-nome">${mat.nome}</div>
+        <div class="mat-detalhe">${feitos}/${total} tópicos · ${tempoStr}</div>
+      </div>
+      <div class="mat-bar"><div class="mat-fill" style="width:${p}%;background:${cor};"></div></div>
+      <span class="mat-pct">${p}%</span>
+      <span class="mat-tag ${cls}">${tag}</span>
+    </a>
+  `
+}
+
+// ── Distribuição de tempo ──
+const tempoWrap  = document.getElementById('tempo-dist')
+const temposTodos = Object.keys(ENEM).map(k => ({
+  key: k, nome: ENEM[k].nome, tempo: getTempoMateria(k)
+})).filter(m => m.tempo > 0).sort((a, b) => b.tempo - a.tempo)
+
+if (temposTodos.length === 0) {
+  tempoWrap.innerHTML = `<p style="font-size:13px;color:var(--text3);">Nenhum tempo registrado ainda.</p>`
+} else {
+  const maxTempo = temposTodos[0].tempo
+  tempoWrap.innerHTML = temposTodos.map(m => `
+    <div class="tempo-barra-item">
+      <span class="tempo-barra-nome">${m.nome}</span>
+      <div class="tempo-barra-wrap">
+        <div class="tempo-barra-fill" style="width:${Math.round(m.tempo / maxTempo * 100)}%;"></div>
+      </div>
+      <span class="tempo-barra-val">${formatTempo(m.tempo)}</span>
+    </div>
+  `).join('')
+}
+
+// ── Streak detalhado ──
+const streakWrap = document.getElementById('streak-detalhe')
+const ultimosDias = Array.from({ length: 14 }, (_, i) => {
+  const d = new Date(Date.now() - (13 - i) * 86400000)
+  return d.toISOString().slice(0, 10)
+})
+const hoje3 = new Date().toISOString().slice(0, 10)
+
+// Reconstrói dias com estudo a partir do streak (simplificado)
+// Marca os últimos N dias como feitos baseado no streak.count e lastDate
+const diasFeitos = new Set()
+if (streak.lastDate) {
+  let d = new Date(streak.lastDate)
+  for (let i = 0; i < streak.count; i++) {
+    diasFeitos.add(d.toISOString().slice(0, 10))
+    d = new Date(d.getTime() - 86400000)
+  }
+}
+
+const DIAS_PT = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
+streakWrap.innerHTML = `
+  <p style="font-size:13px;color:var(--text2);margin-bottom:10px;">
+    ${streak.count > 0
+      ? `🔥 <strong>${streak.count} dia${streak.count !== 1 ? 's' : ''}</strong> seguidos`
+      : 'Nenhum streak ainda. Comece hoje!'}
+  </p>
+  <div class="streak-visual">
+    ${ultimosDias.map(dia => {
+      const d    = new Date(dia)
+      const feito = diasFeitos.has(dia)
+      const eHoje = dia === hoje3
+      return `<div class="streak-dia ${feito ? 'feito' : ''} ${eHoje ? 'hoje' : ''}" title="${dia}">
+        ${DIAS_PT[d.getDay()]}
+      </div>`
+    }).join('')}
+  </div>
+  <p style="font-size:11px;color:var(--text3);margin-top:8px;font-family:var(--mono);">
+    Últimos 14 dias
+    ${streak.lastDate ? ` · Último estudo: ${new Date(streak.lastDate).toLocaleDateString('pt-BR')}` : ''}
+  </p>
+`
+
+// ── Conquistas ──
+const conquistas = getConquistasState()
+const cGrid = document.getElementById('conquistas-mini')
+const desbloqueadas = conquistas.filter(c => c.unlocked)
+const proximas      = conquistas.filter(c => !c.unlocked).slice(0, 4 - Math.min(desbloqueadas.length, 2))
+const mostrar       = [...desbloqueadas.slice(0, 2), ...proximas].slice(0, 6)
+
+if (mostrar.length === 0) {
+  cGrid.innerHTML = `<p style="font-size:13px;color:var(--text3);">Continue estudando para desbloquear conquistas.</p>`
+} else {
+  mostrar.forEach(c => {
+    cGrid.innerHTML += `
+      <div class="conquista-badge ${c.unlocked ? 'unlocked' : ''}">
+        <span class="cb-icon">${c.icone || '🏅'}</span>
+        <div>
+          <div style="font-size:12px;">${c.nome}</div>
+          ${!c.unlocked ? `<div style="font-size:10px;color:var(--text3);margin-top:1px;">${c.progressPct}% concluído</div>` : ''}
+        </div>
+      </div>
+    `
+  })
+}
+
+lucide.createIcons()
+</script>
+</body>
+</html>
