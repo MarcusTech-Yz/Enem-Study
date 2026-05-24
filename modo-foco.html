@@ -92,18 +92,41 @@
       max-width: 760px;
     }
 
-    .focus-progress-meta {
+    .focus-progress-header {
       display: flex;
       justify-content: space-between;
+      align-items: flex-end;
       gap: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .focus-progress-big {
+      font-size: 32px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: 0;
+      color: var(--accent);
+    }
+
+    .focus-progress-sub {
       font-size: 11px;
-      font-family: var(--mono);
       color: var(--text3);
-      margin-bottom: 8px;
+      font-family: var(--mono);
+      margin-top: 4px;
+    }
+
+    .focus-progress-side {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 11px;
     }
 
     .focus-progress {
-      height: 4px;
+      height: 6px;
       background: var(--bg3);
       border-radius: 999px;
       overflow: hidden;
@@ -115,6 +138,10 @@
       background: var(--accent);
       border-radius: 999px;
       transition: width .25s ease, opacity .25s ease;
+    }
+
+    .focus-progress-fill.goal-complete {
+      box-shadow: 0 0 18px rgba(200,241,53,.35);
     }
 
     .focus-actions {
@@ -188,6 +215,48 @@
       line-height: 1.7;
     }
 
+    .focus-notes-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .focus-notes-head h2 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    #focus-note-save-status {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: var(--mono);
+      min-width: 54px;
+      text-align: right;
+    }
+
+    .focus-note-area {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 14px 16px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.7;
+      outline: none;
+    }
+
+    .focus-note-area:focus {
+      border-color: var(--accent);
+    }
+
+
     .focus-bottom {
       position: fixed;
       left: 0;
@@ -238,9 +307,14 @@
         max-width: 100%;
       }
 
-      .focus-progress-meta {
+      .focus-progress-header {
         flex-direction: column;
-        gap: 4px;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .focus-progress-side {
+        align-items: flex-start;
       }
 
       .focus-bottom-inner {
@@ -276,9 +350,16 @@
       <div class="focus-status" id="focus-status">Pronto para começar</div>
 
       <div class="focus-progress-wrap">
-        <div class="focus-progress-meta">
-          <span id="goal-label">Meta: 25 min</span>
-          <span id="progress-label">0%</span>
+        <div class="focus-progress-header">
+          <div>
+            <p class="focus-progress-big" id="progress-big">0%</p>
+            <p class="focus-progress-sub" id="progress-sub">da sessão concluída</p>
+          </div>
+
+          <div class="focus-progress-side">
+            <span id="goal-label">Meta: 25 min</span>
+            <span id="remaining-label">Faltam 25min</span>
+          </div>
         </div>
 
         <div class="focus-progress">
@@ -290,11 +371,6 @@
         <button class="btn btn-accent" id="start-btn" onclick="toggleSessao()">
           <i data-lucide="play" style="width:14px;height:14px;"></i>
           Iniciar sessão
-        </button>
-
-        <button class="btn" onclick="salvarSessao()">
-          <i data-lucide="save" style="width:14px;height:14px;"></i>
-          Salvar sessão
         </button>
 
         <button class="btn" onclick="adicionarCincoMinutos()">
@@ -324,6 +400,22 @@
       <p class="mat" id="topic-mat">Matéria</p>
       <p class="desc" id="topic-desc">Use essa sessão para estudar, revisar ou organizar suas anotações.</p>
     </section>
+
+    <section class="focus-card focus-notes-card">
+      <div class="focus-notes-head">
+        <div>
+          <p class="focus-kicker">Anotações da sessão</p>
+          <h2>Escreva enquanto estuda</h2>
+        </div>
+        <span id="focus-note-save-status"></span>
+      </div>
+
+      <textarea
+        id="focus-topic-note"
+        class="focus-note-area"
+        placeholder="Resumo, dúvidas, fórmulas, exemplos..."
+      ></textarea>
+    </section>
   </main>
 
   <div class="focus-bottom">
@@ -331,6 +423,11 @@
       <button class="btn" onclick="verTopicoCompleto()">
         <i data-lucide="external-link" style="width:14px;height:14px;"></i>
         Ver tópico completo
+      </button>
+
+      <button class="btn" onclick="salvarSessao()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i>
+        Salvar sessão
       </button>
 
       <button class="btn btn-accent" onclick="concluirTopico()">
@@ -359,6 +456,8 @@
     let segundosSalvosNestaTela = 0
     let rodando = false
     let intervalo = null
+    let focusNoteTimer = null
+    let sessionNoticeTimer = null
 
     const SESSION_KEY = `sessao_foco_${getTodayStr()}_${materiaKey}_${tKey}`
 
@@ -380,6 +479,8 @@
     }
 
     carregarSessao()
+    carregarAnotacaoFoco()
+    setupAnotacaoFoco()
     aplicarPresetInicial()
     atualizarTela()
     lucide.createIcons()
@@ -472,35 +573,60 @@
 
       const status = document.getElementById('focus-status')
       const goalLabel = document.getElementById('goal-label')
-      const progressLabel = document.getElementById('progress-label')
+      const progressBig = document.getElementById('progress-big')
+      const progressSub = document.getElementById('progress-sub')
+      const remainingLabel = document.getElementById('remaining-label')
       const progressFill = document.getElementById('progress-fill')
 
+      let pct = 0
+
+      if (metaMin === 0) {
+        progressBig.textContent = formatTempo(segundosSessao)
+        progressSub.textContent = 'acumulados no modo livre'
+        goalLabel.textContent = 'Meta: Livre'
+        remainingLabel.textContent = 'Sem meta definida'
+        progressFill.style.width = '100%'
+        progressFill.style.opacity = segundosSessao > 0 ? '1' : '.25'
+        progressFill.classList.remove('goal-complete')
+      } else {
+        const metaSeg = metaMin * 60
+        const falta = Math.max(0, metaSeg - segundosSessao)
+        pct = Math.min(100, Math.round((segundosSessao / metaSeg) * 100))
+
+        progressBig.textContent = `${pct}%`
+        progressSub.textContent = 'da sessão concluída'
+        goalLabel.textContent = `Meta: ${metaMin} min`
+        remainingLabel.textContent = falta > 0 ? `Faltam ${formatTempo(falta)}` : 'Meta alcançada'
+        progressFill.style.width = `${pct}%`
+        progressFill.style.opacity = '1'
+        progressFill.classList.toggle('goal-complete', segundosSessao >= metaSeg)
+      }
+
       if (rodando) {
-        status.textContent = 'Estudando agora'
+        status.textContent = getMensagemProgresso(pct)
       } else if (segundosSessao > 0) {
-        status.textContent = 'Sessão pausada'
+        status.textContent = metaMin > 0 && pct >= 100
+          ? 'Meta batida · você pode salvar ou continuar'
+          : 'Sessão pausada'
       } else {
         status.textContent = 'Pronto para começar'
       }
 
-      if (metaMin === 0) {
-        goalLabel.textContent = 'Meta: Livre'
-        progressLabel.textContent = `${Math.floor(segundosSessao / 60)}min acumulados`
-        progressFill.style.width = '100%'
-        progressFill.style.opacity = segundosSessao > 0 ? '1' : '.25'
-        return
-      }
+      atualizarNotaSessao()
+    }
 
-      const metaSeg = metaMin * 60
-      const pct = Math.min(100, Math.round((segundosSessao / metaSeg) * 100))
-
-      goalLabel.textContent = `Meta: ${metaMin} min`
-      progressLabel.textContent = `${pct}%`
-      progressFill.style.width = `${pct}%`
-      progressFill.style.opacity = '1'
+    function getMensagemProgresso(pct) {
+      if (segundosSessao <= 0) return 'Pronto para começar'
+      if (metaMin === 0) return 'Sessão livre em andamento'
+      if (pct >= 100) return 'Meta batida · você pode salvar ou continuar'
+      if (pct >= 75) return 'Quase lá'
+      if (pct >= 50) return 'Meio caminho'
+      if (pct >= 25) return 'Pegando ritmo'
+      return 'Aquecimento'
     }
 
     function salvarSessao() {
+      salvarAnotacaoFoco()
       if (rodando) pausarSessao()
 
       const naoSalvo = segundosSessao - segundosSalvosNestaTela
@@ -532,6 +658,7 @@
     }
 
     function concluirTopico() {
+      salvarAnotacaoFoco()
       if (rodando) pausarSessao()
 
       const naoSalvo = segundosSessao - segundosSalvosNestaTela
@@ -568,6 +695,7 @@
     }
 
     function verTopicoCompleto() {
+      salvarAnotacaoFoco()
       if (rodando) pausarSessao()
       persistirSessao()
 
@@ -580,7 +708,13 @@
     }
 
     function sairDoFoco() {
+      salvarAnotacaoFoco()
       if (rodando) pausarSessao()
+      const naoSalvo = segundosSessao - segundosSalvosNestaTela
+      if (naoSalvo > 0) {
+        const sair = confirm(`${formatTempo(naoSalvo)} ainda não foi salvo. Esse tempo continuará salvo como sessão em andamento. Deseja sair mesmo assim?`)
+        if (!sair) return
+      }
       persistirSessao()
       window.history.length > 1 ? window.history.back() : window.location.href = 'index.html'
     }
@@ -628,6 +762,49 @@
       if (!existePreset) botoes.forEach(btn => btn.classList.remove('active'))
     }
 
+    function carregarAnotacaoFoco() {
+      const textarea = document.getElementById('focus-topic-note')
+      if (!textarea || !materiaKey || !tKey || typeof getNotaTopico !== 'function') return
+      textarea.value = getNotaTopico(materiaKey, tKey) || ''
+    }
+
+    function setupAnotacaoFoco() {
+      const textarea = document.getElementById('focus-topic-note')
+      const status = document.getElementById('focus-note-save-status')
+      if (!textarea || !materiaKey || !tKey || typeof saveNotaTopico !== 'function') return
+
+      textarea.addEventListener('input', () => {
+        if (!rodando && segundosSessao <= 0) {
+          avisarSessao('Você está anotando com a sessão pausada. Inicie para contar tempo.')
+        }
+
+        clearTimeout(focusNoteTimer)
+        if (status) status.textContent = 'salvando...'
+
+        focusNoteTimer = setTimeout(() => {
+          salvarAnotacaoFoco()
+          if (status) {
+            status.textContent = 'salvo'
+            setTimeout(() => {
+              if (status) status.textContent = ''
+            }, 1200)
+          }
+        }, 500)
+      })
+
+      textarea.addEventListener('blur', () => {
+        clearTimeout(focusNoteTimer)
+        salvarAnotacaoFoco()
+        if (status) status.textContent = 'salvo'
+      })
+    }
+
+    function salvarAnotacaoFoco() {
+      const textarea = document.getElementById('focus-topic-note')
+      if (!textarea || !materiaKey || !tKey || typeof saveNotaTopico !== 'function') return
+      saveNotaTopico(materiaKey, tKey, textarea.value)
+    }
+
     function addSessaoFocoHoje(sessao) {
       const key = 'sessoes_' + getTodayStr()
       const sessoes = store.get(key) || []
@@ -635,18 +812,41 @@
       store.set(key, sessoes)
     }
 
+    function atualizarNotaSessao() {
+      const note = document.getElementById('session-note')
+      if (!note) return
+
+      const naoSalvo = segundosSessao - segundosSalvosNestaTela
+
+      if (segundosSessao <= 0) {
+        note.textContent = 'Inicie uma sessão para registrar tempo nesse tópico.'
+        note.classList.remove('session-saved')
+        return
+      }
+
+      if (naoSalvo > 0) {
+        note.textContent = `${formatTempo(naoSalvo)} ainda não salvo.`
+        note.classList.remove('session-saved')
+        return
+      }
+
+      note.textContent = 'Tempo salvo. Você pode continuar ou concluir o tópico.'
+      note.classList.add('session-saved')
+    }
+
     function avisarSessao(msg) {
       const note = document.getElementById('session-note')
       note.textContent = msg
       note.classList.add('session-saved')
 
-      setTimeout(() => {
-        note.textContent = 'O tempo será salvo quando você finalizar a sessão.'
-        note.classList.remove('session-saved')
+      clearTimeout(sessionNoticeTimer)
+      sessionNoticeTimer = setTimeout(() => {
+        atualizarNotaSessao()
       }, 2200)
     }
 
     window.addEventListener('beforeunload', () => {
+      salvarAnotacaoFoco()
       if (segundosSessao > 0) persistirSessao()
     })
 
