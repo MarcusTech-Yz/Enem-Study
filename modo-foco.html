@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="Assets/favicon.svg" type="image/svg+xml" />
   <title>ENEM · Modo Foco</title>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
@@ -152,7 +152,8 @@
       margin-top: 1.5rem;
     }
 
-    .focus-actions .btn {
+    .focus-actions .btn,
+    .focus-bottom-inner .btn {
       align-items: center;
       display: inline-flex;
       gap: 7px;
@@ -215,48 +216,6 @@
       line-height: 1.7;
     }
 
-    .focus-notes-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .focus-notes-head h2 {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: 0;
-    }
-
-    #focus-note-save-status {
-      font-size: 11px;
-      color: var(--text3);
-      font-family: var(--mono);
-      min-width: 54px;
-      text-align: right;
-    }
-
-    .focus-note-area {
-      width: 100%;
-      min-height: 180px;
-      resize: vertical;
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      padding: 14px 16px;
-      font-family: var(--mono);
-      font-size: 13px;
-      line-height: 1.7;
-      outline: none;
-    }
-
-    .focus-note-area:focus {
-      border-color: var(--accent);
-    }
-
-
     .focus-bottom {
       position: fixed;
       left: 0;
@@ -278,12 +237,6 @@
       flex-wrap: wrap;
     }
 
-    .focus-bottom-inner .btn {
-      align-items: center;
-      display: inline-flex;
-      gap: 7px;
-    }
-
     .focus-note {
       text-align: center;
       color: var(--text3);
@@ -294,6 +247,18 @@
 
     .session-saved {
       color: var(--blue);
+    }
+
+    .btn.saved-feedback {
+      border-color: rgba(96,165,250,.55);
+      color: var(--blue);
+      background: rgba(96,165,250,.08);
+    }
+
+    .btn.saved-feedback-accent {
+      border-color: rgba(200,241,53,.55);
+      color: #0F0F0F;
+      background: var(--accent);
     }
 
     @media (max-width: 700px) {
@@ -390,7 +355,7 @@
       </div>
 
       <p class="focus-note" id="session-note">
-        O tempo será salvo quando você finalizar a sessão.
+        Inicie uma sessão para registrar tempo nesse tópico.
       </p>
     </section>
 
@@ -398,23 +363,7 @@
       <p class="focus-kicker">Conteúdo do tópico</p>
       <h2 id="topic-name">Tópico</h2>
       <p class="mat" id="topic-mat">Matéria</p>
-      <p class="desc" id="topic-desc">Use essa sessão para estudar, revisar ou organizar suas anotações.</p>
-    </section>
-
-    <section class="focus-card focus-notes-card">
-      <div class="focus-notes-head">
-        <div>
-          <p class="focus-kicker">Anotações da sessão</p>
-          <h2>Escreva enquanto estuda</h2>
-        </div>
-        <span id="focus-note-save-status"></span>
-      </div>
-
-      <textarea
-        id="focus-topic-note"
-        class="focus-note-area"
-        placeholder="Resumo, dúvidas, fórmulas, exemplos..."
-      ></textarea>
+      <p class="desc" id="topic-desc">Abra o tópico completo para anotar, revisar vídeos e resolver questões enquanto o tempo continua contando.</p>
     </section>
   </main>
 
@@ -425,7 +374,7 @@
         Ver tópico completo
       </button>
 
-      <button class="btn" onclick="salvarSessao()">
+      <button class="btn" id="save-session-btn" onclick="salvarSessao()">
         <i data-lucide="save" style="width:14px;height:14px;"></i>
         Salvar sessão
       </button>
@@ -452,14 +401,25 @@
 
     let metaMin = Number(store.get('focus_meta_min') ?? 25)
     if (!Number.isFinite(metaMin)) metaMin = 25
-    let segundosSessao = 0
-    let segundosSalvosNestaTela = 0
-    let rodando = false
     let intervalo = null
-    let focusNoteTimer = null
     let sessionNoticeTimer = null
 
-    const SESSION_KEY = `sessao_foco_${getTodayStr()}_${materiaKey}_${tKey}`
+    let activeSession = getActiveFocusSession()
+    if (
+      !activeSession ||
+      activeSession.materiaKey !== materiaKey ||
+      String(activeSession.tKey) !== String(tKey)
+    ) {
+      activeSession = createFocusSession({
+        materiaKey,
+        tKey,
+        texto,
+        matNome,
+        metaMin,
+      })
+    } else {
+      metaMin = Number(activeSession.metaMin ?? metaMin)
+    }
 
     document.getElementById('top-title').textContent = texto
     document.getElementById('topic-name').textContent = texto
@@ -478,10 +438,8 @@
       document.getElementById('topic-desc').innerHTML = descricaoTopico
     }
 
-    carregarSessao()
-    carregarAnotacaoFoco()
-    setupAnotacaoFoco()
     aplicarPresetInicial()
+    if (getActiveFocusSession()?.running) iniciarLoopTela()
     atualizarTela()
     lucide.createIcons()
 
@@ -492,30 +450,24 @@
     }
 
     function toggleSessao() {
-      rodando ? pausarSessao() : iniciarSessao()
+      const session = getActiveFocusSession()
+      session?.running ? pausarSessao() : iniciarSessao()
     }
 
     function iniciarSessao() {
-      if (rodando) return
-
-      rodando = true
+      startActiveFocusSession()
       document.getElementById('start-btn').innerHTML = `
         <i data-lucide="pause" style="width:14px;height:14px;"></i>
         Pausar
       `
 
-      intervalo = setInterval(() => {
-        segundosSessao++
-        persistirSessao()
-        atualizarTela()
-      }, 1000)
-
+      iniciarLoopTela()
       atualizarTela()
       lucide.createIcons()
     }
 
     function pausarSessao() {
-      rodando = false
+      pauseActiveFocusSession()
       clearInterval(intervalo)
 
       document.getElementById('start-btn').innerHTML = `
@@ -523,20 +475,30 @@
         Retomar
       `
 
-      persistirSessao()
       atualizarTela()
       lucide.createIcons()
     }
 
+    function iniciarLoopTela() {
+      clearInterval(intervalo)
+      intervalo = setInterval(atualizarTela, 1000)
+    }
+
     function resetarSessao() {
-      const naoSalvo = segundosSessao - segundosSalvosNestaTela
+      const session = getActiveFocusSession()
+      const elapsed = getFocusElapsed(session)
+      const committed = Number(session?.committedSec || 0)
+      const naoSalvo = elapsed - committed
       if (naoSalvo > 0 && !confirm('Reiniciar esta sessão? O tempo ainda não salvo será perdido.')) return
 
-      rodando = false
       clearInterval(intervalo)
-      segundosSessao = 0
-      segundosSalvosNestaTela = 0
-      limparSessao()
+      activeSession = createFocusSession({
+        materiaKey,
+        tKey,
+        texto,
+        matNome,
+        metaMin,
+      })
 
       document.getElementById('start-btn').innerHTML = `
         <i data-lucide="play" style="width:14px;height:14px;"></i>
@@ -552,23 +514,31 @@
       else metaMin += 5
 
       store.set('focus_meta_min', metaMin)
+      updateActiveFocusMeta(metaMin)
       marcarPresetAtivo()
       atualizarTela()
-      persistirSessao()
     }
 
     function setMeta(min, btn) {
       metaMin = Number(min)
       store.set('focus_meta_min', metaMin)
+      updateActiveFocusMeta(metaMin)
 
       document.querySelectorAll('.focus-preset').forEach(b => b.classList.remove('active'))
       if (btn) btn.classList.add('active')
 
       atualizarTela()
-      persistirSessao()
     }
 
     function atualizarTela() {
+      const session = getActiveFocusSession()
+      if (!session) return
+
+      const segundosSessao = getFocusElapsed(session)
+      const metaAtual = Number(session.metaMin ?? metaMin)
+      const rodando = !!session.running
+
+      atualizarBotaoSessao(session)
       document.getElementById('focus-time').textContent = formatClock(segundosSessao)
 
       const status = document.getElementById('focus-status')
@@ -580,7 +550,7 @@
 
       let pct = 0
 
-      if (metaMin === 0) {
+      if (metaAtual === 0) {
         progressBig.textContent = formatTempo(segundosSessao)
         progressSub.textContent = 'acumulados no modo livre'
         goalLabel.textContent = 'Meta: Livre'
@@ -589,13 +559,13 @@
         progressFill.style.opacity = segundosSessao > 0 ? '1' : '.25'
         progressFill.classList.remove('goal-complete')
       } else {
-        const metaSeg = metaMin * 60
+        const metaSeg = metaAtual * 60
         const falta = Math.max(0, metaSeg - segundosSessao)
         pct = Math.min(100, Math.round((segundosSessao / metaSeg) * 100))
 
         progressBig.textContent = `${pct}%`
         progressSub.textContent = 'da sessão concluída'
-        goalLabel.textContent = `Meta: ${metaMin} min`
+        goalLabel.textContent = `Meta: ${metaAtual} min`
         remainingLabel.textContent = falta > 0 ? `Faltam ${formatTempo(falta)}` : 'Meta alcançada'
         progressFill.style.width = `${pct}%`
         progressFill.style.opacity = '1'
@@ -603,9 +573,9 @@
       }
 
       if (rodando) {
-        status.textContent = getMensagemProgresso(pct)
+        status.textContent = getMensagemProgresso(pct, segundosSessao, metaAtual)
       } else if (segundosSessao > 0) {
-        status.textContent = metaMin > 0 && pct >= 100
+        status.textContent = metaAtual > 0 && pct >= 100
           ? 'Meta batida · você pode salvar ou continuar'
           : 'Sessão pausada'
       } else {
@@ -615,9 +585,25 @@
       atualizarNotaSessao()
     }
 
-    function getMensagemProgresso(pct) {
+    function atualizarBotaoSessao(session = getActiveFocusSession()) {
+      const btn = document.getElementById('start-btn')
+      if (!btn) return
+
+      const runningState = session?.running ? 'running' : 'stopped'
+      const hasTimeState = getFocusElapsed(session) > 0 ? 'has-time' : 'empty'
+      if (btn.dataset.runningState === runningState && btn.dataset.hasTimeState === hasTimeState) return
+
+      btn.dataset.runningState = runningState
+      btn.dataset.hasTimeState = hasTimeState
+      btn.innerHTML = session?.running
+        ? '<i data-lucide="pause" style="width:14px;height:14px;"></i> Pausar'
+        : `<i data-lucide="play" style="width:14px;height:14px;"></i> ${getFocusElapsed(session) > 0 ? 'Retomar' : 'Iniciar sessão'}`
+      lucide.createIcons()
+    }
+
+    function getMensagemProgresso(pct, segundosSessao, metaAtual) {
       if (segundosSessao <= 0) return 'Pronto para começar'
-      if (metaMin === 0) return 'Sessão livre em andamento'
+      if (metaAtual === 0) return 'Sessão livre em andamento'
       if (pct >= 100) return 'Meta batida · você pode salvar ou continuar'
       if (pct >= 75) return 'Quase lá'
       if (pct >= 50) return 'Meio caminho'
@@ -626,78 +612,86 @@
     }
 
     function salvarSessao() {
-      salvarAnotacaoFoco()
-      if (rodando) pausarSessao()
+      const result = saveActiveFocusTime()
 
-      const naoSalvo = segundosSessao - segundosSalvosNestaTela
-
-      if (!materiaKey || !tKey) {
-        avisarSessao('Não encontrei o tópico desta sessão.')
+      if (!result.ok) {
+        avisarSessao(result.message)
+        feedbackSalvar(false)
         return
       }
 
-      if (naoSalvo <= 0) {
-        avisarSessao('Nada novo para salvar.')
-        return
+      avisarSessao(result.message)
+      feedbackSalvar(true)
+      atualizarTela()
+    }
+
+    function feedbackSalvar(success = true) {
+      const btn = document.getElementById('save-session-btn')
+      if (!btn) return
+
+      const original = `
+        <i data-lucide="save" style="width:14px;height:14px;"></i>
+        Salvar sessão
+      `
+
+      btn.classList.remove('saved-feedback', 'saved-feedback-accent')
+
+      if (success) {
+        btn.classList.add('saved-feedback-accent')
+        btn.innerHTML = `
+          <i data-lucide="check" style="width:14px;height:14px;"></i>
+          Sessão salva
+        `
+      } else {
+        btn.classList.add('saved-feedback')
+        btn.innerHTML = `
+          <i data-lucide="info" style="width:14px;height:14px;"></i>
+          Nada novo
+        `
       }
 
-      addTempo(materiaKey, tKey, naoSalvo)
-      segundosSalvosNestaTela = segundosSessao
+      lucide.createIcons()
 
-      addSessaoFocoHoje({
-        materiaKey,
-        tKey,
-        matNome,
-        topicoNome: texto,
-        durSeg: naoSalvo,
-        hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      })
-
-      persistirSessao()
-      avisarSessao(`Sessão salva: ${formatTempo(naoSalvo)}.`)
+      setTimeout(() => {
+        btn.classList.remove('saved-feedback', 'saved-feedback-accent')
+        btn.innerHTML = original
+        lucide.createIcons()
+      }, 1800)
     }
 
     function concluirTopico() {
-      salvarAnotacaoFoco()
-      if (rodando) pausarSessao()
+      const session = getActiveFocusSession()
+      const elapsed = getFocusElapsed(session)
 
-      const naoSalvo = segundosSessao - segundosSalvosNestaTela
-
-      if (!materiaKey || !tKey) {
-        avisarSessao('Não encontrei o tópico para concluir.')
+      if (!session) {
+        avisarSessao('Nenhuma sessão ativa.')
         return
       }
 
-      if (segundosSessao <= 0) {
+      if (elapsed <= 0) {
         const ok = confirm('Você ainda não registrou tempo nesta sessão. Marcar como concluído mesmo assim?')
         if (!ok) return
       }
 
-      if (naoSalvo > 0) {
-        addTempo(materiaKey, tKey, naoSalvo)
-        segundosSalvosNestaTela = segundosSessao
-
-        addSessaoFocoHoje({
-          materiaKey,
-          tKey,
-          matNome,
-          topicoNome: texto,
-          durSeg: naoSalvo,
-          hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        })
+      const result = concludeActiveFocusTopic()
+      if (!result.ok) {
+        avisarSessao(result.message)
+        return
       }
 
-      marcarTopicoFeito(materiaKey, tKey)
-      limparSessao()
-
-      alert('Tópico concluído! Progresso registrado.')
+      clearInterval(intervalo)
+      alert(result.message)
       window.location.href = 'index.html'
     }
 
     function verTopicoCompleto() {
-      salvarAnotacaoFoco()
-      if (rodando) pausarSessao()
-      persistirSessao()
+      const session = getActiveFocusSession()
+      if (session) {
+        setActiveFocusSession({
+          ...session,
+          updatedAt: new Date().toISOString(),
+        })
+      }
 
       if (!materiaKey || !tKey) {
         window.location.href = 'index.html'
@@ -708,44 +702,24 @@
     }
 
     function sairDoFoco() {
-      salvarAnotacaoFoco()
-      if (rodando) pausarSessao()
-      const naoSalvo = segundosSessao - segundosSalvosNestaTela
+      const session = getActiveFocusSession()
+      const elapsed = getFocusElapsed(session)
+      const committed = Number(session?.committedSec || 0)
+      const naoSalvo = elapsed - committed
+
       if (naoSalvo > 0) {
         const sair = confirm(`${formatTempo(naoSalvo)} ainda não foi salvo. Esse tempo continuará salvo como sessão em andamento. Deseja sair mesmo assim?`)
         if (!sair) return
       }
-      persistirSessao()
-      window.history.length > 1 ? window.history.back() : window.location.href = 'index.html'
-    }
 
-    function persistirSessao() {
-      store.set(SESSION_KEY, {
-        materiaKey,
-        tKey,
-        texto,
-        matNome,
-        metaMin,
-        segundosSessao,
-        segundosSalvosNestaTela,
-        updatedAt: new Date().toISOString(),
-      })
-    }
-
-    function carregarSessao() {
-      const s = store.get(SESSION_KEY)
-      if (!s) return
-
-      segundosSessao = Number(s.segundosSessao || 0)
-      segundosSalvosNestaTela = Number(s.segundosSalvosNestaTela || 0)
-
-      if (typeof s.metaMin === 'number') {
-        metaMin = s.metaMin
+      if (session) {
+        setActiveFocusSession({
+          ...session,
+          updatedAt: new Date().toISOString(),
+        })
       }
-    }
 
-    function limparSessao() {
-      localStorage.removeItem(SESSION_KEY)
+      window.history.length > 1 ? window.history.back() : window.location.href = 'index.html'
     }
 
     function aplicarPresetInicial() {
@@ -762,63 +736,15 @@
       if (!existePreset) botoes.forEach(btn => btn.classList.remove('active'))
     }
 
-    function carregarAnotacaoFoco() {
-      const textarea = document.getElementById('focus-topic-note')
-      if (!textarea || !materiaKey || !tKey || typeof getNotaTopico !== 'function') return
-      textarea.value = getNotaTopico(materiaKey, tKey) || ''
-    }
-
-    function setupAnotacaoFoco() {
-      const textarea = document.getElementById('focus-topic-note')
-      const status = document.getElementById('focus-note-save-status')
-      if (!textarea || !materiaKey || !tKey || typeof saveNotaTopico !== 'function') return
-
-      textarea.addEventListener('input', () => {
-        if (!rodando && segundosSessao <= 0) {
-          avisarSessao('Você está anotando com a sessão pausada. Inicie para contar tempo.')
-        }
-
-        clearTimeout(focusNoteTimer)
-        if (status) status.textContent = 'salvando...'
-
-        focusNoteTimer = setTimeout(() => {
-          salvarAnotacaoFoco()
-          if (status) {
-            status.textContent = 'salvo'
-            setTimeout(() => {
-              if (status) status.textContent = ''
-            }, 1200)
-          }
-        }, 500)
-      })
-
-      textarea.addEventListener('blur', () => {
-        clearTimeout(focusNoteTimer)
-        salvarAnotacaoFoco()
-        if (status) status.textContent = 'salvo'
-      })
-    }
-
-    function salvarAnotacaoFoco() {
-      const textarea = document.getElementById('focus-topic-note')
-      if (!textarea || !materiaKey || !tKey || typeof saveNotaTopico !== 'function') return
-      saveNotaTopico(materiaKey, tKey, textarea.value)
-    }
-
-    function addSessaoFocoHoje(sessao) {
-      const key = 'sessoes_' + getTodayStr()
-      const sessoes = store.get(key) || []
-      sessoes.push(sessao)
-      store.set(key, sessoes)
-    }
-
     function atualizarNotaSessao() {
       const note = document.getElementById('session-note')
-      if (!note) return
+      const session = getActiveFocusSession()
+      if (!note || !session) return
 
-      const naoSalvo = segundosSessao - segundosSalvosNestaTela
+      const elapsed = getFocusElapsed(session)
+      const naoSalvo = elapsed - Number(session.committedSec || 0)
 
-      if (segundosSessao <= 0) {
+      if (elapsed <= 0) {
         note.textContent = 'Inicie uma sessão para registrar tempo nesse tópico.'
         note.classList.remove('session-saved')
         return
@@ -846,8 +772,7 @@
     }
 
     window.addEventListener('beforeunload', () => {
-      salvarAnotacaoFoco()
-      if (segundosSessao > 0) persistirSessao()
+      clearInterval(intervalo)
     })
 
     if (typeof renderMathInElement !== 'undefined') {

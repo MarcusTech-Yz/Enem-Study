@@ -205,18 +205,51 @@ function renderTopicoPage() {
 
         <div class="tab-panel ativo" id="tab-anotacoes">
           <div class="editor-tools">
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button class="fmt-btn" onclick="insertFormat('**','**')"><strong>B</strong></button>
-              <button class="fmt-btn" onclick="insertFormat('*','*')"><em>I</em></button>
-              <button class="fmt-btn" onclick="insertFormat('- ','')">Lista</button>
+            <div class="note-toolbar">
+              <button class="note-tool primary" onclick="insertTemplate('resumo')">
+                <i data-lucide="book-open" style="width:13px;height:13px;"></i>
+                Resumo
+              </button>
+              <button class="note-tool" onclick="insertTemplate('exemplo')">
+                <i data-lucide="lightbulb" style="width:13px;height:13px;"></i>
+                Exemplo
+              </button>
+              <button class="note-tool" onclick="insertTemplate('formula')">
+                <i data-lucide="sigma" style="width:13px;height:13px;"></i>
+                Fórmula
+              </button>
+              <button class="note-tool" onclick="insertTemplate('duvida')">
+                <i data-lucide="circle-help" style="width:13px;height:13px;"></i>
+                Dúvida
+              </button>
+              <button class="note-tool" onclick="insertTemplate('erro')">
+                <i data-lucide="triangle-alert" style="width:13px;height:13px;"></i>
+                Erro
+              </button>
+
+              <span class="note-toolbar-sep"></span>
+
+              <button class="note-tool" onclick="insertFormat('**','**')"><strong>B</strong></button>
+              <button class="note-tool" onclick="insertFormat('*','*')"><em>I</em></button>
+              <button class="note-tool" onclick="insertFormat('- ','')">Lista</button>
             </div>
             <div class="save-status" id="save-status-topico"></div>
           </div>
-          <textarea class="anotacao-area" id="topico-anotacao" placeholder="Resuma esse tópico, exemplos, fórmulas e dúvidas...">${escapeHtmlForTextarea(getTopicoAnotacao())}</textarea>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-            <button class="btn btn-sm" onclick="setDifficulty(1)">Entendi pouco</button>
-            <button class="btn btn-sm" onclick="setDifficulty(2)">Mais ou menos</button>
-            <button class="btn btn-sm" onclick="setDifficulty(3)">Entendi bem</button>
+          <textarea class="anotacao-area" id="topico-anotacao" placeholder="Comece com um resumo simples. Ex: 'Razão compara duas grandezas. Proporção é igualdade entre razões.'&#10;&#10;Use os botões acima para inserir blocos de resumo, exemplo, fórmula, dúvida ou erro comum.">${escapeHtmlForTextarea(getTopicoAnotacao())}</textarea>
+          <p class="note-helper">Use os blocos para montar uma anotação de revisão, não só um texto solto.</p>
+          <div class="mastery-row">
+            <button class="mastery-btn d1" data-dif="1" onclick="setDifficulty(1)">
+              <i data-lucide="alert-circle" style="width:14px;height:14px;"></i>
+              Preciso revisar
+            </button>
+            <button class="mastery-btn d2" data-dif="2" onclick="setDifficulty(2)">
+              <i data-lucide="loader-circle" style="width:14px;height:14px;"></i>
+              Em andamento
+            </button>
+            <button class="mastery-btn d3" data-dif="3" onclick="setDifficulty(3)">
+              <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i>
+              Entendi bem
+            </button>
           </div>
         </div>
 
@@ -273,6 +306,7 @@ function renderTopicoPage() {
 
   setupTopicoListeners()
   renderTopicoVideos()
+  renderFocusMiniBar()
   iniciarQuiz({
     containerId:  'practice-area',
     storageKey:   TOPICO_SK.quiz,
@@ -282,6 +316,7 @@ function renderTopicoPage() {
   })
   renderTopicoQuestoes()
   setNavActive()
+  updateMasteryButtons()
   lucide.createIcons()
 }
 
@@ -326,7 +361,7 @@ function updateTopicoHeader() {
     button.innerHTML = `<i data-lucide="${isTopicoAtualFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i> ${isTopicoAtualFeito() ? 'Concluído' : 'Marcar como feito'}`
   }
   if (tempoEl) tempoEl.textContent = formatTempo(getTempo(topicoMateriaKey, topicoKeyId))
-  if (difEl) difEl.textContent = formatDificuldadeLabel(getTopicoDificuldade())
+  if (difEl) difEl.innerHTML = formatDificuldadeLabel(getTopicoDificuldade())
   if (progressoEl) progressoEl.textContent = `${getProgressoMateria(topicoMateriaKey).pct}%`
   lucide.createIcons()
 }
@@ -335,6 +370,17 @@ function setDifficulty(value) {
   const current = getTopicoDificuldade()
   setTopicoDificuldade(current === value ? 0 : value)
   updateTopicoHeader()
+  updateMasteryButtons()
+}
+
+function updateMasteryButtons() {
+  const current = getTopicoDificuldade()
+
+  document.querySelectorAll('.mastery-btn').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.dif) === current)
+  })
+
+  lucide.createIcons()
 }
 
 function startTopicoFocus() {
@@ -351,10 +397,46 @@ function startTopicoFocus() {
 }
 
 function formatDificuldadeLabel(value) {
-  if (value === 1) return 'Baixa compreensão'
-  if (value === 2) return 'Em andamento'
-  if (value === 3) return 'Bem entendido'
-  return 'Não avaliado'
+  const meta = getDificuldadeMeta(value)
+
+  return `
+    <span class="mastery-badge ${meta.className}">
+      <i data-lucide="${meta.icon}" style="width:14px;height:14px;"></i>
+      ${meta.label}
+    </span>
+  `
+}
+
+function getDificuldadeMeta(value) {
+  if (value === 1) {
+    return {
+      label: 'Preciso revisar',
+      icon: 'alert-circle',
+      className: 'd1',
+    }
+  }
+
+  if (value === 2) {
+    return {
+      label: 'Em andamento',
+      icon: 'loader-circle',
+      className: 'd2',
+    }
+  }
+
+  if (value === 3) {
+    return {
+      label: 'Entendi bem',
+      icon: 'check-circle-2',
+      className: 'd3',
+    }
+  }
+
+  return {
+    label: 'Não avaliado',
+    icon: 'circle',
+    className: 'none',
+  }
 }
 
 function ytId(url) {
@@ -558,18 +640,180 @@ function escapeHtmlForAttr(value) {
 function insertFormat(before, after) {
   const textarea = document.getElementById('topico-anotacao')
   if (!textarea) return
+
   const start = textarea.selectionStart
   const end = textarea.selectionEnd
   const selected = textarea.value.slice(start, end)
-  textarea.value = `${textarea.value.slice(0, start)}${before}${selected}${after}${textarea.value.slice(end)}`
+  const replacement = `${before}${selected}${after}`
+
+  textarea.value =
+    textarea.value.slice(0, start) +
+    replacement +
+    textarea.value.slice(end)
+
   textarea.focus()
   textarea.selectionStart = start + before.length
-  textarea.selectionEnd = end + before.length
+  textarea.selectionEnd = start + before.length + selected.length
+
   saveTopicoAnotacao(textarea.value)
+  markTopicoSaved()
+}
+
+function insertTemplate(type) {
+  const templates = {
+    resumo:
+`\n## Resumo\n- Ideia principal:\n- Como aparece no ENEM:\n- Palavra-chave:\n`,
+
+    exemplo:
+`\n## Exemplo\nSituação:\n\nComo resolver:\n\nConclusão:\n`,
+
+    formula:
+`\n## Fórmula / regra\n\`\`\`\n\n\`\`\`\nQuando usar:\n`,
+
+    duvida:
+`\n## Dúvida\nO que eu não entendi:\n\nO que preciso revisar:\n`,
+
+    erro:
+`\n## Erro comum\nEu errei porque:\n\nComo evitar na próxima:\n`,
+  }
+
+  insertAtCursor(templates[type] || '')
+}
+
+function insertAtCursor(text) {
+  const textarea = document.getElementById('topico-anotacao')
+  if (!textarea) return
+
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+
+  textarea.value =
+    textarea.value.slice(0, start) +
+    text +
+    textarea.value.slice(end)
+
+  textarea.focus()
+  textarea.selectionStart = textarea.selectionEnd = start + text.length
+
+  saveTopicoAnotacao(textarea.value)
+  markTopicoSaved()
+}
+
+function markTopicoSaved() {
+  const status = document.getElementById('save-status-topico')
+  if (status) {
+    status.textContent = 'salvo'
+    setTimeout(() => {
+      if (status) status.textContent = ''
+    }, 1200)
+  }
 }
 
 function sanitizeFileName(name) {
   return name.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-')
 }
+
+let focusMiniInterval = null
+
+function renderFocusMiniBar() {
+  const existing = document.getElementById('focus-mini-bar')
+  if (existing) existing.remove()
+  if (!isActiveFocusForTopic(topicoMateriaKey, topicoKeyId)) return
+
+  const bar = document.createElement('div')
+  bar.id = 'focus-mini-bar'
+  bar.className = 'focus-mini-bar'
+  bar.innerHTML = `
+    <div class="focus-mini-left">
+      <span class="focus-mini-dot"></span>
+      <div>
+        <strong id="focus-mini-time">00:00</strong>
+      </div>
+    </div>
+
+    <div class="focus-mini-actions">
+      <button class="btn btn-sm" id="focus-mini-toggle" onclick="toggleFocusMini()">
+        Pausar
+      </button>
+      <button class="btn btn-sm" id="focus-mini-save" onclick="saveFocusMini()">
+        Salvar tempo
+      </button>
+      <button class="btn btn-sm btn-accent" onclick="finishFocusMini()">
+        Concluir tópico
+      </button>
+    </div>
+  `
+
+  document.body.appendChild(bar)
+
+  updateFocusMiniBar()
+  clearInterval(focusMiniInterval)
+  focusMiniInterval = setInterval(updateFocusMiniBar, 1000)
+}
+
+function updateFocusMiniBar() {
+  const session = getActiveFocusSession()
+  if (!session || !isActiveFocusForTopic(topicoMateriaKey, topicoKeyId)) {
+    const bar = document.getElementById('focus-mini-bar')
+    if (bar) bar.remove()
+    clearInterval(focusMiniInterval)
+    return
+  }
+
+  const elapsed = getFocusElapsed(session)
+  const timeEl = document.getElementById('focus-mini-time')
+  const toggleBtn = document.getElementById('focus-mini-toggle')
+
+  if (timeEl) timeEl.textContent = formatTempo(elapsed)
+
+  if (toggleBtn) {
+    toggleBtn.textContent = session.running ? 'Pausar' : 'Retomar'
+  }
+}
+
+function toggleFocusMini() {
+  const session = getActiveFocusSession()
+  if (!session) return
+
+  if (session.running) {
+    pauseActiveFocusSession()
+  } else {
+    startActiveFocusSession()
+  }
+
+  updateFocusMiniBar()
+}
+
+function saveFocusMini() {
+  const result = saveActiveFocusTime()
+  const btn = document.getElementById('focus-mini-save')
+
+  if (btn) {
+    const old = btn.textContent
+    btn.textContent = result.ok ? 'Salvo ✓' : 'Nada novo'
+    setTimeout(() => {
+      btn.textContent = old
+    }, 1400)
+  }
+
+  updateFocusMiniBar()
+  updateTopicoHeader()
+}
+
+function finishFocusMini() {
+  const result = concludeActiveFocusTopic()
+  if (!result.ok) {
+    alert(result.message)
+    return
+  }
+
+  alert(result.message)
+  updateTopicoHeader()
+  updateFocusMiniBar()
+}
+
+window.addEventListener('beforeunload', () => {
+  clearInterval(focusMiniInterval)
+})
 
 document.addEventListener('DOMContentLoaded', renderTopicoPage)

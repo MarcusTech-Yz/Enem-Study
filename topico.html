@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="Assets/favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="Assets/favicon.svg" type="image/svg+xml" />
   <title>ENEM · Tópico</title>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
@@ -73,6 +73,75 @@
       margin-bottom: 4px;
     }
     .tstat-val { font-size: 16px; font-weight: 500; }
+    .mastery-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .mastery-btn {
+      border: 1px solid var(--border2);
+      background: var(--bg2);
+      color: var(--text2);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all .15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .mastery-btn:hover {
+      background: var(--bg3);
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+    .mastery-btn.d1.active {
+      color: var(--red);
+      border-color: rgba(255,94,94,.45);
+      background: rgba(255,94,94,.08);
+    }
+    .mastery-btn.d2.active {
+      color: var(--amber);
+      border-color: rgba(245,166,35,.45);
+      background: rgba(245,166,35,.08);
+    }
+    .mastery-btn.d3.active {
+      color: var(--green);
+      border-color: rgba(74,222,128,.45);
+      background: rgba(74,222,128,.08);
+    }
+    .mastery-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      width: fit-content;
+    }
+    .mastery-badge.none {
+      color: var(--text3);
+      border: 1px solid var(--border2);
+      background: var(--bg3);
+    }
+    .mastery-badge.d1 {
+      color: var(--red);
+      border: 1px solid rgba(255,94,94,.35);
+      background: rgba(255,94,94,.08);
+    }
+    .mastery-badge.d2 {
+      color: var(--amber);
+      border: 1px solid rgba(245,166,35,.35);
+      background: rgba(245,166,35,.08);
+    }
+    .mastery-badge.d3 {
+      color: var(--green);
+      border: 1px solid rgba(74,222,128,.35);
+      background: rgba(74,222,128,.08);
+    }
     .tabs {
       display: flex;
       gap: 4px;
@@ -108,6 +177,48 @@
       gap: 10px;
       margin-bottom: .8rem;
       flex-wrap: wrap;
+    }
+    .note-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .note-tool {
+      border: 1px solid var(--border2);
+      background: var(--bg3);
+      color: var(--text2);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all .15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .note-tool:hover {
+      color: var(--accent);
+      border-color: rgba(200,241,53,.35);
+      background: rgba(200,241,53,.06);
+    }
+    .note-tool.primary {
+      color: var(--accent);
+      border-color: rgba(200,241,53,.28);
+      background: rgba(200,241,53,.06);
+    }
+    .note-toolbar-sep {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      margin: 0 2px;
+    }
+    .note-helper {
+      color: var(--text3);
+      font-size: 11px;
+      font-family: var(--mono);
+      margin-top: 8px;
     }
     .anotacao-area,
     .questao-form textarea,

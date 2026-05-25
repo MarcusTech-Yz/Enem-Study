@@ -562,6 +562,63 @@ a { color: inherit; text-decoration: none; }
 .hoje-timer-count.running { color: var(--accent); }
 .hoje-timer-count.rest    { color: var(--blue); }
 
+/* ── Mini sessão de foco no tópico ── */
+.focus-mini-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  width: min(920px, calc(100vw - 32px));
+  z-index: 80;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  background: rgba(22,22,22,.94);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 12px 14px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 60px rgba(0,0,0,.35);
+}
+
+.focus-mini-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.focus-mini-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 14px rgba(200,241,53,.45);
+}
+
+.focus-mini-left strong {
+  display: block;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.focus-mini-left small {
+  display: block;
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.focus-mini-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* ── Anotações ── */
 .anotacao-area {
   width: 100%;
@@ -895,6 +952,14 @@ a { color: inherit; text-decoration: none; }
   .grade-grid { grid-template-columns: repeat(4, 1fr); }
   .two-col, .two-col-3 { grid-template-columns: 1fr; }
   .timer-bar { left: 0; padding: 12px 1rem; }
+  .focus-mini-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .focus-mini-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
   .practice-head,
   .quiz-topbar { align-items: stretch; }
   .practice-head .btn,

@@ -440,6 +440,157 @@ function getNotasMateria(materiaKey) {
   return all
 }
 
+// ── Sessão global de foco ──────────────────────────────
+const ACTIVE_FOCUS_KEY = 'active_focus_session'
+
+function getActiveFocusSession() {
+  return store.get(ACTIVE_FOCUS_KEY)
+}
+
+function setActiveFocusSession(session) {
+  store.set(ACTIVE_FOCUS_KEY, session)
+  return session
+}
+
+function clearActiveFocusSession() {
+  localStorage.removeItem(ACTIVE_FOCUS_KEY)
+}
+
+function getFocusSessionId(materiaKey, tKey) {
+  return `${getTodayStr()}_${materiaKey}_${tKey}`
+}
+
+function createFocusSession({ materiaKey, tKey, texto, matNome, metaMin = 25 }) {
+  const session = {
+    id: getFocusSessionId(materiaKey, tKey),
+    materiaKey,
+    tKey,
+    texto,
+    matNome,
+    metaMin,
+    accumulatedSec: 0,
+    committedSec: 0,
+    running: false,
+    startedAt: null,
+    updatedAt: new Date().toISOString(),
+  }
+
+  return setActiveFocusSession(session)
+}
+
+function getFocusElapsed(session = getActiveFocusSession()) {
+  if (!session) return 0
+
+  const base = Number(session.accumulatedSec || 0)
+
+  if (!session.running || !session.startedAt) {
+    return base
+  }
+
+  const diff = Math.floor((Date.now() - Number(session.startedAt)) / 1000)
+  return base + Math.max(0, diff)
+}
+
+function startActiveFocusSession() {
+  const session = getActiveFocusSession()
+  if (!session) return null
+  if (session.running) return session
+
+  session.running = true
+  session.startedAt = Date.now()
+  session.updatedAt = new Date().toISOString()
+
+  return setActiveFocusSession(session)
+}
+
+function pauseActiveFocusSession() {
+  const session = getActiveFocusSession()
+  if (!session) return null
+
+  session.accumulatedSec = getFocusElapsed(session)
+  session.running = false
+  session.startedAt = null
+  session.updatedAt = new Date().toISOString()
+
+  return setActiveFocusSession(session)
+}
+
+function updateActiveFocusMeta(metaMin) {
+  const session = getActiveFocusSession()
+  if (!session) return null
+
+  session.metaMin = Number(metaMin)
+  session.updatedAt = new Date().toISOString()
+
+  return setActiveFocusSession(session)
+}
+
+function saveActiveFocusTime() {
+  let session = getActiveFocusSession()
+  if (!session) return { ok: false, message: 'Nenhuma sessão ativa.' }
+
+  const elapsed = getFocusElapsed(session)
+  const committed = Number(session.committedSec || 0)
+  const delta = elapsed - committed
+
+  if (delta <= 0) {
+    return { ok: false, message: 'Nada novo para salvar.' }
+  }
+
+  addTempo(session.materiaKey, session.tKey, delta)
+
+  const key = 'sessoes_' + getTodayStr()
+  const sessoes = store.get(key) || []
+  sessoes.push({
+    materiaKey: session.materiaKey,
+    tKey: session.tKey,
+    matNome: session.matNome,
+    topicoNome: session.texto,
+    durSeg: delta,
+    hora: new Date().toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  })
+  store.set(key, sessoes)
+
+  session = getActiveFocusSession()
+  session.accumulatedSec = elapsed
+  session.committedSec = elapsed
+  session.startedAt = session.running ? Date.now() : null
+  session.updatedAt = new Date().toISOString()
+  setActiveFocusSession(session)
+
+  return {
+    ok: true,
+    delta,
+    message: `Sessão salva: ${formatTempo(delta)}.`,
+  }
+}
+
+function concludeActiveFocusTopic() {
+  const session = getActiveFocusSession()
+  if (!session) return { ok: false, message: 'Nenhuma sessão ativa.' }
+
+  const saved = saveActiveFocusTime()
+
+  marcarTopicoFeito(session.materiaKey, session.tKey)
+  clearActiveFocusSession()
+
+  return {
+    ok: true,
+    saved,
+    message: 'Tópico concluído! Progresso registrado.',
+  }
+}
+
+function isActiveFocusForTopic(materiaKey, tKey) {
+  const session = getActiveFocusSession()
+  return !!session &&
+    session.materiaKey === materiaKey &&
+    String(session.tKey) === String(tKey)
+}
+
 // ── Nav ────────────────────────────────────────────────
 function setNavActive() {
   const path = window.location.pathname.split('/').pop() || 'index.html'
