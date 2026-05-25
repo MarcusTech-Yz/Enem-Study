@@ -23,6 +23,8 @@ const TOPICO_SK = {
   vault: 'obsidian_vault',
 }
 
+const NOTE_BLOCK_TYPES = ['resumo', 'exemplo', 'formula', 'duvida', 'erro', 'texto']
+
 // Firebase e quiz gerenciados por firebase-init.js e quiz.js
 
 function resolveTopicoContext(materia, params) {
@@ -74,6 +76,9 @@ function getTopicoDescricao() {
 }
 
 function getTopicoAnotacao() {
+  const blocos = store.get(getNoteBlocksKey())
+  if (Array.isArray(blocos)) return blocksToMarkdown(normalizeNoteBlocks(blocos))
+
   const notas = getNotasMateria(topicoMateriaKey)
   const oficial = notas[topicoKeyId]
   if (typeof oficial === 'string' && oficial.trim()) return oficial
@@ -204,52 +209,69 @@ function renderTopicoPage() {
         </div>
 
         <div class="tab-panel ativo" id="tab-anotacoes">
-          <div class="editor-tools">
-            <div class="note-toolbar">
-              <button class="note-tool primary" onclick="insertTemplate('resumo')">
-                <i data-lucide="book-open" style="width:13px;height:13px;"></i>
-                Resumo
-              </button>
-              <button class="note-tool" onclick="insertTemplate('exemplo')">
-                <i data-lucide="lightbulb" style="width:13px;height:13px;"></i>
-                Exemplo
-              </button>
-              <button class="note-tool" onclick="insertTemplate('formula')">
-                <i data-lucide="sigma" style="width:13px;height:13px;"></i>
-                Fórmula
-              </button>
-              <button class="note-tool" onclick="insertTemplate('duvida')">
-                <i data-lucide="circle-help" style="width:13px;height:13px;"></i>
-                Dúvida
-              </button>
-              <button class="note-tool" onclick="insertTemplate('erro')">
-                <i data-lucide="triangle-alert" style="width:13px;height:13px;"></i>
-                Erro
-              </button>
-
-              <span class="note-toolbar-sep"></span>
-
-              <button class="note-tool" onclick="insertFormat('**','**')"><strong>B</strong></button>
-              <button class="note-tool" onclick="insertFormat('*','*')"><em>I</em></button>
-              <button class="note-tool" onclick="insertFormat('- ','')">Lista</button>
+          <div class="note-head">
+            <div>
+              <p class="note-kicker">Caderno do tópico</p>
+              <h3>Anotações de revisão</h3>
             </div>
             <div class="save-status" id="save-status-topico"></div>
           </div>
-          <textarea class="anotacao-area" id="topico-anotacao" placeholder="Comece com um resumo simples. Ex: 'Razão compara duas grandezas. Proporção é igualdade entre razões.'&#10;&#10;Use os botões acima para inserir blocos de resumo, exemplo, fórmula, dúvida ou erro comum.">${escapeHtmlForTextarea(getTopicoAnotacao())}</textarea>
-          <p class="note-helper">Use os blocos para montar uma anotação de revisão, não só um texto solto.</p>
-          <div class="mastery-row">
-            <button class="mastery-btn d1" data-dif="1" onclick="setDifficulty(1)">
-              <i data-lucide="alert-circle" style="width:14px;height:14px;"></i>
-              Preciso revisar
+
+          <div class="note-toolbar">
+            <button class="note-tool primary" onclick="addNoteBlock('resumo')">
+              <i data-lucide="book-open" style="width:13px;height:13px;"></i>
+              Resumo
             </button>
-            <button class="mastery-btn d2" data-dif="2" onclick="setDifficulty(2)">
-              <i data-lucide="loader-circle" style="width:14px;height:14px;"></i>
-              Em andamento
+            <button class="note-tool" onclick="addNoteBlock('exemplo')">
+              <i data-lucide="lightbulb" style="width:13px;height:13px;"></i>
+              Exemplo
             </button>
-            <button class="mastery-btn d3" data-dif="3" onclick="setDifficulty(3)">
-              <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i>
-              Entendi bem
+            <button class="note-tool" onclick="addNoteBlock('formula')">
+              <i data-lucide="sigma" style="width:13px;height:13px;"></i>
+              Fórmula
             </button>
+            <button class="note-tool" onclick="addNoteBlock('duvida')">
+              <i data-lucide="circle-help" style="width:13px;height:13px;"></i>
+              Dúvida
+            </button>
+            <button class="note-tool" onclick="addNoteBlock('erro')">
+              <i data-lucide="triangle-alert" style="width:13px;height:13px;"></i>
+              Erro
+            </button>
+            <button class="note-tool" onclick="addNoteBlock('texto')">
+              <i data-lucide="type" style="width:13px;height:13px;"></i>
+              Texto
+            </button>
+          </div>
+
+          <div id="note-blocks" class="note-blocks"></div>
+
+          <div class="note-footer">
+            <p class="note-helper">
+              Dica: escreva pensando em revisão. O ideal é conseguir reler isso em 2 minutos antes da prova.
+            </p>
+          </div>
+
+          <div class="mastery-box">
+            <div>
+              <p class="note-kicker">Domínio do conteúdo</p>
+              <p class="mastery-help">Como você se sente nesse tópico agora?</p>
+            </div>
+
+            <div class="mastery-row">
+              <button class="mastery-btn d1" data-dif="1" onclick="setDifficulty(1)">
+                <i data-lucide="alert-circle" style="width:14px;height:14px;"></i>
+                Preciso revisar
+              </button>
+              <button class="mastery-btn d2" data-dif="2" onclick="setDifficulty(2)">
+                <i data-lucide="loader-circle" style="width:14px;height:14px;"></i>
+                Em andamento
+              </button>
+              <button class="mastery-btn d3" data-dif="3" onclick="setDifficulty(3)">
+                <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i>
+                Entendi bem
+              </button>
+            </div>
           </div>
         </div>
 
@@ -304,7 +326,7 @@ function renderTopicoPage() {
     </div>
   `
 
-  setupTopicoListeners()
+  renderNoteBlocks()
   renderTopicoVideos()
   renderFocusMiniBar()
   iniciarQuiz({
@@ -318,25 +340,6 @@ function renderTopicoPage() {
   setNavActive()
   updateMasteryButtons()
   lucide.createIcons()
-}
-
-function setupTopicoListeners() {
-  const textarea = document.getElementById('topico-anotacao')
-  let timer = null
-  if (!textarea) return
-
-  textarea.addEventListener('input', () => {
-    clearTimeout(timer)
-    const status = document.getElementById('save-status-topico')
-    if (status) status.textContent = 'salvando...'
-    timer = setTimeout(() => {
-      saveTopicoAnotacao(textarea.value)
-      if (status) {
-        status.textContent = 'salvo'
-        setTimeout(() => { if (status) status.textContent = '' }, 1200)
-      }
-    }, 500)
-  })
 }
 
 function switchTopicoTab(name, btn) {
@@ -384,9 +387,6 @@ function updateMasteryButtons() {
 }
 
 function startTopicoFocus() {
-  const textarea = document.getElementById('topico-anotacao')
-  if (textarea) saveTopicoAnotacao(textarea.value)
-
   const params = new URLSearchParams({
     materiaKey: topicoMateriaKey,
     tKey: topicoKeyId,
@@ -564,10 +564,15 @@ function importFromObsidian() {
   const content = importEl.value.trim()
   if (!content) return
   if (!confirm('Isso vai substituir suas anotações atuais desse tópico. Continuar?')) return
-  saveTopicoAnotacao(content)
-  const anotacaoEl = document.getElementById('topico-anotacao')
-  if (anotacaoEl) anotacaoEl.value = content
+  saveNoteBlocks([{
+    id: createNoteBlockId(),
+    type: 'texto',
+    title: 'Importado do Obsidian',
+    content,
+  }])
+  renderNoteBlocks()
   importEl.value = ''
+  markTopicoSaved()
 }
 
 function exportTopicoMarkdown() {
@@ -637,72 +642,232 @@ function escapeHtmlForAttr(value) {
   return escapeHtml(value)
 }
 
-function insertFormat(before, after) {
-  const textarea = document.getElementById('topico-anotacao')
-  if (!textarea) return
-
-  const start = textarea.selectionStart
-  const end = textarea.selectionEnd
-  const selected = textarea.value.slice(start, end)
-  const replacement = `${before}${selected}${after}`
-
-  textarea.value =
-    textarea.value.slice(0, start) +
-    replacement +
-    textarea.value.slice(end)
-
-  textarea.focus()
-  textarea.selectionStart = start + before.length
-  textarea.selectionEnd = start + before.length + selected.length
-
-  saveTopicoAnotacao(textarea.value)
-  markTopicoSaved()
+function getNoteBlocksKey() {
+  return `note_blocks_${topicoMateriaKey}_${topicoKeyId}`
 }
 
-function insertTemplate(type) {
-  const templates = {
-    resumo:
-`\n## Resumo\n- Ideia principal:\n- Como aparece no ENEM:\n- Palavra-chave:\n`,
+function getNoteBlocks() {
+  const blocks = store.get(getNoteBlocksKey())
+  if (Array.isArray(blocks)) return normalizeNoteBlocks(blocks)
 
-    exemplo:
-`\n## Exemplo\nSituação:\n\nComo resolver:\n\nConclusão:\n`,
+  const oldNote = getTopicoAnotacao()
+  if (oldNote && oldNote.trim()) {
+    const migrated = [{
+      id: createNoteBlockId(),
+      type: 'texto',
+      title: 'Anotação antiga',
+      content: oldNote,
+    }]
 
-    formula:
-`\n## Fórmula / regra\n\`\`\`\n\n\`\`\`\nQuando usar:\n`,
-
-    duvida:
-`\n## Dúvida\nO que eu não entendi:\n\nO que preciso revisar:\n`,
-
-    erro:
-`\n## Erro comum\nEu errei porque:\n\nComo evitar na próxima:\n`,
+    saveNoteBlocks(migrated)
+    return migrated
   }
 
-  insertAtCursor(templates[type] || '')
+  return []
 }
 
-function insertAtCursor(text) {
-  const textarea = document.getElementById('topico-anotacao')
-  if (!textarea) return
+function normalizeNoteBlocks(blocks) {
+  return blocks
+    .filter(block => block && typeof block === 'object')
+    .map(block => {
+      const type = NOTE_BLOCK_TYPES.includes(block.type) ? block.type : 'texto'
+      const meta = getBlockMeta(type)
+      return {
+        id: String(block.id || createNoteBlockId()),
+        type,
+        title: String(block.title || meta.title),
+        content: String(block.content || ''),
+      }
+    })
+}
 
-  const start = textarea.selectionStart
-  const end = textarea.selectionEnd
+function saveNoteBlocks(blocks) {
+  const normalized = normalizeNoteBlocks(blocks)
+  store.set(getNoteBlocksKey(), normalized)
+  saveTopicoAnotacao(blocksToMarkdown(normalized))
+}
 
-  textarea.value =
-    textarea.value.slice(0, start) +
-    text +
-    textarea.value.slice(end)
+function blocksToMarkdown(blocks) {
+  return blocks
+    .map(block => {
+      const meta = getBlockMeta(block.type)
+      const title = block.title || meta.title
+      return `## ${title}\n${block.content || ''}`.trim()
+    })
+    .filter(Boolean)
+    .join('\n\n')
+}
 
-  textarea.focus()
-  textarea.selectionStart = textarea.selectionEnd = start + text.length
+function getBlockMeta(type) {
+  const meta = {
+    resumo: {
+      title: 'Resumo',
+      icon: 'book-open',
+      template: '- Ideia principal:\n- Como aparece no ENEM:\n- Palavra-chave:',
+    },
+    exemplo: {
+      title: 'Exemplo',
+      icon: 'lightbulb',
+      template: 'Situação:\n\nComo resolver:\n\nConclusão:',
+    },
+    formula: {
+      title: 'Fórmula / regra',
+      icon: 'sigma',
+      template: 'Expressão:\n\nQuando usar:\n\nCuidados:',
+    },
+    duvida: {
+      title: 'Dúvida',
+      icon: 'circle-help',
+      template: 'O que não entendi:\n\nO que preciso revisar:',
+    },
+    erro: {
+      title: 'Erro comum',
+      icon: 'triangle-alert',
+      template: 'Eu errei porque:\n\nComo evitar:',
+    },
+    texto: {
+      title: 'Texto livre',
+      icon: 'type',
+      template: '',
+    },
+  }
 
-  saveTopicoAnotacao(textarea.value)
+  return meta[type] || meta.texto
+}
+
+function createNoteBlockId() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID()
+  }
+
+  return `note_${Date.now()}_${Math.random().toString(36).slice(2)}`
+}
+
+function addNoteBlock(type) {
+  const meta = getBlockMeta(type)
+  const blocks = getNoteBlocks()
+
+  blocks.push({
+    id: createNoteBlockId(),
+    type: NOTE_BLOCK_TYPES.includes(type) ? type : 'texto',
+    title: meta.title,
+    content: meta.template,
+  })
+
+  saveNoteBlocks(blocks)
+  renderNoteBlocks()
+  markTopicoSaved()
+
+  setTimeout(() => {
+    const last = document.querySelector('.note-block:last-child textarea')
+    if (last) {
+      last.focus()
+      last.setSelectionRange(last.value.length, last.value.length)
+    }
+  }, 0)
+}
+
+function updateNoteBlock(id, content) {
+  const blocks = getNoteBlocks().map(block => {
+    if (block.id !== id) return block
+    return { ...block, content }
+  })
+
+  saveNoteBlocks(blocks)
   markTopicoSaved()
 }
 
-function markTopicoSaved() {
+function removeNoteBlock(id) {
+  const ok = confirm('Remover este bloco de anotação?')
+  if (!ok) return
+
+  saveNoteBlocks(getNoteBlocks().filter(block => block.id !== id))
+  renderNoteBlocks()
+  markTopicoSaved()
+}
+
+function moveNoteBlock(id, direction) {
+  const blocks = getNoteBlocks()
+  const index = blocks.findIndex(block => block.id === id)
+  if (index === -1) return
+
+  const newIndex = index + direction
+  if (newIndex < 0 || newIndex >= blocks.length) return
+
+  const current = blocks[index]
+  blocks[index] = blocks[newIndex]
+  blocks[newIndex] = current
+
+  saveNoteBlocks(blocks)
+  renderNoteBlocks()
+  markTopicoSaved()
+}
+
+function renderNoteBlocks() {
+  const container = document.getElementById('note-blocks')
+  if (!container) return
+
+  const blocks = getNoteBlocks()
+
+  if (!blocks.length) {
+    container.innerHTML = `
+      <div class="note-empty-state">
+        <strong>Nenhuma anotação ainda.</strong>
+        Use os botões acima para criar blocos de revisão.
+      </div>
+    `
+    return
+  }
+
+  container.innerHTML = blocks.map((block, index) => {
+    const meta = getBlockMeta(block.type)
+    const blockId = escapeJsString(block.id)
+
+    return `
+      <article class="note-block ${block.type}" data-id="${escapeHtmlForAttr(block.id)}">
+        <div class="note-block-head">
+          <div class="note-block-title">
+            <i data-lucide="${meta.icon}"></i>
+            ${escapeHtml(block.title || meta.title)}
+          </div>
+
+          <div class="note-block-actions">
+            <button class="note-block-action" onclick="moveNoteBlock('${blockId}', -1)" ${index === 0 ? 'disabled' : ''} title="Mover para cima">
+              <i data-lucide="chevron-up"></i>
+            </button>
+            <button class="note-block-action" onclick="moveNoteBlock('${blockId}', 1)" ${index === blocks.length - 1 ? 'disabled' : ''} title="Mover para baixo">
+              <i data-lucide="chevron-down"></i>
+            </button>
+            <button class="note-block-action danger" onclick="removeNoteBlock('${blockId}')" title="Remover bloco">
+              <i data-lucide="trash-2"></i>
+            </button>
+          </div>
+        </div>
+
+        <textarea
+          class="note-block-textarea"
+          oninput="updateNoteBlock('${blockId}', this.value)"
+          placeholder="Escreva aqui..."
+        >${escapeHtmlForTextarea(block.content || '')}</textarea>
+      </article>
+    `
+  }).join('')
+
+  lucide.createIcons()
+}
+
+function escapeJsString(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+}
+
+function markTopicoSaved(message = 'salvo') {
   const status = document.getElementById('save-status-topico')
   if (status) {
-    status.textContent = 'salvo'
+    status.textContent = message
     setTimeout(() => {
       if (status) status.textContent = ''
     }, 1200)
