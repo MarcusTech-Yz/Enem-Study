@@ -155,142 +155,6 @@
     .pulo-alerta-titulo { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
     .pulo-alerta-sub { font-size: 12px; color: var(--text2); margin-bottom: 1rem; }
     .pulo-opcoes { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    /* ══════════════════════════════════════════
-       ONBOARDING EM ETAPAS
-    ══════════════════════════════════════════ */
-    .ob-wrap {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 2rem;
-      margin-bottom: 1.5rem;
-      position: relative; overflow: hidden;
-    }
-
-    /* Barra de progresso do onboarding */
-    .ob-progress-bar {
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 2px; background: var(--border);
-    }
-    .ob-progress-fill {
-      height: 100%; background: var(--accent);
-      border-radius: 0 2px 2px 0;
-      transition: width .4s ease;
-    }
-
-    .ob-steps-dots {
-      display: flex; gap: 6px; margin-bottom: 2rem;
-    }
-    .ob-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--border2); transition: background .3s;
-    }
-    .ob-dot.ativo { background: var(--accent); }
-    .ob-dot.feito { background: var(--accent); opacity: .4; }
-
-    /* Cada step */
-    .ob-step-panel {
-      display: none;
-      animation: obFadeIn .3s ease;
-    }
-    .ob-step-panel.ativo { display: block; }
-
-    @keyframes obFadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .ob-eyebrow {
-      font-size: 10px; font-weight: 600;
-      letter-spacing: .12em; text-transform: uppercase;
-      color: var(--text3); font-family: var(--mono); margin-bottom: 8px;
-    }
-    .ob-titulo {
-      font-size: 20px; font-weight: 600;
-      letter-spacing: -.02em; margin-bottom: 6px;
-    }
-    .ob-sub {
-      font-size: 13px; color: var(--text2); margin-bottom: 1.5rem;
-    }
-    .ob-opcoes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; }
-    .ob-opt {
-      padding: 8px 16px; border-radius: 8px;
-      border: 1px solid var(--border2); background: none;
-      color: var(--text2); font-size: 13px; font-family: var(--font);
-      cursor: pointer; transition: all .15s;
-    }
-    .ob-opt:hover { color: var(--text); background: var(--bg3); }
-    .ob-opt.selected {
-      border-color: var(--accent); color: var(--accent);
-      background: rgba(200,241,53,.08);
-    }
-    .ob-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .ob-btn-prox {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: var(--accent); color: #0F0F0F;
-      border: none; border-radius: 8px;
-      padding: 10px 22px; font-size: 13px; font-weight: 600;
-      font-family: var(--font); cursor: pointer; transition: opacity .15s;
-    }
-    .ob-btn-prox:hover { opacity: .85; }
-    .ob-btn-prox:disabled { opacity: .35; cursor: default; }
-    .ob-btn-voltar {
-      background: none; border: none;
-      color: var(--text3); font-size: 12px;
-      font-family: var(--font); cursor: pointer;
-      padding: 0; transition: color .15s;
-      display: flex; align-items: center; gap: 5px;
-    }
-    .ob-btn-voltar:hover { color: var(--text); }
-    .ob-step-num {
-      font-size: 11px; color: var(--text3); font-family: var(--mono);
-    }
-
-    /* ══════════════════════════════════════════
-       TELA DE CONFIRMAÇÃO PÓS-PLANO
-    ══════════════════════════════════════════ */
-    .plano-confirmacao {
-      background: var(--accent); color: #0F0F0F;
-      border-radius: var(--radius); padding: 2rem;
-      margin-bottom: 1.5rem;
-      position: relative; overflow: hidden;
-    }
-    .plano-confirmacao::before {
-      content: '';
-      position: absolute;
-      bottom: -60px; right: -60px;
-      width: 200px; height: 200px;
-      background: rgba(0,0,0,.06);
-      border-radius: 50%;
-    }
-    .pc-eyebrow {
-      font-size: 10px; font-weight: 600;
-      letter-spacing: .12em; text-transform: uppercase;
-      opacity: .55; font-family: var(--mono); margin-bottom: 8px;
-    }
-    .pc-titulo {
-      font-size: 22px; font-weight: 600;
-      letter-spacing: -.03em; line-height: 1.2; margin-bottom: 6px;
-    }
-    .pc-resumo {
-      font-size: 13px; opacity: .7; font-family: var(--mono); margin-bottom: 1.5rem;
-    }
-    .pc-stats {
-      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 1.75rem;
-    }
-    .pc-stat {
-      background: rgba(0,0,0,.12); border-radius: 8px;
-      padding: 10px 14px;
-    }
-    .pc-stat-num { font-size: 20px; font-weight: 600; line-height: 1; }
-    .pc-stat-lbl { font-size: 10px; opacity: .6; font-family: var(--mono); margin-top: 3px; text-transform: uppercase; letter-spacing: .08em; }
-    .pc-btn {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: #0F0F0F; color: var(--accent);
-      border: none; border-radius: 8px;
-      padding: 11px 22px; font-size: 13px; font-weight: 600;
-      font-family: var(--font); cursor: pointer; transition: opacity .15s;
-    }
-    .pc-btn:hover { opacity: .85; }
   </style>
 </head>
 <body>
@@ -366,6 +230,8 @@
         </div>
         <div class="streak-pill" id="streak-badge"></div>
       </div>
+
+      <p class="home-context" id="home-context"></p>
 
       <!-- Alerta após 2 pulos -->
       <div class="pulo-alerta" id="pulo-alerta">
@@ -539,20 +405,31 @@ function escapeHtmlForAttr(value) {
   return escapeHtml(value)
 }
 
+function escapeJsArgForAttr(value) {
+  return escapeHtmlForAttr(JSON.stringify(String(value)))
+}
+
 function renderOnboarding() {
   const step = ONBOARDING_STEPS[onboardingStepIndex]
   const progress = Math.min(100, Math.round(((onboardingStepIndex + 1) / ONBOARDING_STEPS.length) * 100))
   const app = document.getElementById('onboarding-section')
 
-  document.getElementById('saudacao').textContent = getOnboardingTitle()
-  const subtitleEl = document.getElementById('page-subtitle')
-  if (subtitleEl) {
-    subtitleEl.textContent = 'Responda algumas perguntas rápidas para o enem.study se adaptar à sua rotina.'
-    subtitleEl.style.display = 'block'
-  }
-
   app.innerHTML = `
     <section class="ob-official">
+      <div class="ob-topbar">
+        <div class="ob-logo">
+          <span></span>
+          enem.study
+        </div>
+        <div class="ob-top-hint">Configuração inicial</div>
+      </div>
+
+      <div class="page-header ob-header">
+        <div class="date-tag">${document.getElementById('data-hoje')?.textContent || 'Primeiro acesso'}</div>
+        <h1>${getOnboardingTitle()}</h1>
+        <p>Responda algumas perguntas rápidas para o enem.study se adaptar à sua rotina.</p>
+      </div>
+
       <div class="ob-card">
         <div class="ob-line">
           <span style="width:${progress}%"></span>
@@ -615,7 +492,7 @@ function renderOnboardingAnswer(step) {
         ${step.options.map(opt => `
           <button
             class="ob-option ${selected === opt.value ? 'selected' : ''}"
-            onclick="selectOnboardingOption('${step.key}', '${String(opt.value)}')"
+            onclick="selectOnboardingOption(${escapeJsArgForAttr(step.key)}, ${escapeJsArgForAttr(opt.value)})"
           >
             ${opt.label}
           </button>
@@ -690,50 +567,6 @@ function getOnboardingTitle() {
   return name ? `Vamos montar seu plano, ${name}.` : 'Vamos montar seu plano.'
 }
 
-function formatTempoOnboarding(min) {
-  if (min >= 180) return '3 horas+'
-  if (min === 120) return '2 horas'
-  if (min === 60) return '1 hora'
-  return `${min} min`
-}
-
-function formatMateriaFoco(value) {
-  const map = {
-    equilibrado: 'Equilibrado',
-    matematica: 'Matemática',
-    portugues: 'Português',
-    historia: 'História',
-    geografia: 'Geografia',
-    ciencias: 'Ciências da Natureza',
-    redacao: 'Redação'
-  }
-
-  return map[value] || value
-}
-
-function formatRitmo(value) {
-  const map = {
-    recomecando: 'Recomeçando',
-    irregular: 'Irregular',
-    razoavel: 'Razoável',
-    constante: 'Constante'
-  }
-
-  return map[value] || value
-}
-
-function formatFormato(value) {
-  const map = {
-    resumos: 'Resumos',
-    questoes: 'Questões',
-    videos: 'Vídeos',
-    revisao: 'Revisão rápida',
-    misturado: 'Misturado'
-  }
-
-  return map[value] || value
-}
-
 /* ─────────────────────────────────────────
    SUGESTÃO DE TÓPICOS
 ───────────────────────────────────────── */
@@ -806,15 +639,6 @@ function getSugestaoTopicos(n) {
 ───────────────────────────────────────── */
 let pulados = []
 
-function getQuantidadeTopicosHoje() {
-  const tempo = Number(getUserProfile().tempoDiaMin || 60)
-
-  if (tempo <= 30) return 1
-  if (tempo <= 60) return 2
-  if (tempo <= 120) return 4
-  return 5
-}
-
 function getMsgProgresso(done, total) {
   if (done === 0)           return `Comece o primeiro!`
   if (done === 1)           return `1 feito! Você tá indo bem.`
@@ -853,6 +677,7 @@ function getStreakText(days) {
 
 function renderEstudo() {
   if (shouldShowOnboarding()) {
+    document.body.classList.add('onboarding-mode')
     renderOnboarding()
     document.getElementById('onboarding-section').style.display = 'block'
     document.getElementById('estudo-section').style.display     = 'none'
@@ -861,14 +686,22 @@ function renderEstudo() {
     return
   }
 
+  document.body.classList.remove('onboarding-mode')
   updateHomeHeader()
   document.getElementById('onboarding-section').style.display  = 'none'
   document.getElementById('confirmacao-section').style.display  = 'none'
   document.getElementById('estudo-section').style.display      = 'block'
 
-  const topicos   = getSugestaoTopicos(getQuantidadeTopicosHoje())
+  const personalizacao = getPersonalizacao()
+  const topicos   = getSugestaoTopicos(personalizacao.qtdTopicosHoje)
   const total     = Math.max(topicos.length, 1)
   const doneCount = topicos.filter(t => isTopicoFeito(t.materiaKey, t.tKey)).length
+  const metaSessao = personalizacao.metaSessaoPadrao
+  const contextoEl = document.getElementById('home-context')
+
+  if (contextoEl) {
+    contextoEl.textContent = `${personalizacao.focoMensagem} ${personalizacao.ritmoMensagem}`
+  }
 
   // Barra e textos de progresso
   document.getElementById('dia-prog-fill').style.width = Math.round(doneCount / total * 100) + '%'
@@ -879,7 +712,7 @@ function renderEstudo() {
 
   // Tempo restante
   const restantes = total - doneCount
-  const minRest   = restantes * 25
+  const minRest   = restantes * metaSessao
   const hRest     = Math.floor(minRest / 60)
   const mRest     = minRest % 60
   const tempoRestStr = restantes === 0
@@ -918,7 +751,7 @@ function renderEstudo() {
       <div class="topico-atual">
         <p class="ta-label">Tópico atual</p>
         <p class="ta-nome">${atual.texto}</p>
-        <p class="ta-meta">${atual.matNome} · ~25 min</p>
+        <p class="ta-meta">${atual.matNome} · ~${metaSessao} min</p>
         <div class="ta-acoes">
           <a class="ta-btn-comecar" href="${focoUrl}">
             <i data-lucide="play" style="width:14px;height:14px;"></i>
@@ -986,7 +819,7 @@ function renderEstudo() {
    PULAR / MUDAR MATÉRIA
 ───────────────────────────────────────── */
 function pularTopico() {
-  const topicos = getSugestaoTopicos(4)
+  const topicos = getSugestaoTopicos(getQuantidadeTopicosHoje())
   const atual = topicos.find(t =>
     !pulados.includes(t.tKey) &&
     !isTopicoFeito(t.materiaKey, t.tKey)

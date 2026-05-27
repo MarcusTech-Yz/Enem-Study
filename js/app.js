@@ -63,6 +63,8 @@ function finishOnboarding(profile) {
     store.set('perfil_nome', finalProfile.nome.trim())
   }
 
+  seedInitialGradeFromProfile(finalProfile)
+
   return finalProfile
 }
 
@@ -78,6 +80,214 @@ function getDisplayName() {
 function getGreetingName() {
   const name = getDisplayName()
   return name ? `, ${name}` : ''
+}
+
+function getQuantidadeTopicosHoje() {
+  const tempo = Number(getUserProfile().tempoDiaMin || 60)
+
+  if (tempo <= 30) return 1
+  if (tempo <= 60) return 2
+  if (tempo <= 120) return 4
+  return 5
+}
+
+function getMetaSessaoPadrao() {
+  const tempo = Number(getUserProfile().tempoDiaMin || 60)
+
+  if (tempo <= 30) return 10
+  if (tempo <= 60) return 25
+  if (tempo <= 120) return 25
+  return 45
+}
+
+function getEnemTargetDate() {
+  const profile = getUserProfile()
+  const year = Number(profile.enemAno || 2026)
+  const d = new Date(year, 10, 1)
+
+  while (d.getDay() !== 0) {
+    d.setDate(d.getDate() + 1)
+  }
+
+  return d
+}
+
+function getDiasAteEnem() {
+  const hoje = new Date()
+  const alvo = getEnemTargetDate()
+  const diff = alvo - hoje
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+}
+
+function getRitmoEnemLabel() {
+  const dias = getDiasAteEnem()
+
+  if (dias <= 120) return 'reta final'
+  if (dias <= 240) return 'ritmo de consolidação'
+  return 'construção de base'
+}
+
+function formatTempoOnboarding(min) {
+  if (min >= 180) return '3 horas+'
+  if (min === 120) return '2 horas'
+  if (min === 60) return '1 hora'
+  return `${min} min`
+}
+
+function formatMateriaFoco(value) {
+  const map = {
+    equilibrado: 'Equilibrado',
+    matematica: 'Matemática',
+    portugues: 'Português',
+    historia: 'História',
+    geografia: 'Geografia',
+    ciencias: 'Ciências da Natureza',
+    redacao: 'Redação'
+  }
+
+  if (map[value]) return map[value]
+  return typeof ENEM !== 'undefined' && ENEM[value]?.nome ? ENEM[value].nome : value
+}
+
+function formatRitmo(value) {
+  const map = {
+    recomecando: 'Recomeçando',
+    irregular: 'Irregular',
+    razoavel: 'Razoável',
+    constante: 'Constante'
+  }
+
+  return map[value] || value
+}
+
+function formatFormato(value) {
+  const map = {
+    resumos: 'Resumos',
+    questoes: 'Questões',
+    videos: 'Vídeos',
+    revisao: 'Revisão rápida',
+    misturado: 'Misturado'
+  }
+
+  return map[value] || value
+}
+
+function getFocusMateriaMessage() {
+  const foco = getUserProfile().focoMateria
+
+  if (!foco || foco === 'equilibrado') {
+    return 'Plano equilibrado entre as áreas.'
+  }
+
+  return `${formatMateriaFoco(foco)} aparece com mais frequência no seu plano.`
+}
+
+function getRitmoConfig() {
+  const ritmo = getUserProfile().ritmoAtual
+
+  const configs = {
+    recomecando: {
+      label: 'Recomeçando',
+      dailyBonusText: 'Hoje, uma sessão curta já conta.',
+      intensity: 'leve'
+    },
+    irregular: {
+      label: 'Irregular',
+      dailyBonusText: 'O foco hoje é só não quebrar o ciclo.',
+      intensity: 'leve'
+    },
+    razoavel: {
+      label: 'Razoável',
+      dailyBonusText: 'Boa: dá para misturar conteúdo novo e revisão.',
+      intensity: 'medio'
+    },
+    constante: {
+      label: 'Constante',
+      dailyBonusText: 'Seu ritmo permite um plano mais forte.',
+      intensity: 'forte'
+    }
+  }
+
+  return configs[ritmo] || configs.irregular
+}
+
+function getFormatoPreferidoAction() {
+  const formato = getUserProfile().formatoPreferido
+
+  const actions = {
+    resumos: {
+      label: 'Comece criando um bloco de resumo.',
+      tab: 'anotacoes'
+    },
+    questoes: {
+      label: 'Depois da teoria, tente resolver questões.',
+      tab: 'questoes'
+    },
+    videos: {
+      label: 'Use um vídeo curto para destravar o tópico.',
+      tab: 'videos'
+    },
+    revisao: {
+      label: 'Faça uma revisão rápida e marque sua compreensão.',
+      tab: 'anotacoes'
+    },
+    misturado: {
+      label: 'Misture anotação, foco e revisão.',
+      tab: 'anotacoes'
+    }
+  }
+
+  return actions[formato] || actions.misturado
+}
+
+function getPersonalizacao() {
+  const profile = getUserProfile()
+  const ritmoConfig = getRitmoConfig()
+
+  return {
+    nome: profile.nome?.trim() || 'Estudante',
+    tempoDiaMin: Number(profile.tempoDiaMin || 60),
+    qtdTopicosHoje: getQuantidadeTopicosHoje(),
+    metaSessaoPadrao: getMetaSessaoPadrao(),
+    diasAteEnem: getDiasAteEnem(),
+    ritmoLabel: ritmoConfig.label,
+    ritmoMensagem: ritmoConfig.dailyBonusText,
+    ritmoIntensidade: ritmoConfig.intensity,
+    focoMensagem: getFocusMateriaMessage(),
+    formatoAcao: getFormatoPreferidoAction(),
+    enemRitmoLabel: getRitmoEnemLabel()
+  }
+}
+
+function seedInitialGradeFromProfile(profile = getUserProfile()) {
+  if (typeof ENEM === 'undefined') return null
+
+  const grade = getGrade()
+  const materias = Object.keys(ENEM)
+  const foco = profile.focoMateria
+  const rotacao = foco && foco !== 'equilibrado' && materias.includes(foco)
+    ? [foco, ...materias.filter(k => k !== foco)]
+    : materias
+  const horarios = ['08:00', '09:00', '10:00', '14:00', '15:00']
+  const duracao = String(profile.tempoDiaMin || 60)
+  let mIdx = 0
+  let changed = false
+
+  for (let dia = 1; dia <= 6; dia++) {
+    if (!Array.isArray(grade[dia])) grade[dia] = []
+    if (grade[dia].length === 0 && rotacao.length) {
+      grade[dia] = [{
+        key: rotacao[mIdx % rotacao.length],
+        inicio: horarios[mIdx % horarios.length],
+        duracao
+      }]
+      mIdx++
+      changed = true
+    }
+  }
+
+  if (changed) saveGrade(grade)
+  return grade
 }
 
 const DIAS      = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']

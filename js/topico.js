@@ -144,6 +144,7 @@ function setTopicoDificuldade(value) {
 
 function renderTopicoPage() {
   document.title = `ENEM · ${getTopicoTitulo()}`
+  const formatoAcao = getFormatoPreferidoAction()
 
   document.getElementById('main-content').innerHTML = `
     <div class="topico-shell">
@@ -191,6 +192,10 @@ function renderTopicoPage() {
           <div class="tstat-val" id="progresso-materia-val">${getProgressoMateria(topicoMateriaKey).pct}%</div>
         </div>
       </section>
+
+      <div class="personal-tip">
+        <strong>Sugestão para você:</strong> ${escapeHtml(formatoAcao.label)}
+      </div>
 
       <section class="topico-card">
         <div class="tabs">

@@ -997,171 +997,10 @@ a { color: inherit; text-decoration: none; }
   white-space: nowrap;
 }
 
-/* ── Onboarding em etapas ── */
-.ob-wrap {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 2rem;
-  margin-bottom: 1.5rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.ob-progress-bar {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--border);
-}
-.ob-progress-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 0 2px 2px 0;
-  transition: width .4s ease;
-}
-
-.ob-steps-dots {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 2rem;
-}
-.ob-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--border2);
-  transition: background .3s, opacity .3s;
-}
-.ob-dot.ativo { background: var(--accent); }
-.ob-dot.feito { background: var(--accent); opacity: .4; }
-
-.ob-step-panel {
-  display: none;
-  animation: obFadeIn .3s ease;
-}
-.ob-step-panel.ativo { display: block; }
-
 @keyframes obFadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
-.ob-eyebrow {
-  font-size: 10px; font-weight: 600;
-  letter-spacing: .12em; text-transform: uppercase;
-  color: var(--text3); font-family: var(--mono);
-  margin-bottom: 8px;
-}
-.ob-titulo {
-  font-size: 20px; font-weight: 600;
-  letter-spacing: -.02em; margin-bottom: 6px;
-}
-.ob-sub {
-  font-size: 13px; color: var(--text2); margin-bottom: 1.5rem;
-}
-.ob-opcoes {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-}
-.ob-opt {
-  padding: 8px 16px; border-radius: 8px;
-  border: 1px solid var(--border2); background: none;
-  color: var(--text2); font-size: 13px; font-family: var(--font);
-  cursor: pointer; transition: all .15s;
-}
-.ob-opt:hover { color: var(--text); background: var(--bg3); }
-.ob-opt.selected {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(200,241,53,.08);
-}
-
-.ob-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.ob-btn-prox {
-  display: inline-flex; align-items: center; gap: 7px;
-  background: var(--accent); color: #0F0F0F;
-  border: none; border-radius: 8px;
-  padding: 10px 22px; font-size: 13px; font-weight: 600;
-  font-family: var(--font); cursor: pointer; transition: opacity .15s;
-}
-.ob-btn-prox:hover { opacity: .85; }
-.ob-btn-prox:disabled { opacity: .35; cursor: default; }
-
-.ob-btn-voltar {
-  background: none; border: none;
-  color: var(--text3); font-size: 12px;
-  font-family: var(--font); cursor: pointer;
-  padding: 0; transition: color .15s;
-  display: flex; align-items: center; gap: 5px;
-}
-.ob-btn-voltar:hover { color: var(--text); }
-
-.ob-step-num {
-  font-size: 11px; color: var(--text3); font-family: var(--mono);
-}
-
-/* ── Confirmação pós-plano ── */
-.plano-confirmacao {
-  background: var(--accent);
-  color: #0F0F0F;
-  border-radius: var(--radius);
-  padding: 2rem;
-  margin-bottom: 1.5rem;
-  position: relative;
-  overflow: hidden;
-  animation: obFadeIn .35s ease;
-}
-.plano-confirmacao::before {
-  content: '';
-  position: absolute;
-  bottom: -60px; right: -60px;
-  width: 200px; height: 200px;
-  background: rgba(0,0,0,.06);
-  border-radius: 50%;
-}
-.pc-eyebrow {
-  font-size: 10px; font-weight: 600;
-  letter-spacing: .12em; text-transform: uppercase;
-  opacity: .55; font-family: var(--mono); margin-bottom: 8px;
-}
-.pc-titulo {
-  font-size: 22px; font-weight: 600;
-  letter-spacing: -.03em; line-height: 1.2; margin-bottom: 6px;
-}
-.pc-resumo {
-  font-size: 13px; opacity: .7;
-  font-family: var(--mono); margin-bottom: 1.5rem;
-}
-.pc-stats {
-  display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 1.75rem;
-}
-.pc-stat {
-  background: rgba(0,0,0,.12);
-  border-radius: 8px; padding: 10px 14px;
-}
-.pc-stat-num {
-  font-size: 20px; font-weight: 600; line-height: 1;
-}
-.pc-stat-lbl {
-  font-size: 10px; opacity: .6;
-  font-family: var(--mono); margin-top: 3px;
-  text-transform: uppercase; letter-spacing: .08em;
-}
-.pc-btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  background: #0F0F0F; color: var(--accent);
-  border: none; border-radius: 8px;
-  padding: 11px 22px; font-size: 13px; font-weight: 600;
-  font-family: var(--font); cursor: pointer; transition: opacity .15s;
-}
-.pc-btn:hover { opacity: .85; }
 
 /* ── Alerta de pulos ── */
 .pulo-alerta {
@@ -1182,9 +1021,79 @@ a { color: inherit; text-decoration: none; }
 }
 .pulo-opcoes { display: flex; gap: 8px; flex-wrap: wrap; }
 
+body.onboarding-mode .sidebar {
+  display: none;
+}
+
+body.onboarding-mode .layout {
+  display: block;
+}
+
+body.onboarding-mode .main {
+  margin-left: 0;
+  max-width: none;
+  width: 100%;
+  min-height: 100vh;
+  padding: 3rem clamp(1.5rem, 7vw, 7rem);
+}
+
+body.onboarding-mode .main > .page-header {
+  display: none;
+}
+
+body.onboarding-mode .ob-official {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.home-context {
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-top: -0.7rem;
+  margin-bottom: 1.2rem;
+}
+
 /* Onboarding oficial */
 .ob-official {
   max-width: 1180px;
+}
+
+.ob-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.25rem;
+}
+
+.ob-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.ob-logo span {
+  width: 9px;
+  height: 9px;
+  background: var(--accent);
+  border-radius: 999px;
+  box-shadow: 0 0 18px rgba(200,241,53,.35);
+}
+
+.ob-top-hint {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+
+.ob-header h1 {
+  font-size: clamp(30px, 4vw, 48px);
+  letter-spacing: 0;
 }
 
 .ob-card {
@@ -1192,7 +1101,7 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  min-height: 360px;
+  min-height: 420px;
 }
 
 .ob-line {
@@ -1253,10 +1162,12 @@ a { color: inherit; text-decoration: none; }
   color: var(--text2);
   font-size: 14px;
   line-height: 1.7;
+  max-width: 760px;
 }
 
 .ob-answer {
   margin-top: 1.8rem;
+  max-width: 760px;
 }
 
 .ob-input {
@@ -1321,6 +1232,10 @@ a { color: inherit; text-decoration: none; }
 }
 
 .ob-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   margin-top: 3rem;
 }
 

@@ -399,8 +399,8 @@
     const texto = params.get('texto') || 'Tópico'
     const matNome = params.get('matNome') || (ENEM[materiaKey]?.nome || 'Matéria')
 
-    let metaMin = Number(store.get('focus_meta_min') ?? 25)
-    if (!Number.isFinite(metaMin)) metaMin = 25
+    let metaMin = Number(store.get('focus_meta_min') ?? getMetaSessaoPadrao())
+    if (!Number.isFinite(metaMin)) metaMin = getMetaSessaoPadrao()
     let intervalo = null
     let sessionNoticeTimer = null
 

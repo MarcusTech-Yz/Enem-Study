@@ -220,6 +220,7 @@ const prog   = getProgressoGlobal()
 const pct    = prog.total > 0 ? Math.round(prog.feitos / prog.total * 100) : 0
 const streak = getStreak()
 const tempo  = getTempoTotal()
+const personalizacao = getPersonalizacao()
 
 // ── Motivação ──
 const motivacoes = {
@@ -232,7 +233,8 @@ const motivacoes = {
   90: 'Impressionante. Quase lá.',
 }
 const motivKey = Object.keys(motivacoes).reverse().find(k => pct >= parseInt(k)) || 0
-document.getElementById('prog-motivacao').textContent = motivacoes[motivKey]
+document.getElementById('prog-motivacao').textContent =
+  `${motivacoes[motivKey]} ${personalizacao.ritmoMensagem}`
 
 // ── Stats ──
 document.getElementById('stats-row').innerHTML = `
@@ -267,12 +269,8 @@ const semanasAtivas = Math.max(1, Math.ceil(streak.count / 7))
 const topicosSemanais = prog.feitos > 0 ? Math.max(1, Math.round(prog.feitos / Math.max(1, semanasAtivas))) : 0
 const semanasParaTerminar = topicosSemanais > 0 ? Math.ceil(topicosRestantes / topicosSemanais) : null
 
-// Referencia aproximada para novembro. A data oficial pode virar configuracao no plano.
-const hoje       = new Date()
-const proximoEnem = new Date(hoje.getFullYear(), 10, 1) // Nov 1
-if (proximoEnem < hoje) proximoEnem.setFullYear(hoje.getFullYear() + 1)
-const diasParaEnem  = Math.ceil((proximoEnem - hoje) / 86400000)
-const semanasParaEnem = Math.ceil(diasParaEnem / 7)
+const diasParaEnem  = personalizacao.diasAteEnem
+const semanasParaEnem = Math.max(1, Math.ceil(diasParaEnem / 7))
 
 let projecaoPct = 0
 let projecaoTxt = ''
@@ -282,18 +280,18 @@ let projecaoCor  = 'var(--accent)'
 if (prog.feitos === 0) {
   projecaoPct  = 0
   projecaoTxt  = 'Comece a estudar para ver sua projeção.'
-  projecaoMeta = `${diasParaEnem} dias para o ENEM · ${semanasParaEnem} semanas`
+  projecaoMeta = `${diasParaEnem} dias para o ENEM · ${personalizacao.enemRitmoLabel}`
   projecaoCor  = 'var(--border2)'
 } else if (semanasParaTerminar && semanasParaTerminar <= semanasParaEnem) {
   projecaoPct  = Math.min(100, Math.round((semanasParaEnem - semanasParaTerminar) / semanasParaEnem * 100 + pct))
   projecaoTxt  = `No ritmo atual, você cobre ~${Math.min(100, pct + Math.round(topicosSemanais * semanasParaEnem / prog.total * 100))}% do conteúdo até novembro.`
-  projecaoMeta = `${diasParaEnem} dias para o ENEM · ${topicosSemanais} tópicos/semana no seu ritmo atual`
+  projecaoMeta = `${diasParaEnem} dias para o ENEM · ${personalizacao.enemRitmoLabel} · ${topicosSemanais} tópicos/semana`
   projecaoCor  = 'var(--accent)'
 } else {
   const coberturaEnem = Math.min(100, Math.round(pct + (topicosSemanais * semanasParaEnem / prog.total * 100)))
   projecaoPct  = coberturaEnem
   projecaoTxt  = `No ritmo atual, você vai cobrir ~${coberturaEnem}% até novembro. Aumente o ritmo para chegar em mais matérias.`
-  projecaoMeta = `${diasParaEnem} dias para o ENEM · Precisa de ~${Math.ceil(topicosRestantes / semanasParaEnem)} tópicos/semana para cobrir tudo`
+  projecaoMeta = `${diasParaEnem} dias para o ENEM · ${personalizacao.enemRitmoLabel} · Precisa de ~${Math.ceil(topicosRestantes / semanasParaEnem)} tópicos/semana`
   projecaoCor  = coberturaEnem < 50 ? 'var(--amber)' : 'var(--accent)'
 }
 
