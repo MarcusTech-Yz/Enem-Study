@@ -1122,6 +1122,11 @@ body.onboarding-mode .ob-official {
   border: 1px solid rgba(255,255,255,.09);
 }
 
+.ob-card.is-intro {
+  background: #000;
+  border-color: rgba(255,255,255,.08);
+}
+
 .ob-line {
   height: 3px;
   background: rgba(255,255,255,.045);
@@ -1311,19 +1316,20 @@ body.onboarding-mode .ob-official {
   border-radius: 22px;
 
   background:
-    radial-gradient(ellipse at 50% 78%, rgba(200,241,53,.11), transparent 33%),
-    radial-gradient(ellipse at 50% 58%, rgba(0,0,0,.72), transparent 70%);
-  animation: obMascotIn .5s ease both;
+    radial-gradient(circle at 50% 85%, rgba(200,241,53,.05), transparent 24%),
+    linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,0)),
+    transparent;
+  animation: obMascotIn .45s ease both;
 }
 
 .ob-mascot-scene::before {
   content: "";
   position: absolute;
-  inset: auto 7% 5% 7%;
-  height: 42%;
-  background: radial-gradient(ellipse at center, rgba(200,241,53,.15), transparent 62%);
-  filter: blur(20px);
-  opacity: .9;
+  inset: auto 18% 7% 18%;
+  height: 18%;
+  background: radial-gradient(ellipse at center, rgba(200,241,53,.08), transparent 70%);
+  filter: blur(18px);
+  opacity: .45;
 }
 
 .ob-mascot-img {
@@ -1336,13 +1342,18 @@ body.onboarding-mode .ob-official {
   object-position: center bottom;
   user-select: none;
   filter:
-    drop-shadow(0 0 20px rgba(200,241,53,.12))
-    drop-shadow(0 34px 80px rgba(0,0,0,.68));
-  animation: obMascotFloat 4.4s ease-in-out infinite;
+    drop-shadow(0 10px 28px rgba(0,0,0,.45))
+    drop-shadow(0 0 10px rgba(200,241,53,.05));
 }
 
 .ob-mascot-video {
-  border-radius: 20px;
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  object-fit: contain;
+  object-position: center bottom;
+  background: #000;
+  border-radius: 18px;
 }
 
 .mascot-intro .ob-mascot-img {
@@ -1376,16 +1387,45 @@ body.onboarding-mode .ob-official {
 
 .mascot-final .ob-mascot-img {
   max-width: 320px;
-  transform: translateY(24px);
+  transform: translateY(8px);
 }
 
 .ob-card.is-intro .ob-content {
-  grid-template-columns: minmax(0, .95fr) minmax(360px, 520px);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 560px);
+  gap: 2.5rem;
 }
 
 .ob-card.is-intro .ob-content h2 {
   font-size: 64px;
   max-width: 700px;
+}
+
+.ob-card.is-intro .ob-mascot-scene {
+  padding: 0;
+  align-items: center;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ob-card.is-intro .ob-mascot-scene::before {
+  display: none;
+}
+
+.ob-card.is-intro .ob-mascot-video {
+  width: 126%;
+  max-width: 720px;
+  max-height: 560px;
+  object-position: center center;
+  border-radius: 0;
+  filter:
+    brightness(1.14)
+    contrast(1.03)
+    saturate(1.08)
+    drop-shadow(0 10px 28px rgba(0,0,0,.42))
+    drop-shadow(0 0 14px rgba(200,241,53,.06));
+  -webkit-mask-image: radial-gradient(ellipse at 50% 56%, #000 0 54%, rgba(0,0,0,.82) 66%, transparent 82%);
+  mask-image: radial-gradient(ellipse at 50% 56%, #000 0 54%, rgba(0,0,0,.82) 66%, transparent 82%);
 }
 
 .ob-intro-copy {
@@ -1405,6 +1445,23 @@ body.onboarding-mode .ob-official {
 
 .ob-card.is-final .ob-mascot-scene {
   align-items: flex-end;
+}
+
+.mascot-final.ob-mascot-scene::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  width: 220px;
+  height: 28px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.35),
+    0 0 0 1px rgba(255,255,255,.04);
 }
 
 .ob-card.is-final .ob-final {
@@ -1463,16 +1520,6 @@ body.onboarding-mode .ob-official {
   to {
     opacity: 1;
     transform: translateX(0) scale(1);
-  }
-}
-
-@keyframes obMascotFloat {
-  0%, 100% {
-    translate: 0 0;
-  }
-
-  50% {
-    translate: 0 -8px;
   }
 }
 
@@ -1588,11 +1635,17 @@ body.onboarding-mode .ob-official {
   }
 
   .ob-card.is-intro .ob-mascot-scene {
-    min-height: 150px;
+    min-height: 155px;
   }
 
   .ob-card.is-intro .ob-mascot-img {
-    max-height: 145px;
+    max-height: 155px;
+  }
+
+  .ob-card.is-intro .ob-mascot-video {
+    width: 118%;
+    max-width: 118%;
+    max-height: 155px;
   }
 
   .ob-intro-copy {
