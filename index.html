@@ -291,6 +291,17 @@ updateHomeHeader()
 ───────────────────────────────────────── */
 const ONBOARDING_STEPS = [
   {
+    key: 'intro',
+    type: 'intro',
+    kicker: 'Bem-vindo',
+    title: 'Seu plano começa aqui.',
+    subtitle: 'O enem.study vai adaptar sua rotina, seu tempo e sua forma de estudar.',
+    mascot: 'Vamos montar uma base simples para o seu plano inicial.',
+    mascotVideo: 'Assets/mascote/robo.mp4',
+    mascotImage: 'Assets/mascote/mascote-01-nome.png',
+    mascotClass: 'mascot-intro'
+  },
+  {
     key: 'nome',
     type: 'input',
     kicker: 'Passo 1 de 6',
@@ -423,29 +434,75 @@ function escapeJsArgForAttr(value) {
   return escapeHtmlForAttr(JSON.stringify(String(value)))
 }
 
+function getOnboardingQuestionSteps() {
+  return ONBOARDING_STEPS.filter(step => step.type !== 'intro' && step.type !== 'final')
+}
+
+function getOnboardingProgress(step) {
+  if (step.type === 'intro') return 0
+  if (step.type === 'final') return 100
+
+  const questionSteps = getOnboardingQuestionSteps()
+  const index = questionSteps.findIndex(item => item.key === step.key)
+
+  return Math.round(((index + 1) / questionSteps.length) * 100)
+}
+
+function getOnboardingStepLabel(step) {
+  if (step.type === 'intro') return 'Configuração inicial'
+  if (step.type === 'final') return 'Plano inicial'
+
+  const questionSteps = getOnboardingQuestionSteps()
+  const index = questionSteps.findIndex(item => item.key === step.key)
+
+  return `Passo ${index + 1} de ${questionSteps.length}`
+}
+
+function getOnboardingNextLabel(step) {
+  if (step.type === 'intro') return 'Começar'
+  if (step.type === 'final') return 'Entrar no app'
+  return 'Próximo'
+}
+
 function renderOnboardingMascot(step) {
-  if (!step.mascotImage) return ''
+  if (!step.mascotImage && !step.mascotVideo) return ''
 
-  return `
-    <div class="ob-mascot-scene ${step.mascotClass || ''}">
-      <div class="ob-mascot-speech">
-        <p>Guia enem.study</p>
-        <span>${escapeHtml(step.mascot || 'Vamos montar seu plano.')}</span>
-      </div>
-
+  const media = step.mascotVideo
+    ? `
+      <video
+        class="ob-mascot-img ob-mascot-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        poster="${escapeHtmlForAttr(step.mascotImage || '')}"
+        aria-label="Mascote enem.study"
+      >
+        <source src="${escapeHtmlForAttr(step.mascotVideo)}" type="video/mp4">
+      </video>
+    `
+    : `
       <img
         class="ob-mascot-img"
         src="${escapeHtmlForAttr(step.mascotImage)}"
         alt="Mascote enem.study"
         loading="lazy"
       >
+    `
+
+  return `
+    <div class="ob-mascot-scene ${step.mascotClass || ''}">
+      ${media}
     </div>
   `
 }
 
 function renderOnboarding() {
   const step = ONBOARDING_STEPS[onboardingStepIndex]
-  const progress = Math.min(100, Math.round(((onboardingStepIndex + 1) / ONBOARDING_STEPS.length) * 100))
+  const progress = getOnboardingProgress(step)
+  const questionSteps = getOnboardingQuestionSteps()
+  const currentQuestionIndex = questionSteps.findIndex(item => item.key === step.key)
   const app = document.getElementById('onboarding-section')
 
   app.innerHTML = `
@@ -458,45 +515,47 @@ function renderOnboarding() {
         <div class="ob-top-hint">Configuração inicial</div>
       </div>
 
-      <div class="page-header ob-header">
+      <div class="page-header ob-header ${step.type === 'intro' ? 'is-intro-header' : 'is-step-header'}">
         <div class="date-tag">${document.getElementById('data-hoje')?.textContent || 'Primeiro acesso'}</div>
-        <h1>${getOnboardingTitle()}</h1>
+        <h1>${getOnboardingTitle(step)}</h1>
         <p>Responda algumas perguntas rápidas para o enem.study se adaptar à sua rotina.</p>
       </div>
 
-      <div class="ob-card">
+      <div class="ob-card ${step.type === 'intro' ? 'is-intro' : ''} ${step.type === 'final' ? 'is-final' : ''}">
         <div class="ob-line">
           <span style="width:${progress}%"></span>
         </div>
 
         <div class="ob-content">
           <div class="ob-main">
-            <div class="ob-dots">
-              ${ONBOARDING_STEPS.slice(0, -1).map((_, i) => `
-                <span class="${i === onboardingStepIndex ? 'active' : i < onboardingStepIndex ? 'done' : ''}"></span>
-              `).join('')}
-            </div>
+            ${step.type !== 'intro' ? `
+              <div class="ob-dots">
+                ${questionSteps.map((_, i) => `
+                  <span class="${step.type === 'final' || i < currentQuestionIndex ? 'done' : i === currentQuestionIndex ? 'active' : ''}"></span>
+                `).join('')}
+              </div>
+            ` : ''}
 
-            <p class="ob-kicker">${step.kicker}</p>
+            <p class="ob-kicker">${getOnboardingStepLabel(step)}</p>
             <h2>${step.title}</h2>
             <p class="ob-subtitle">${step.subtitle}</p>
 
             <div class="ob-answer">
               ${renderOnboardingAnswer(step)}
             </div>
-
-            <div class="ob-nav">
-              <button class="btn btn-ghost" onclick="prevOnboardingStep()" ${onboardingStepIndex === 0 ? 'style="visibility:hidden"' : ''}>
-                Voltar
-              </button>
-
-              <button class="btn btn-accent" onclick="nextOnboardingStep()">
-                ${step.type === 'final' ? 'Entrar no app' : 'Próximo'}
-              </button>
-            </div>
           </div>
 
           ${renderOnboardingMascot(step)}
+
+          <div class="ob-nav">
+            <button class="btn btn-ghost" onclick="prevOnboardingStep()" ${onboardingStepIndex === 0 ? 'style="visibility:hidden"' : ''}>
+              Voltar
+            </button>
+
+            <button class="btn btn-accent" onclick="nextOnboardingStep()">
+              ${getOnboardingNextLabel(step)}
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -506,6 +565,16 @@ function renderOnboarding() {
 }
 
 function renderOnboardingAnswer(step) {
+  if (step.type === 'intro') {
+    return `
+      <div class="ob-intro-copy">
+        <span>Leva menos de 1 minuto</span>
+        <span>Plano ajustável depois</span>
+        <span>Sem cadastro obrigatório</span>
+      </div>
+    `
+  }
+
   if (step.type === 'input') {
     return `
       <input
@@ -527,9 +596,10 @@ function renderOnboardingAnswer(step) {
 
     return `
       <div class="ob-options">
-        ${step.options.map(opt => `
+        ${step.options.map((opt, index) => `
           <button
             class="ob-option ${selected === opt.value ? 'selected' : ''}"
+            style="animation-delay:${index * 35}ms"
             onclick="selectOnboardingOption(${escapeJsArgForAttr(step.key)}, ${escapeJsArgForAttr(opt.value)})"
           >
             ${opt.label}
@@ -600,9 +670,9 @@ function prevOnboardingStep() {
   renderOnboarding()
 }
 
-function getOnboardingTitle() {
-  const name = onboardingDraft.nome?.trim()
-  return name ? `Vamos montar seu plano, ${name}.` : 'Vamos montar seu plano.'
+function getOnboardingTitle(step = ONBOARDING_STEPS[onboardingStepIndex]) {
+  if (step.type === 'intro') return 'Bem-vindo ao enem.study.'
+  return 'Configurando seu plano'
 }
 
 /* ─────────────────────────────────────────
