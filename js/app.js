@@ -5,6 +5,81 @@ const store = {
   set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
 }
 
+const DEFAULT_USER_PROFILE = {
+  nome: '',
+  enemAno: 2026,
+  tempoDiaMin: 60,
+  focoMateria: 'equilibrado',
+  ritmoAtual: 'irregular',
+  formatoPreferido: 'misturado',
+  onboardingDone: false,
+  createdAt: null,
+  updatedAt: null,
+}
+
+function getUserProfile() {
+  return {
+    ...DEFAULT_USER_PROFILE,
+    ...(store.get('userProfile') || {})
+  }
+}
+
+function saveUserProfile(profile) {
+  const current = getUserProfile()
+  const now = new Date().toISOString()
+
+  const next = {
+    ...current,
+    ...profile,
+    updatedAt: now,
+    createdAt: current.createdAt || now
+  }
+
+  store.set('userProfile', next)
+
+  return next
+}
+
+function finishOnboarding(profile) {
+  const finalProfile = saveUserProfile({
+    ...profile,
+    onboardingDone: true
+  })
+
+  // Compatibilidade com configuracoes ja existentes.
+  if (finalProfile.tempoDiaMin) {
+    store.set('tempo_diario', finalProfile.tempoDiaMin)
+  }
+
+  if (finalProfile.enemAno) {
+    store.set('enem_ano', finalProfile.enemAno)
+  }
+
+  if (finalProfile.focoMateria) {
+    store.set('materia_prioritaria', finalProfile.focoMateria)
+  }
+
+  if (finalProfile.nome?.trim()) {
+    store.set('perfil_nome', finalProfile.nome.trim())
+  }
+
+  return finalProfile
+}
+
+function shouldShowOnboarding() {
+  return !getUserProfile().onboardingDone
+}
+
+function getDisplayName() {
+  const profile = getUserProfile()
+  return profile.nome?.trim() || ''
+}
+
+function getGreetingName() {
+  const name = getDisplayName()
+  return name ? `, ${name}` : ''
+}
+
 const DIAS      = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 const DIAS_FULL = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']
 

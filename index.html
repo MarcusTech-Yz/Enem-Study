@@ -320,98 +320,16 @@
     <div class="page-header">
       <p class="date-tag" id="data-hoje"></p>
       <h1 id="saudacao"></h1>
+      <p id="page-subtitle"></p>
     </div>
 
     <!-- ════════════════════════════════
          ONBOARDING EM ETAPAS
     ════════════════════════════════ -->
     <div id="onboarding-section" style="display:none;">
-      <div class="ob-wrap">
-        <!-- Barra de progresso topo -->
-        <div class="ob-progress-bar">
-          <div class="ob-progress-fill" id="ob-prog-fill" style="width:33%"></div>
-        </div>
-
-        <!-- Dots de navegação -->
-        <div class="ob-steps-dots">
-          <div class="ob-dot ativo" id="dot-0"></div>
-          <div class="ob-dot" id="dot-1"></div>
-          <div class="ob-dot" id="dot-2"></div>
-        </div>
-
-        <!-- Step 1: Quando é o ENEM -->
-        <div class="ob-step-panel ativo" id="ob-step-0">
-          <p class="ob-eyebrow">Passo 1 de 3</p>
-          <p class="ob-titulo">Quando é o seu ENEM?</p>
-          <p class="ob-sub">Isso ajuda a definir o ritmo do seu plano.</p>
-          <div class="ob-opcoes">
-            <button class="ob-opt" data-group="enem" data-val="nov2025" onclick="selecionarOpt(this)">Nov 2025</button>
-            <button class="ob-opt selected" data-group="enem" data-val="nov2026" onclick="selecionarOpt(this)">Nov 2026</button>
-            <button class="ob-opt" data-group="enem" data-val="nov2027" onclick="selecionarOpt(this)">Nov 2027+</button>
-          </div>
-          <div class="ob-nav">
-            <span class="ob-step-num">1 / 3</span>
-            <button class="ob-btn-prox" onclick="obProximo()">
-              Próximo <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Step 2: Tempo por dia -->
-        <div class="ob-step-panel" id="ob-step-1">
-          <p class="ob-eyebrow">Passo 2 de 3</p>
-          <p class="ob-titulo">Quanto tempo por dia?</p>
-          <p class="ob-sub">Seja realista — é melhor 30 min todo dia do que 3h uma vez.</p>
-          <div class="ob-opcoes">
-            <button class="ob-opt" data-group="tempo" data-val="30" onclick="selecionarOpt(this)">30 min</button>
-            <button class="ob-opt selected" data-group="tempo" data-val="60" onclick="selecionarOpt(this)">1 hora</button>
-            <button class="ob-opt" data-group="tempo" data-val="120" onclick="selecionarOpt(this)">2 horas</button>
-            <button class="ob-opt" data-group="tempo" data-val="180" onclick="selecionarOpt(this)">3 horas+</button>
-          </div>
-          <div class="ob-nav">
-            <button class="ob-btn-voltar" onclick="obVoltar()">
-              <i data-lucide="arrow-left" style="width:13px;height:13px;"></i> Voltar
-            </button>
-            <button class="ob-btn-prox" onclick="obProximo()">
-              Próximo <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Step 3: Matéria foco -->
-        <div class="ob-step-panel" id="ob-step-2">
-          <p class="ob-eyebrow">Passo 3 de 3</p>
-          <p class="ob-titulo">Tem alguma matéria que precisa de mais atenção?</p>
-          <p class="ob-sub">Vamos colocar ela com mais frequência no seu plano.</p>
-          <div class="ob-opcoes" id="ob-materias-opts"></div>
-          <div class="ob-nav">
-            <button class="ob-btn-voltar" onclick="obVoltar()">
-              <i data-lucide="arrow-left" style="width:13px;height:13px;"></i> Voltar
-            </button>
-            <button class="ob-btn-prox" onclick="criarPlano()">
-              <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
-              Criar meu plano
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- ════════════════════════════════
-         CONFIRMAÇÃO PÓS-PLANO
-    ════════════════════════════════ -->
-    <div id="confirmacao-section" style="display:none;">
-      <div class="plano-confirmacao">
-        <p class="pc-eyebrow">Plano criado!</p>
-        <p class="pc-titulo">Tudo pronto. Vamos começar?</p>
-        <p class="pc-resumo" id="pc-resumo-txt"></p>
-        <div class="pc-stats" id="pc-stats"></div>
-        <button class="pc-btn" onclick="iniciarEstudo()">
-          <i data-lucide="play" style="width:14px;height:14px;"></i>
-          Começar agora
-        </button>
-      </div>
-    </div>
+    <div id="confirmacao-section" style="display:none;"></div>
 
     <!-- ════════════════════════════════
          ALERTA DE STREAK
@@ -479,136 +397,341 @@
    Saudação e data
 ───────────────────────────────────────── */
 const agora = new Date()
-const hora  = agora.getHours()
 document.getElementById('data-hoje').textContent =
   agora.toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })
-document.getElementById('saudacao').textContent =
-  hora < 12 ? 'Bom dia. Vamos estudar?' :
-  hora < 18 ? 'Boa tarde. Pronto para estudar?' : 'Boa noite. Uma última sessão?'
+
+function getHomeGreeting() {
+  const hour = new Date().getHours()
+  const name = getGreetingName()
+
+  if (hour < 12) return `Bom dia${name}. Bora começar?`
+  if (hour < 18) return `Boa tarde${name}. Pronto para estudar?`
+  return `Boa noite${name}. Uma última sessão?`
+}
+
+function updateHomeHeader(subtitle = '') {
+  const subtitleEl = document.getElementById('page-subtitle')
+  document.getElementById('saudacao').textContent = getHomeGreeting()
+
+  if (!subtitleEl) return
+  subtitleEl.textContent = subtitle
+  subtitleEl.style.display = subtitle ? 'block' : 'none'
+}
+
+updateHomeHeader()
 
 /* ─────────────────────────────────────────
-   ONBOARDING EM ETAPAS
+   ONBOARDING OFICIAL
 ───────────────────────────────────────── */
-let obStep = 0
-const OB_TOTAL = 3
-
-// Monta opções de matérias no step 3
-const obMats = document.getElementById('ob-materias-opts')
-;['equilibrado', ...Object.keys(ENEM)].forEach(k => {
-  const nome = k === 'equilibrado' ? 'Equilibrado' : ENEM[k]?.nome || k
-  const btn  = document.createElement('button')
-  btn.className      = 'ob-opt' + (k === 'equilibrado' ? ' selected' : '')
-  btn.dataset.group  = 'foco'
-  btn.dataset.val    = k
-  btn.textContent    = nome
-  btn.onclick = function() { selecionarOpt(this) }
-  obMats.appendChild(btn)
-})
-
-function selecionarOpt(el) {
-  document.querySelectorAll(`.ob-opt[data-group="${el.dataset.group}"]`)
-    .forEach(b => b.classList.remove('selected'))
-  el.classList.add('selected')
-}
-
-function getObVal(group) {
-  return document.querySelector(`.ob-opt.selected[data-group="${group}"]`)?.dataset.val || null
-}
-
-function atualizarDotsEBarra() {
-  for (let i = 0; i < OB_TOTAL; i++) {
-    const dot = document.getElementById('dot-' + i)
-    dot.classList.remove('ativo', 'feito')
-    if (i < obStep)       dot.classList.add('feito')
-    else if (i === obStep) dot.classList.add('ativo')
+const ONBOARDING_STEPS = [
+  {
+    key: 'nome',
+    type: 'input',
+    kicker: 'Passo 1 de 6',
+    title: 'Como você quer ser chamado?',
+    subtitle: 'Esse nome aparece nas mensagens, no perfil e nas conquistas.',
+    placeholder: 'Ex: Marcus',
+    mascot: 'Primeiro, vamos dar uma cara sua para o app.'
+  },
+  {
+    key: 'enemAno',
+    type: 'options',
+    kicker: 'Passo 2 de 6',
+    title: 'Quando é o seu ENEM?',
+    subtitle: 'Isso ajuda a definir o ritmo do seu plano.',
+    mascot: 'Quanto mais distante a prova, mais sustentável pode ser o ritmo.',
+    options: [
+      { label: 'Nov 2025', value: 2025, insight: 'Plano mais direto, com foco em revisão e pontos fracos.' },
+      { label: 'Nov 2026', value: 2026, insight: 'Plano equilibrado, com tempo para construir base e revisar.' },
+      { label: 'Nov 2027+', value: 2027, insight: 'Plano leve, ideal para criar constância desde cedo.' },
+    ]
+  },
+  {
+    key: 'tempoDiaMin',
+    type: 'options',
+    kicker: 'Passo 3 de 6',
+    title: 'Quanto tempo você consegue sustentar por dia?',
+    subtitle: 'Seja realista - é melhor 30 min todo dia do que 3h uma vez.',
+    mascot: 'O melhor plano é aquele que você consegue repetir.',
+    options: [
+      { label: '30 min', value: 30, insight: 'Plano leve: 1 bloco principal por dia.' },
+      { label: '1 hora', value: 60, insight: 'Plano equilibrado: 2 blocos por dia.' },
+      { label: '2 horas', value: 120, insight: 'Plano intenso: tópicos + revisão.' },
+      { label: '3 horas+', value: 180, insight: 'Plano avançado: ideal para uma rotina forte.' },
+    ]
+  },
+  {
+    key: 'focoMateria',
+    type: 'options',
+    kicker: 'Passo 4 de 6',
+    title: 'Qual área mais te trava hoje?',
+    subtitle: 'Vamos colocar essa área com um pouco mais de frequência no plano.',
+    mascot: 'Não precisa acertar perfeito. Você pode mudar isso depois.',
+    options: [
+      { label: 'Equilibrado', value: 'equilibrado', insight: 'Seu plano vai distribuir melhor entre as áreas.' },
+      { label: 'Matemática', value: 'matematica', insight: 'Matemática vai aparecer com mais frequência.' },
+      { label: 'Português', value: 'portugues', insight: 'Português vai ganhar reforço em leitura e linguagem.' },
+      { label: 'História', value: 'historia', insight: 'História vai receber mais blocos de revisão.' },
+      { label: 'Geografia', value: 'geografia', insight: 'Geografia vai aparecer mais no ciclo da semana.' },
+      { label: 'Ciências da Natureza', value: 'ciencias', insight: 'Ciências vai ganhar prioridade no seu plano.' },
+      { label: 'Redação', value: 'redacao', insight: 'Redação pode entrar como rotina semanal.' },
+    ]
+  },
+  {
+    key: 'ritmoAtual',
+    type: 'options',
+    kicker: 'Passo 5 de 6',
+    title: 'Como está seu ritmo atualmente?',
+    subtitle: 'Isso muda o tom do plano: leve, equilibrado ou mais puxado.',
+    mascot: 'Sem julgamento aqui. O importante é começar do ponto certo.',
+    options: [
+      { label: 'Recomeçando', value: 'recomecando', insight: 'Vamos começar leve para criar tração.' },
+      { label: 'Irregular', value: 'irregular', insight: 'O foco será manter uma sequência simples.' },
+      { label: 'Razoável', value: 'razoavel', insight: 'Dá para equilibrar conteúdo novo e revisão.' },
+      { label: 'Constante', value: 'constante', insight: 'Seu plano pode ser um pouco mais ambicioso.' },
+    ]
+  },
+  {
+    key: 'formatoPreferido',
+    type: 'options',
+    kicker: 'Passo 6 de 6',
+    title: 'Qual formato mais te ajuda a estudar?',
+    subtitle: 'Isso ajuda o app a sugerir ações melhores em cada tópico.',
+    mascot: 'Assim eu sei se devo te puxar mais para resumo, questão ou revisão.',
+    options: [
+      { label: 'Resumos', value: 'resumos', insight: 'O app vai destacar blocos de anotação e revisão.' },
+      { label: 'Questões', value: 'questoes', insight: 'O app pode te puxar mais para prática.' },
+      { label: 'Vídeos', value: 'videos', insight: 'A aba de vídeos ganha mais sentido no seu fluxo.' },
+      { label: 'Revisão rápida', value: 'revisao', insight: 'Você vai receber ações mais curtas e objetivas.' },
+      { label: 'Misturado', value: 'misturado', insight: 'O plano vai alternar teoria, anotação e prática.' },
+    ]
+  },
+  {
+    key: 'final',
+    type: 'final',
+    kicker: 'Plano inicial',
+    title: 'Seu plano está pronto.',
+    subtitle: 'Esse é o primeiro desenho da sua rotina. Você pode ajustar tudo depois.',
+    mascot: 'Pronto. Agora o enem.study tem uma base para te guiar.'
   }
-  const pct = Math.round(((obStep + 1) / OB_TOTAL) * 100)
-  document.getElementById('ob-prog-fill').style.width = pct + '%'
+]
+
+let onboardingStepIndex = 0
+let onboardingDraft = {
+  ...getUserProfile(),
+  enemAno: getUserProfile().enemAno || 2026,
+  tempoDiaMin: getUserProfile().tempoDiaMin || 60,
+  focoMateria: getUserProfile().focoMateria || 'equilibrado',
+  ritmoAtual: getUserProfile().ritmoAtual || 'irregular',
+  formatoPreferido: getUserProfile().formatoPreferido || 'misturado',
 }
 
-function obProximo() {
-  if (obStep >= OB_TOTAL - 1) return
-  document.getElementById('ob-step-' + obStep).classList.remove('ativo')
-  obStep++
-  document.getElementById('ob-step-' + obStep).classList.add('ativo')
-  atualizarDotsEBarra()
-  lucide.createIcons()
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
 }
 
-function obVoltar() {
-  if (obStep <= 0) return
-  document.getElementById('ob-step-' + obStep).classList.remove('ativo')
-  obStep--
-  document.getElementById('ob-step-' + obStep).classList.add('ativo')
-  atualizarDotsEBarra()
-  lucide.createIcons()
+function escapeHtmlForAttr(value) {
+  return escapeHtml(value)
 }
 
-/* ─────────────────────────────────────────
-   CRIAR PLANO + TELA DE CONFIRMAÇÃO
-───────────────────────────────────────── */
-function criarPlano() {
-  const foco    = getObVal('foco')
-  const tempo   = parseInt(getObVal('tempo') || '60')
-  const grade   = getGrade()
-  const materias = Object.keys(ENEM)
-  const rotacao  = (!foco || foco === 'equilibrado' || !ENEM[foco])
-    ? materias
-    : [foco, ...materias.filter(k => k !== foco)]
-  const horarios = ['08:00','09:00','10:00','14:00','15:00']
-  let mIdx = 0
-  for (let dia = 1; dia <= 6; dia++) {
-    if (grade[dia].length === 0) {
-      grade[dia] = [{ key: rotacao[mIdx % rotacao.length], inicio: horarios[mIdx % horarios.length], duracao: String(tempo) }]
-      mIdx++
-    }
+function renderOnboarding() {
+  const step = ONBOARDING_STEPS[onboardingStepIndex]
+  const progress = Math.min(100, Math.round(((onboardingStepIndex + 1) / ONBOARDING_STEPS.length) * 100))
+  const app = document.getElementById('onboarding-section')
+
+  document.getElementById('saudacao').textContent = getOnboardingTitle()
+  const subtitleEl = document.getElementById('page-subtitle')
+  if (subtitleEl) {
+    subtitleEl.textContent = 'Responda algumas perguntas rápidas para o enem.study se adaptar à sua rotina.'
+    subtitleEl.style.display = 'block'
   }
-  saveGrade(grade)
-  store.set('onboarding_done', true)
-  store.set('tempo_diario', tempo)
 
-  // Calcular stats para a confirmação
-  const topicosHoje = getSugestaoTopicos(4)
-  const numTopicos  = topicosHoje.length || 4
-  const minTotal    = numTopicos * 25
-  const horas       = Math.floor(minTotal / 60)
-  const mins        = minTotal % 60
-  const tempoStr    = horas > 0
-    ? (mins > 0 ? `${horas}h${mins}min` : `${horas}h`)
-    : `${mins}min`
+  app.innerHTML = `
+    <section class="ob-official">
+      <div class="ob-card">
+        <div class="ob-line">
+          <span style="width:${progress}%"></span>
+        </div>
 
-  // Preencher confirmação
-  document.getElementById('pc-resumo-txt').textContent =
-    `Hoje: ${numTopicos} tópicos · ~${tempoStr} no total`
+        <div class="ob-content">
+          <div class="ob-dots">
+            ${ONBOARDING_STEPS.slice(0, -1).map((_, i) => `
+              <span class="${i === onboardingStepIndex ? 'active' : i < onboardingStepIndex ? 'done' : ''}"></span>
+            `).join('')}
+          </div>
 
-  const focaNome = (!foco || foco === 'equilibrado')
-    ? 'Equilibrado'
-    : ENEM[foco]?.nome || foco
+          <p class="ob-kicker">${step.kicker}</p>
+          <h2>${step.title}</h2>
+          <p class="ob-subtitle">${step.subtitle}</p>
 
-  document.getElementById('pc-stats').innerHTML = `
-    <div class="pc-stat">
-      <div class="pc-stat-num">${numTopicos}</div>
-      <div class="pc-stat-lbl">tópicos hoje</div>
-    </div>
-    <div class="pc-stat">
-      <div class="pc-stat-num">${tempoStr}</div>
-      <div class="pc-stat-lbl">tempo estimado</div>
-    </div>
-    <div class="pc-stat">
-      <div class="pc-stat-num" style="font-size:15px">${focaNome}</div>
-      <div class="pc-stat-lbl">foco principal</div>
-    </div>
+          <div class="ob-answer">
+            ${renderOnboardingAnswer(step)}
+          </div>
+
+          <div class="ob-nav">
+            <button class="btn btn-ghost" onclick="prevOnboardingStep()" ${onboardingStepIndex === 0 ? 'style="visibility:hidden"' : ''}>
+              Voltar
+            </button>
+
+            <button class="btn btn-accent" onclick="nextOnboardingStep()">
+              ${step.type === 'final' ? 'Entrar no app' : 'Próximo'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   `
 
-  // Mostrar confirmação
-  document.getElementById('onboarding-section').style.display = 'none'
-  document.getElementById('confirmacao-section').style.display = 'block'
-  lucide.createIcons()
+  if (typeof lucide !== 'undefined') lucide.createIcons()
 }
 
-function iniciarEstudo() {
-  document.getElementById('confirmacao-section').style.display = 'none'
-  renderEstudo()
+function renderOnboardingAnswer(step) {
+  if (step.type === 'input') {
+    return `
+      <input
+        class="ob-input"
+        placeholder="${step.placeholder || ''}"
+        value="${escapeHtmlForAttr(onboardingDraft[step.key] || '')}"
+        oninput="onboardingDraft.${step.key} = this.value"
+      />
+
+      <div class="ob-insight">
+        <strong>Dica:</strong> use o nome que você quer ver na home e no perfil.
+      </div>
+    `
+  }
+
+  if (step.type === 'options') {
+    const selected = onboardingDraft[step.key]
+    const current = step.options.find(opt => opt.value === selected)
+
+    return `
+      <div class="ob-options">
+        ${step.options.map(opt => `
+          <button
+            class="ob-option ${selected === opt.value ? 'selected' : ''}"
+            onclick="selectOnboardingOption('${step.key}', '${String(opt.value)}')"
+          >
+            ${opt.label}
+          </button>
+        `).join('')}
+      </div>
+
+      ${current?.insight ? `
+        <div class="ob-insight">
+          <strong>Como isso muda seu plano:</strong> ${current.insight}
+        </div>
+      ` : ''}
+    `
+  }
+
+  if (step.type === 'final') {
+    return `
+      <div class="ob-final">
+        <p>Resumo inicial:</p>
+
+        <ul>
+          <li>Nome no app: <strong>${escapeHtml(onboardingDraft.nome || 'Estudante')}</strong></li>
+          <li>ENEM: <strong>${escapeHtml(onboardingDraft.enemAno)}</strong></li>
+          <li>Tempo por dia: <strong>${escapeHtml(formatTempoOnboarding(onboardingDraft.tempoDiaMin))}</strong></li>
+          <li>Foco inicial: <strong>${escapeHtml(formatMateriaFoco(onboardingDraft.focoMateria))}</strong></li>
+          <li>Ritmo atual: <strong>${escapeHtml(formatRitmo(onboardingDraft.ritmoAtual))}</strong></li>
+          <li>Formato preferido: <strong>${escapeHtml(formatFormato(onboardingDraft.formatoPreferido))}</strong></li>
+        </ul>
+      </div>
+    `
+  }
+
+  return ''
+}
+
+function selectOnboardingOption(key, value) {
+  let parsedValue = value
+
+  if (key === 'enemAno' || key === 'tempoDiaMin') {
+    parsedValue = Number(value)
+  }
+
+  onboardingDraft[key] = parsedValue
+  renderOnboarding()
+}
+
+function nextOnboardingStep() {
+  const step = ONBOARDING_STEPS[onboardingStepIndex]
+
+  if (step.key === 'nome' && !onboardingDraft.nome?.trim()) {
+    onboardingDraft.nome = 'Estudante'
+  }
+
+  if (step.type === 'final') {
+    finishOnboarding(onboardingDraft)
+    updateHomeHeader()
+    renderEstudo()
+    return
+  }
+
+  onboardingStepIndex++
+  renderOnboarding()
+}
+
+function prevOnboardingStep() {
+  if (onboardingStepIndex <= 0) return
+  onboardingStepIndex--
+  renderOnboarding()
+}
+
+function getOnboardingTitle() {
+  const name = onboardingDraft.nome?.trim()
+  return name ? `Vamos montar seu plano, ${name}.` : 'Vamos montar seu plano.'
+}
+
+function formatTempoOnboarding(min) {
+  if (min >= 180) return '3 horas+'
+  if (min === 120) return '2 horas'
+  if (min === 60) return '1 hora'
+  return `${min} min`
+}
+
+function formatMateriaFoco(value) {
+  const map = {
+    equilibrado: 'Equilibrado',
+    matematica: 'Matemática',
+    portugues: 'Português',
+    historia: 'História',
+    geografia: 'Geografia',
+    ciencias: 'Ciências da Natureza',
+    redacao: 'Redação'
+  }
+
+  return map[value] || value
+}
+
+function formatRitmo(value) {
+  const map = {
+    recomecando: 'Recomeçando',
+    irregular: 'Irregular',
+    razoavel: 'Razoável',
+    constante: 'Constante'
+  }
+
+  return map[value] || value
+}
+
+function formatFormato(value) {
+  const map = {
+    resumos: 'Resumos',
+    questoes: 'Questões',
+    videos: 'Vídeos',
+    revisao: 'Revisão rápida',
+    misturado: 'Misturado'
+  }
+
+  return map[value] || value
 }
 
 /* ─────────────────────────────────────────
@@ -642,13 +765,18 @@ function getSugestaoTopicos(n) {
 
   // Sem grade: rotação balanceada priorizando matérias principais do ENEM
   // (não usa Object.keys em ordem — isso sempre entregava a mesma matéria)
+  const profile = getUserProfile()
+  const foco = profile.focoMateria
   const ROTACAO_PADRAO = ['matematica', 'portugues', 'historia', 'geografia', 'ciencias', 'filosofia', 'ingles']
   const todasKeys      = Object.keys(ENEM)
   // Garante que qualquer matéria nova no ENEM object apareça no final
-  const rotacao = [
+  const rotacaoBase = [
     ...ROTACAO_PADRAO.filter(k => todasKeys.includes(k)),
     ...todasKeys.filter(k => !ROTACAO_PADRAO.includes(k) && k !== 'redacao')
   ]
+  const rotacao = foco && foco !== 'equilibrado' && todasKeys.includes(foco)
+    ? [foco, ...rotacaoBase.filter(k => k !== foco)]
+    : rotacaoBase
 
   // Pega um tópico de cada matéria em sequência (round-robin)
   // para garantir variedade mesmo sem plano
@@ -677,6 +805,15 @@ function getSugestaoTopicos(n) {
    RENDER ESTUDO
 ───────────────────────────────────────── */
 let pulados = []
+
+function getQuantidadeTopicosHoje() {
+  const tempo = Number(getUserProfile().tempoDiaMin || 60)
+
+  if (tempo <= 30) return 1
+  if (tempo <= 60) return 2
+  if (tempo <= 120) return 4
+  return 5
+}
 
 function getMsgProgresso(done, total) {
   if (done === 0)           return `Comece o primeiro!`
@@ -715,22 +852,21 @@ function getStreakText(days) {
 }
 
 function renderEstudo() {
-  const gradeHoje = getMateriaHoje()
-  const temPlano  = gradeHoje.length > 0 || store.get('onboarding_done')
-
-  if (!temPlano) {
+  if (shouldShowOnboarding()) {
+    renderOnboarding()
     document.getElementById('onboarding-section').style.display = 'block'
     document.getElementById('estudo-section').style.display     = 'none'
     document.getElementById('confirmacao-section').style.display = 'none'
-    lucide.createIcons()
+    if (typeof lucide !== 'undefined') lucide.createIcons()
     return
   }
 
+  updateHomeHeader()
   document.getElementById('onboarding-section').style.display  = 'none'
   document.getElementById('confirmacao-section').style.display  = 'none'
   document.getElementById('estudo-section').style.display      = 'block'
 
-  const topicos   = getSugestaoTopicos(4)
+  const topicos   = getSugestaoTopicos(getQuantidadeTopicosHoje())
   const total     = Math.max(topicos.length, 1)
   const doneCount = topicos.filter(t => isTopicoFeito(t.materiaKey, t.tKey)).length
 

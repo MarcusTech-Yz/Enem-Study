@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enem.study · onboarding teste</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg: #0F0F0F;
+      --bg2: #161616;
+      --bg3: #1E1E1E;
+      --border: #2A2A2A;
+      --border2: #3A3A3A;
+      --text: #F0F0F0;
+      --text2: #9A9A9A;
+      --text3: #5E5E5E;
+      --accent: #C8F135;
+      --accent2: #9BBF1A;
+      --amber: #F5A623;
+      --blue: #60A5FA;
+      --radius: 18px;
+      --font: 'Sora', sans-serif;
+      --mono: 'DM Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 78% 18%, rgba(200,241,53,.08), transparent 28%),
+        radial-gradient(circle at 20% 80%, rgba(96,165,250,.05), transparent 28%),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+    }
+
+    .page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: var(--bg2);
+      padding: 2rem 1.25rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 700;
+      letter-spacing: -.03em;
+    }
+
+    .logo-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 18px rgba(200,241,53,.35);
+    }
+
+    .main {
+      padding: 3.25rem clamp(2rem, 6vw, 6rem);
+      max-width: 1420px;
+      width: 100%;
+    }
+
+    .header {
+      margin-bottom: 2rem;
+    }
+
+    .date {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .header h1 {
+      font-size: clamp(30px, 4vw, 46px);
+      line-height: 1.05;
+      letter-spacing: -.05em;
+      font-weight: 700;
+    }
+
+    .header p {
+      color: var(--text2);
+      margin-top: .75rem;
+      font-size: 15px;
+    }
+
+    .onboarding-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) 420px;
+      gap: 1.25rem;
+      align-items: stretch;
+    }
+
+    .card {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.018), transparent),
+        var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      min-height: 540px;
+    }
+
+    .progress-line {
+      height: 3px;
+      background: var(--bg3);
+      position: relative;
+    }
+
+    .progress-line span {
+      display: block;
+      height: 100%;
+      width: 20%;
+      background: var(--accent);
+      box-shadow: 0 0 24px rgba(200,241,53,.35);
+      transition: width .35s ease;
+    }
+
+    .card-inner {
+      padding: clamp(1.6rem, 4vw, 2.6rem);
+      min-height: 537px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .steps {
+      display: flex;
+      gap: 7px;
+      margin-bottom: 2.3rem;
+    }
+
+    .step-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--border2);
+      transition: all .2s ease;
+    }
+
+    .step-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 16px rgba(200,241,53,.35);
+    }
+
+    .step-dot.done {
+      background: rgba(200,241,53,.38);
+    }
+
+    .kicker {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      margin-bottom: .85rem;
+    }
+
+    .question {
+      max-width: 720px;
+    }
+
+    .question h2 {
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1.15;
+      letter-spacing: -.04em;
+      margin-bottom: .6rem;
+    }
+
+    .question p {
+      color: var(--text2);
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 620px;
+    }
+
+    .answer-area {
+      margin-top: 2rem;
+    }
+
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .7rem;
+    }
+
+    .option {
+      border: 1px solid var(--border2);
+      background: var(--bg3);
+      color: var(--text2);
+      border-radius: 12px;
+      padding: .85rem 1.05rem;
+      font-family: var(--font);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .16s ease;
+    }
+
+    .option:hover {
+      color: var(--text);
+      transform: translateY(-1px);
+      border-color: #4a4a4a;
+    }
+
+    .option.selected {
+      color: var(--accent);
+      border-color: rgba(200,241,53,.75);
+      background: rgba(200,241,53,.075);
+      box-shadow: inset 0 0 0 1px rgba(200,241,53,.08);
+    }
+
+    .input {
+      width: min(460px, 100%);
+      border: 1px solid var(--border2);
+      background: var(--bg3);
+      color: var(--text);
+      border-radius: 12px;
+      padding: .95rem 1rem;
+      font-family: var(--font);
+      font-size: 15px;
+      outline: none;
+    }
+
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(200,241,53,.08);
+    }
+
+    .insight {
+      margin-top: 1rem;
+      width: fit-content;
+      max-width: 620px;
+      border: 1px solid rgba(200,241,53,.18);
+      background: rgba(200,241,53,.055);
+      color: var(--text2);
+      border-radius: 12px;
+      padding: .85rem 1rem;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .insight strong {
+      color: var(--accent);
+    }
+
+    .nav {
+      margin-top: auto;
+      padding-top: 2rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      border: 1px solid var(--border2);
+      background: var(--bg3);
+      color: var(--text);
+      border-radius: 12px;
+      padding: .85rem 1.15rem;
+      font-family: var(--font);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+    }
+
+    .btn:hover {
+      background: var(--bg4, #252525);
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #0F0F0F;
+      border-color: var(--accent);
+      font-weight: 700;
+      padding-inline: 1.45rem;
+    }
+
+    .btn.primary:hover {
+      background: var(--accent2);
+      border-color: var(--accent2);
+    }
+
+    .btn.ghost {
+      background: transparent;
+      border-color: transparent;
+      color: var(--text3);
+    }
+
+    .btn.ghost:hover {
+      color: var(--text2);
+      background: var(--bg3);
+    }
+
+    .side {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 1.25rem;
+    }
+
+    .mascot-card {
+      background:
+        radial-gradient(ellipse at 50% 62%, #000 0 46%, rgba(0,0,0,.9) 58%, transparent 76%),
+        radial-gradient(circle at 50% 76%, rgba(200,241,53,.12), transparent 30%),
+        #050505;
+      border: 1px solid rgba(200,241,53,.12);
+      border-radius: 18px;
+      overflow: hidden;
+      min-height: 390px;
+      position: relative;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .mascot-video,
+    .mascot-img {
+      width: 100%;
+      max-width: 360px;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      display: block;
+      mix-blend-mode: normal;
+      filter: drop-shadow(0 18px 44px rgba(200,241,53,.08));
+      -webkit-mask-image:
+        linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%),
+        linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
+      -webkit-mask-composite: source-in;
+      mask-image:
+        linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%),
+        linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
+      mask-composite: intersect;
+    }
+
+    .mascot-video {
+      transform: scale(1.06);
+      transform-origin: center bottom;
+    }
+
+    .speech {
+      position: absolute;
+      left: 1.1rem;
+      right: 1.1rem;
+      top: 1.1rem;
+      background: rgba(15,15,15,.72);
+      border: 1px solid rgba(200,241,53,.18);
+      border-radius: 16px;
+      padding: .9rem 1rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .speech-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .11em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: .35rem;
+    }
+
+    .speech-text {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text2);
+    }
+
+    .summary-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+    }
+
+    .summary-card h3 {
+      font-size: 13px;
+      margin-bottom: .9rem;
+      letter-spacing: -.02em;
+    }
+
+    .summary-list {
+      display: grid;
+      gap: .65rem;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,.045);
+      padding-bottom: .65rem;
+    }
+
+    .summary-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .summary-key {
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .summary-value {
+      color: var(--text2);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .final-box {
+      border: 1px solid rgba(200,241,53,.22);
+      background:
+        linear-gradient(135deg, rgba(200,241,53,.1), rgba(96,165,250,.025)),
+        var(--bg3);
+      border-radius: 16px;
+      padding: 1.3rem;
+      margin-top: 2rem;
+      max-width: 680px;
+    }
+
+    .final-box ul {
+      list-style: none;
+      display: grid;
+      gap: .65rem;
+      color: var(--text2);
+      font-size: 14px;
+    }
+
+    .final-box li::before {
+      content: "•";
+      color: var(--accent);
+      margin-right: .65rem;
+    }
+
+    @media (max-width: 1050px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .onboarding-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        grid-template-columns: 1fr;
+      }
+
+      .mascot-card {
+        min-height: 320px;
+      }
+
+      .mascot-video,
+      .mascot-img {
+        width: 250px;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .main {
+        padding: 1.5rem 1rem 2rem;
+      }
+
+      .card-inner {
+        min-height: 560px;
+      }
+
+      .nav {
+        flex-direction: column-reverse;
+        align-items: stretch;
+      }
+
+      .btn {
+        justify-content: center;
+      }
+
+      .option {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <div class="logo">
+        <span class="logo-dot"></span>
+        enem.study
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="header">
+        <p class="date">Primeiro acesso</p>
+        <h1 id="main-title">Vamos montar seu plano.</h1>
+        <p id="main-subtitle">Responda algumas perguntas rápidas para o enem.study se adaptar à sua rotina.</p>
+      </header>
+
+      <section class="onboarding-shell">
+        <div class="card">
+          <div class="progress-line">
+            <span id="progress-fill"></span>
+          </div>
+
+          <div class="card-inner">
+            <div class="steps" id="steps"></div>
+
+            <div class="question">
+              <p class="kicker" id="step-kicker">Passo 1 de 6</p>
+              <h2 id="question-title">Como você quer ser chamado?</h2>
+              <p id="question-subtitle">Esse nome aparece nas mensagens, no perfil e nas conquistas.</p>
+            </div>
+
+            <div class="answer-area" id="answer-area"></div>
+
+            <div class="nav">
+              <button class="btn ghost" id="back-btn" onclick="prevStep()">← Voltar</button>
+              <button class="btn primary" id="next-btn" onclick="nextStep()">Próximo →</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="side">
+          <div class="mascot-card">
+            <div class="speech">
+              <p class="speech-label">Guia enem.study</p>
+              <p class="speech-text" id="mascot-speech">Vamos montar algo realista. Sem exagero: o plano tem que caber na sua rotina.</p>
+            </div>
+
+            <!-- Troca o src para o seu arquivo real -->
+            <video class="mascot-video" autoplay muted loop playsinline preload="metadata">
+              <source src="Assets/robot/robo.mp4" type="video/webm">
+              <source src="Assets/robot/robo.mp4" type="video/mp4">
+            </video>
+
+            <!-- Fallback se quiser usar imagem no teste:
+            <img class="mascot-img" src="Assets/mascote/robo.png" alt="Mascote enem.study">
+            -->
+          </div>
+
+          <div class="summary-card">
+            <h3>Seu plano até agora</h3>
+            <div class="summary-list" id="summary-list"></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const profile = {
+      nome: '',
+      enemAno: 'Nov 2026',
+      tempoDia: '1 hora',
+      foco: 'Equilibrado',
+      ritmo: '',
+      formato: ''
+    }
+
+    const steps = [
+      {
+        key: 'nome',
+        title: 'Como você quer ser chamado?',
+        subtitle: 'Esse nome aparece nas mensagens, no perfil e nas conquistas.',
+        speech: '',
+        type: 'input',
+        placeholder: 'Ex: Marcus'
+      },
+      {
+        key: 'enemAno',
+        title: 'Quando é o seu ENEM?',
+        subtitle: 'Isso ajuda a definir o ritmo do seu plano.',
+        speech: 'Quanto mais distante a prova, mais sustentável pode ser o ritmo.',
+        type: 'options',
+        options: ['Nov 2025', 'Nov 2026', 'Nov 2027+'],
+        insights: {
+          'Nov 2025': 'Plano mais direto, com foco em revisão e pontos fracos.',
+          'Nov 2026': 'Plano equilibrado, com tempo para construir base e revisar.',
+          'Nov 2027+': 'Plano leve, ideal para criar constância desde cedo.'
+        }
+      },
+      {
+        key: 'tempoDia',
+        title: 'Quanto tempo você consegue sustentar por dia?',
+        subtitle: 'Seja realista — é melhor 30 min todo dia do que 3h uma vez.',
+        speech: 'O melhor plano é aquele que você consegue repetir.',
+        type: 'options',
+        options: ['30 min', '1 hora', '2 horas', '3 horas+'],
+        insights: {
+          '30 min': 'Plano leve · 1 bloco principal por dia.',
+          '1 hora': 'Plano equilibrado · 2 blocos por dia.',
+          '2 horas': 'Plano intenso · tópicos + revisão.',
+          '3 horas+': 'Plano avançado · ideal para rotina forte de preparação.'
+        }
+      },
+      {
+        key: 'foco',
+        title: 'Qual área mais te trava hoje?',
+        subtitle: 'Vamos colocar essa área com um pouco mais de frequência no plano.',
+        speech: 'Não precisa acertar perfeito. Você pode mudar isso depois.',
+        type: 'options',
+        options: ['Equilibrado', 'Matemática', 'Português', 'História', 'Geografia', 'Ciências da Natureza', 'Filosofia e Sociologia', 'Inglês', 'Redação'],
+        insights: {
+          'Equilibrado': 'Seu plano vai distribuir melhor entre as áreas.',
+          'Matemática': 'Matemática vai aparecer com mais frequência.',
+          'Português': 'Português vai ganhar reforço em leitura e linguagem.',
+          'História': 'História vai receber mais blocos de revisão.',
+          'Geografia': 'Geografia vai aparecer mais no ciclo da semana.',
+          'Ciências da Natureza': 'Ciências da Natureza vai ganhar prioridade.',
+          'Filosofia e Sociologia': 'Humanas conceituais vão receber mais atenção.',
+          'Inglês': 'Inglês entra como reforço leve e recorrente.',
+          'Redação': 'Redação pode entrar como rotina semanal.'
+        }
+      },
+      {
+        key: 'ritmo',
+        title: 'Como está seu ritmo atualmente?',
+        subtitle: 'Isso muda o tom do plano: leve, equilibrado ou mais puxado.',
+        speech: 'Sem julgamento aqui. O importante é começar do ponto certo.',
+        type: 'options',
+        options: ['Recomeçando', 'Irregular', 'Razoável', 'Constante'],
+        insights: {
+          'Recomeçando': 'Vamos começar leve para criar tração.',
+          'Irregular': 'O foco será manter uma sequência simples.',
+          'Razoável': 'Dá para equilibrar conteúdo novo e revisão.',
+          'Constante': 'Seu plano pode ser um pouco mais ambicioso.'
+        }
+      },
+      {
+        key: 'formato',
+        title: 'Qual formato mais te ajuda a estudar?',
+        subtitle: 'Isso ajuda o app a sugerir ações melhores em cada tópico.',
+        speech: 'Assim eu sei se devo te puxar mais para resumo, questão ou revisão.',
+        type: 'options',
+        options: ['Resumos', 'Questões', 'Vídeos', 'Revisão rápida', 'Misturado'],
+        insights: {
+          'Resumos': 'O app vai destacar blocos de anotação e revisão.',
+          'Questões': 'O app pode te puxar mais para prática.',
+          'Vídeos': 'A aba de vídeos ganha mais sentido no seu fluxo.',
+          'Revisão rápida': 'Você vai receber ações mais curtas e objetivas.',
+          'Misturado': 'O plano vai alternar teoria, anotação e prática.'
+        }
+      },
+      {
+        key: 'final',
+        title: 'Seu plano está pronto.',
+        subtitle: 'Esse é o primeiro desenho da sua rotina. Você pode ajustar tudo depois.',
+        
+        type: 'final'
+      }
+    ]
+
+    let currentStep = 0
+
+    function render() {
+      const step = steps[currentStep]
+      const totalRealSteps = steps.length - 1
+      const pct = Math.round(((currentStep + 1) / steps.length) * 100)
+
+      document.getElementById('progress-fill').style.width = pct + '%'
+      document.getElementById('step-kicker').textContent =
+        step.type === 'final' ? 'Plano inicial' : `Passo ${currentStep + 1} de ${totalRealSteps}`
+
+      document.getElementById('question-title').textContent = step.title
+      document.getElementById('question-subtitle').textContent = step.subtitle
+      document.getElementById('mascot-speech').textContent = step.speech
+
+      document.getElementById('back-btn').style.visibility = currentStep === 0 ? 'hidden' : 'visible'
+      document.getElementById('next-btn').textContent = step.type === 'final' ? 'Entrar no app →' : 'Próximo →'
+
+      renderSteps()
+      renderAnswer(step)
+      renderSummary()
+    }
+
+    function renderSteps() {
+      const container = document.getElementById('steps')
+      container.innerHTML = steps.slice(0, -1).map((_, index) => {
+        const cls = index === currentStep
+          ? 'active'
+          : index < currentStep
+            ? 'done'
+            : ''
+
+        return `<span class="step-dot ${cls}"></span>`
+      }).join('')
+    }
+
+    function renderAnswer(step) {
+      const area = document.getElementById('answer-area')
+
+      if (step.type === 'input') {
+        area.innerHTML = `
+          <input
+            class="input"
+            id="name-input"
+            placeholder="${step.placeholder}"
+            value="${profile.nome || ''}"
+            oninput="profile.nome = this.value; renderSummary(); updateTitle();"
+          />
+          <div class="insight">
+            <strong>Dica:</strong> use o nome que você quer ver na home e no perfil.
+          </div>
+        `
+        setTimeout(() => document.getElementById('name-input')?.focus(), 0)
+        return
+      }
+
+      if (step.type === 'options') {
+        const selected = profile[step.key]
+        const insight = step.insights?.[selected]
+
+        area.innerHTML = `
+          <div class="options">
+            ${step.options.map(option => `
+              <button
+                class="option ${selected === option ? 'selected' : ''}"
+                onclick="selectOption('${step.key}', '${escapeAttr(option)}')"
+              >
+                ${option}
+              </button>
+            `).join('')}
+          </div>
+
+          ${insight ? `
+            <div class="insight">
+              <strong>Como isso muda seu plano:</strong> ${insight}
+            </div>
+          ` : ''}
+        `
+        return
+      }
+
+      if (step.type === 'final') {
+        area.innerHTML = `
+          <div class="final-box">
+            <ul>
+              <li>Nome no app: ${profile.nome || 'Estudante'}</li>
+              <li>Meta: ${profile.enemAno}</li>
+              <li>Ritmo diário: ${profile.tempoDia}</li>
+              <li>Foco inicial: ${profile.foco}</li>
+              <li>Ritmo atual: ${profile.ritmo || 'não informado'}</li>
+              <li>Formato preferido: ${profile.formato || 'não informado'}</li>
+            </ul>
+          </div>
+        `
+      }
+    }
+
+    function selectOption(key, value) {
+      profile[key] = value
+      render()
+    }
+
+    function nextStep() {
+      const step = steps[currentStep]
+
+      if (step.type === 'final') {
+        console.log('Perfil criado:', profile)
+        alert('Teste concluído! Veja o objeto userProfile no console.')
+        return
+      }
+
+      if (currentStep < steps.length - 1) {
+        currentStep++
+        render()
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep--
+        render()
+      }
+    }
+
+    function renderSummary() {
+      const items = [
+        ['Nome', profile.nome || '—'],
+        ['ENEM', profile.enemAno || '—'],
+        ['Tempo', profile.tempoDia || '—'],
+        ['Foco', profile.foco || '—'],
+        ['Ritmo', profile.ritmo || '—'],
+        ['Formato', profile.formato || '—']
+      ]
+
+      document.getElementById('summary-list').innerHTML = items.map(([key, value]) => `
+        <div class="summary-item">
+          <span class="summary-key">${key}</span>
+          <span class="summary-value">${value}</span>
+        </div>
+      `).join('')
+    }
+
+    function updateTitle() {
+      const name = profile.nome?.trim()
+      document.getElementById('main-title').textContent = name
+        ? `Vamos montar seu plano, ${name}.`
+        : 'Vamos montar seu plano.'
+    }
+
+    function escapeAttr(value) {
+      return String(value).replace(/'/g, "\\'")
+    }
+
+    render()
+  </script>
+</body>
+</html>
