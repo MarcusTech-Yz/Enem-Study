@@ -297,7 +297,9 @@ const ONBOARDING_STEPS = [
     title: 'Como você quer ser chamado?',
     subtitle: 'Esse nome aparece nas mensagens, no perfil e nas conquistas.',
     placeholder: 'Ex: Marcus',
-    mascot: 'Primeiro, vamos dar uma cara sua para o app.'
+    mascot: 'Primeiro, vamos dar uma cara sua para o app.',
+    mascotImage: 'Assets/mascote/mascote-01-nome.png',
+    mascotClass: 'mascot-name'
   },
   {
     key: 'enemAno',
@@ -306,6 +308,8 @@ const ONBOARDING_STEPS = [
     title: 'Quando é o seu ENEM?',
     subtitle: 'Isso ajuda a definir o ritmo do seu plano.',
     mascot: 'Quanto mais distante a prova, mais sustentável pode ser o ritmo.',
+    mascotImage: 'Assets/mascote/mascote-02-enem.png',
+    mascotClass: 'mascot-calendar',
     options: [
       { label: 'Nov 2025', value: 2025, insight: 'Plano mais direto, com foco em revisão e pontos fracos.' },
       { label: 'Nov 2026', value: 2026, insight: 'Plano equilibrado, com tempo para construir base e revisar.' },
@@ -319,6 +323,8 @@ const ONBOARDING_STEPS = [
     title: 'Quanto tempo você consegue sustentar por dia?',
     subtitle: 'Seja realista - é melhor 30 min todo dia do que 3h uma vez.',
     mascot: 'O melhor plano é aquele que você consegue repetir.',
+    mascotImage: 'Assets/mascote/mascote-03-tempo.png',
+    mascotClass: 'mascot-time',
     options: [
       { label: '30 min', value: 30, insight: 'Plano leve: 1 bloco principal por dia.' },
       { label: '1 hora', value: 60, insight: 'Plano equilibrado: 2 blocos por dia.' },
@@ -333,6 +339,8 @@ const ONBOARDING_STEPS = [
     title: 'Qual área mais te trava hoje?',
     subtitle: 'Vamos colocar essa área com um pouco mais de frequência no plano.',
     mascot: 'Não precisa acertar perfeito. Você pode mudar isso depois.',
+    mascotImage: 'Assets/mascote/mascote-04-materia.png',
+    mascotClass: 'mascot-subjects',
     options: [
       { label: 'Equilibrado', value: 'equilibrado', insight: 'Seu plano vai distribuir melhor entre as áreas.' },
       { label: 'Matemática', value: 'matematica', insight: 'Matemática vai aparecer com mais frequência.' },
@@ -350,6 +358,8 @@ const ONBOARDING_STEPS = [
     title: 'Como está seu ritmo atualmente?',
     subtitle: 'Isso muda o tom do plano: leve, equilibrado ou mais puxado.',
     mascot: 'Sem julgamento aqui. O importante é começar do ponto certo.',
+    mascotImage: 'Assets/mascote/mascote-05-ritmo.png',
+    mascotClass: 'mascot-rhythm',
     options: [
       { label: 'Recomeçando', value: 'recomecando', insight: 'Vamos começar leve para criar tração.' },
       { label: 'Irregular', value: 'irregular', insight: 'O foco será manter uma sequência simples.' },
@@ -364,6 +374,8 @@ const ONBOARDING_STEPS = [
     title: 'Qual formato mais te ajuda a estudar?',
     subtitle: 'Isso ajuda o app a sugerir ações melhores em cada tópico.',
     mascot: 'Assim eu sei se devo te puxar mais para resumo, questão ou revisão.',
+    mascotImage: 'Assets/mascote/mascote-06-formato.png',
+    mascotClass: 'mascot-format',
     options: [
       { label: 'Resumos', value: 'resumos', insight: 'O app vai destacar blocos de anotação e revisão.' },
       { label: 'Questões', value: 'questoes', insight: 'O app pode te puxar mais para prática.' },
@@ -378,7 +390,9 @@ const ONBOARDING_STEPS = [
     kicker: 'Plano inicial',
     title: 'Seu plano está pronto.',
     subtitle: 'Esse é o primeiro desenho da sua rotina. Você pode ajustar tudo depois.',
-    mascot: 'Pronto. Agora o enem.study tem uma base para te guiar.'
+    mascot: 'Pronto. Agora o enem.study tem uma base para te guiar.',
+    mascotImage: 'Assets/mascote/mascote-07-final.png',
+    mascotClass: 'mascot-final'
   }
 ]
 
@@ -409,6 +423,26 @@ function escapeJsArgForAttr(value) {
   return escapeHtmlForAttr(JSON.stringify(String(value)))
 }
 
+function renderOnboardingMascot(step) {
+  if (!step.mascotImage) return ''
+
+  return `
+    <div class="ob-mascot-scene ${step.mascotClass || ''}">
+      <div class="ob-mascot-speech">
+        <p>Guia enem.study</p>
+        <span>${escapeHtml(step.mascot || 'Vamos montar seu plano.')}</span>
+      </div>
+
+      <img
+        class="ob-mascot-img"
+        src="${escapeHtmlForAttr(step.mascotImage)}"
+        alt="Mascote enem.study"
+        loading="lazy"
+      >
+    </div>
+  `
+}
+
 function renderOnboarding() {
   const step = ONBOARDING_STEPS[onboardingStepIndex]
   const progress = Math.min(100, Math.round(((onboardingStepIndex + 1) / ONBOARDING_STEPS.length) * 100))
@@ -436,29 +470,33 @@ function renderOnboarding() {
         </div>
 
         <div class="ob-content">
-          <div class="ob-dots">
-            ${ONBOARDING_STEPS.slice(0, -1).map((_, i) => `
-              <span class="${i === onboardingStepIndex ? 'active' : i < onboardingStepIndex ? 'done' : ''}"></span>
-            `).join('')}
+          <div class="ob-main">
+            <div class="ob-dots">
+              ${ONBOARDING_STEPS.slice(0, -1).map((_, i) => `
+                <span class="${i === onboardingStepIndex ? 'active' : i < onboardingStepIndex ? 'done' : ''}"></span>
+              `).join('')}
+            </div>
+
+            <p class="ob-kicker">${step.kicker}</p>
+            <h2>${step.title}</h2>
+            <p class="ob-subtitle">${step.subtitle}</p>
+
+            <div class="ob-answer">
+              ${renderOnboardingAnswer(step)}
+            </div>
+
+            <div class="ob-nav">
+              <button class="btn btn-ghost" onclick="prevOnboardingStep()" ${onboardingStepIndex === 0 ? 'style="visibility:hidden"' : ''}>
+                Voltar
+              </button>
+
+              <button class="btn btn-accent" onclick="nextOnboardingStep()">
+                ${step.type === 'final' ? 'Entrar no app' : 'Próximo'}
+              </button>
+            </div>
           </div>
 
-          <p class="ob-kicker">${step.kicker}</p>
-          <h2>${step.title}</h2>
-          <p class="ob-subtitle">${step.subtitle}</p>
-
-          <div class="ob-answer">
-            ${renderOnboardingAnswer(step)}
-          </div>
-
-          <div class="ob-nav">
-            <button class="btn btn-ghost" onclick="prevOnboardingStep()" ${onboardingStepIndex === 0 ? 'style="visibility:hidden"' : ''}>
-              Voltar
-            </button>
-
-            <button class="btn btn-accent" onclick="nextOnboardingStep()">
-              ${step.type === 'final' ? 'Entrar no app' : 'Próximo'}
-            </button>
-          </div>
+          ${renderOnboardingMascot(step)}
         </div>
       </div>
     </section>
@@ -848,7 +886,7 @@ function verificarAlertaStreak() {
   const streak = getStreak()
   if (streak.count < 1) return
 
-  const ontem = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const ontem = getLocalDateStr(-1)
   if (streak.lastDate !== ontem) return // já estudou hoje ou streak quebrou
 
   const agora     = new Date()

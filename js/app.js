@@ -273,6 +273,7 @@ function seedInitialGradeFromProfile(profile = getUserProfile()) {
   let mIdx = 0
   let changed = false
 
+  // Mantem domingo livre no plano inicial para descanso/revisao solta.
   for (let dia = 1; dia <= 6; dia++) {
     if (!Array.isArray(grade[dia])) grade[dia] = []
     if (grade[dia].length === 0 && rotacao.length) {
