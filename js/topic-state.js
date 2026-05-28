@@ -1,47 +1,88 @@
 // Estado rico da pagina de topico.
 // Reusa topic_state_v1 do recommendation-engine.js para evitar dados paralelos.
 
+const UI_LABELS = {
+  status: {
+    novo: 'Não iniciado',
+    nao_iniciado: 'Não iniciado',
+    em_estudo: 'Em estudo',
+    parcial: 'Médio',
+    dominado: 'Forte',
+    dificuldade: 'Fraco',
+    fraco: 'Fraco',
+    medio: 'Médio',
+    forte: 'Forte',
+    concluido: 'Concluído',
+  },
+  difficulty: {
+    nao_avaliado: 'Dificuldade não avaliada',
+    baixa: 'Baixa',
+    media: 'Média',
+    alta: 'Alta',
+    critica: 'Crítica',
+  },
+  questionStatus: {
+    nao_respondida: 'Não respondida',
+    acertei: 'Acertei',
+    errei: 'Errei',
+    chutei: 'Acertei chutando',
+  },
+  errorReason: {
+    conteudo: 'Não sabia o conteúdo',
+    interpretacao: 'Errei interpretação',
+    calculo: 'Errei cálculo',
+    conceito: 'Confundi conceito',
+    atencao: 'Falta de atenção',
+    inicio: 'Não soube começar',
+  },
+  noteType: {
+    resumo: 'Resumo',
+    exemplo: 'Exemplo',
+    formula: 'Fórmula / regra',
+    duvida: 'Dúvida',
+    erro: 'Erro',
+    texto: 'Texto solto',
+  },
+}
+
+function label(group, key) {
+  return UI_LABELS[group]?.[key] || key
+}
+
 const TOPIC_NOTE_TYPE_META = {
   resumo: {
-    label: 'Resumo',
+    label: label('noteType', 'resumo'),
     icon: 'book-open',
     template: '- Ideia principal:\n- Como aparece no ENEM:\n- Palavra-chave:',
   },
   exemplo: {
-    label: 'Exemplo',
+    label: label('noteType', 'exemplo'),
     icon: 'lightbulb',
-    template: 'Situacao:\n\nComo resolver:\n\nConclusao:',
+    template: 'Situação:\n\nComo resolver:\n\nConclusão:',
   },
   formula: {
-    label: 'Formula / regra',
+    label: label('noteType', 'formula'),
     icon: 'sigma',
-    template: 'Expressao:\n\nQuando usar:\n\nCuidados:',
+    template: 'Expressão:\n\nQuando usar:\n\nCuidados:',
   },
   duvida: {
-    label: 'Duvida',
+    label: label('noteType', 'duvida'),
     icon: 'circle-help',
-    template: 'O que nao entendi:\n\nO que preciso revisar:',
+    template: 'O que não entendi:\n\nO que preciso revisar:',
   },
   erro: {
-    label: 'Erro',
+    label: label('noteType', 'erro'),
     icon: 'triangle-alert',
     template: 'O que errei:\n\nPor que errei:\n\nComo evitar:',
   },
   texto: {
-    label: 'Texto solto',
+    label: label('noteType', 'texto'),
     icon: 'type',
     template: '',
   },
 }
 
-const QUESTION_ERROR_REASON_LABELS = {
-  conteudo: 'Nao sabia o conteudo',
-  interpretacao: 'Errei interpretacao',
-  calculo: 'Errei calculo',
-  conceito: 'Confundi conceito',
-  atencao: 'Falta de atencao',
-  inicio: 'Nao soube comecar',
-}
+const QUESTION_ERROR_REASON_LABELS = UI_LABELS.errorReason
 
 function createTopicEntityId(prefix = 'item') {
   if (window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -95,18 +136,18 @@ function getMasteryFromState(state) {
 
 function getTopicStatusMeta(state) {
   if (state.concluido || state.status === 'dominado') {
-    return { label: 'Forte', className: 'forte' }
+    return { label: label('status', 'forte'), className: 'forte' }
   }
   if (state.status === 'dificuldade' || state.difficulty === 'alta' || state.difficulty === 'critica') {
-    return { label: 'Fraco', className: 'fraco' }
+    return { label: label('status', 'fraco'), className: 'fraco' }
   }
   if (state.status === 'parcial' || state.difficulty === 'media') {
-    return { label: 'Medio', className: 'medio' }
+    return { label: label('status', 'medio'), className: 'medio' }
   }
   if (state.tempoSeg > 0 || state.notes.length || state.videos.length || state.questions.length) {
-    return { label: 'Em estudo', className: 'em-estudo' }
+    return { label: label('status', 'em_estudo'), className: 'em-estudo' }
   }
-  return { label: 'Nao iniciado', className: 'nao-iniciado' }
+  return { label: label('status', 'nao_iniciado'), className: 'nao-iniciado' }
 }
 
 function setTopicLearningDifficulty(materiaKey, topicoKey, difficulty) {
@@ -184,11 +225,11 @@ function createReviewFromTopicNote(materiaKey, topicoKey, noteId) {
 }
 
 function generateReviewQuestion(note) {
-  if (note.type === 'duvida') return 'Voce consegue responder a duvida que registrou?'
-  if (note.type === 'formula') return 'Voce lembra quando usar esta formula ou regra?'
-  if (note.type === 'erro') return 'Voce lembra qual erro cometeu e como evitar?'
-  if (note.type === 'resumo') return 'Voce consegue explicar a ideia principal deste resumo?'
-  return 'Revise esta anotacao.'
+  if (note.type === 'duvida') return 'Você consegue responder a dúvida que registrou?'
+  if (note.type === 'formula') return 'Você lembra quando usar esta fórmula ou regra?'
+  if (note.type === 'erro') return 'Você lembra qual erro cometeu e como evitar?'
+  if (note.type === 'resumo') return 'Você consegue explicar a ideia principal deste resumo?'
+  return 'Revise esta anotação.'
 }
 
 function resolveTopicReview(materiaKey, topicoKey, reviewId, result) {
@@ -242,21 +283,15 @@ function getTopicSuggestionText(state) {
     review.status === 'pendente' && new Date(review.dueAt) <= new Date()
   )
 
-  if (hasDueReview) return 'voce tem revisoes pendentes. Resolva elas antes de estudar conteudo novo.'
+  if (hasDueReview) return 'você tem revisões pendentes. Resolva elas antes de estudar conteúdo novo.'
   if (!state.notes.length && !state.videos.length && !state.questions.length) return 'comece com uma videoaula curta ou crie um resumo de 3 linhas.'
-  if (state.videos.length && !state.notes.length) return 'voce salvou video, mas ainda nao anotou. Registre uma duvida ou ideia principal.'
-  if (state.notes.length && !state.questions.length) return 'voce ja anotou teoria. Agora faca questoes para testar se entendeu.'
-  if (state.difficulty === 'alta' || state.difficulty === 'critica') return 'esse topico esta dificil. Revise erros e gere uma revisao para daqui a poucos dias.'
-  if (Number(state.mastery || 0) >= 75) return 'voce esta bem nesse topico. Faca uma revisao rapida e siga para o proximo.'
-  return 'faca uma revisao rapida, registre um erro ou duvida e atualize seu dominio.'
+  if (state.videos.length && !state.notes.length) return 'você salvou vídeo, mas ainda não anotou. Registre uma dúvida ou ideia principal.'
+  if (state.notes.length && !state.questions.length) return 'você já anotou teoria. Agora faça questões para testar se entendeu.'
+  if (state.difficulty === 'alta' || state.difficulty === 'critica') return 'esse tópico está difícil. Revise erros e gere uma revisão para daqui a poucos dias.'
+  if (Number(state.mastery || 0) >= 75) return 'você está bem nesse tópico. Faça uma revisão rápida e siga para o próximo.'
+  return 'faça uma revisão rápida, registre um erro ou dúvida e atualize seu domínio.'
 }
 
 function getQuestionStatusLabel(status) {
-  const map = {
-    nao_respondida: 'Nao respondida',
-    acertei: 'Acertei',
-    errei: 'Errei',
-    chutei: 'Acertei chutando',
-  }
-  return map[status] || status || 'Nao respondida'
+  return label('questionStatus', status) || label('questionStatus', 'nao_respondida')
 }

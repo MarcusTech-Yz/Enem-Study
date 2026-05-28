@@ -368,6 +368,7 @@ function toggleTopicoDone() {
 }
 
 function updateTopicoHeader() {
+  const state = getTopicRichState(topicoMateriaKey, topicoKeyId)
   const button = document.getElementById('topico-check-btn')
   const tempoEl = document.getElementById('tempo-topico-val')
   const difEl = document.getElementById('dificuldade-topico-val')
@@ -376,6 +377,7 @@ function updateTopicoHeader() {
     button.className = `btn btn-sm ${isTopicoAtualFeito() ? 'btn-accent' : ''}`
     button.innerHTML = `<i data-lucide="${isTopicoAtualFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i> ${isTopicoAtualFeito() ? 'Concluído' : 'Marcar como feito'}`
   }
+  if (button) button.innerHTML = button.innerHTML.replace('Conclu\u00C3\u00ADdo', 'Conclu\u00EDdo')
   if (tempoEl) tempoEl.textContent = formatTempo(getTempo(topicoMateriaKey, topicoKeyId))
   if (difEl) difEl.innerHTML = formatDificuldadeLabel(getTopicoDificuldade())
   if (progressoEl) progressoEl.textContent = `${getProgressoMateria(topicoMateriaKey).pct}%`
@@ -424,12 +426,30 @@ function startTopicoFocus() {
 }
 
 function formatDificuldadeLabel(value) {
-  const meta = getDificuldadeMeta(value)
+  return formatDifficultyBadge(difficultyKeyFromLegacy(value))
+}
+
+function difficultyKeyFromLegacy(value) {
+  if (value === 1) return 'alta'
+  if (value === 2) return 'media'
+  if (value === 3) return 'baixa'
+  return 'nao_avaliado'
+}
+
+function formatDifficultyBadge(value) {
+  const key = value || 'nao_avaliado'
+  const icon = {
+    nao_avaliado: 'circle',
+    baixa: 'check-circle-2',
+    media: 'loader-circle',
+    alta: 'alert-circle',
+    critica: 'octagon-alert',
+  }[key] || 'circle'
 
   return `
-    <span class="mastery-badge ${meta.className}">
-      <i data-lucide="${meta.icon}" style="width:14px;height:14px;"></i>
-      ${meta.label}
+    <span class="badge-difficulty ${key}">
+      <i data-lucide="${icon}" style="width:14px;height:14px;"></i>
+      ${label('difficulty', key)}
     </span>
   `
 }
@@ -445,7 +465,7 @@ function getDificuldadeMeta(value) {
 
   if (value === 2) {
     return {
-      label: 'Em andamento',
+      label: label('difficulty', 'media'),
       icon: 'loader-circle',
       className: 'd2',
     }
@@ -453,7 +473,7 @@ function getDificuldadeMeta(value) {
 
   if (value === 3) {
     return {
-      label: 'Entendi bem',
+      label: label('difficulty', 'baixa'),
       icon: 'check-circle-2',
       className: 'd3',
     }
@@ -719,10 +739,16 @@ function blocksToMarkdown(blocks) {
     .map(block => {
       const meta = getBlockMeta(block.type)
       const title = block.title || meta.title
-      return `## ${title}\n${block.content || ''}`.trim()
+      const source = formatNoteSource(block.source)
+      return `## ${title}\n${source ? `_${source}_\n\n` : ''}${block.content || ''}`.trim()
     })
     .filter(Boolean)
     .join('\n\n')
+}
+
+function formatNoteSource(source) {
+  if (!source || source.type !== 'video') return ''
+  return `Origem: vídeo ${source.videoTitle || 'salvo'}`
 }
 
 function getBlockMeta(type) {
@@ -1025,16 +1051,16 @@ function renderTopicoPage() {
           <div class="topico-desc">${escapeHtml(getTopicoDescricao())}</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
             <span class="learning-status ${statusMeta.className}" id="topic-status-chip">${statusMeta.label}</span>
-            <span class="learning-status ${statusMeta.className}" id="topic-difficulty-chip">${formatDifficultyText(state.difficulty)}</span>
+            <span class="learning-status dominio" id="topic-hero-mastery-chip">Domínio ${Number(state.mastery || 0)}%</span>
           </div>
         </div>
         <div class="topico-actions">
           <button class="btn btn-sm ${isTopicoAtualFeito() ? 'btn-accent' : ''}" id="topico-check-btn" onclick="toggleTopicoDone()">
             <i data-lucide="${isTopicoAtualFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i>
-            ${isTopicoAtualFeito() ? 'Concluido' : 'Marcar como feito'}
+            ${isTopicoAtualFeito() ? 'Concluído' : 'Marcar como feito'}
           </button>
           <button class="btn btn-sm btn-accent" onclick="startTopicoFocus()">
-            <i data-lucide="play" style="width:13px;height:13px;"></i> Iniciar sessao
+            <i data-lucide="play" style="width:13px;height:13px;"></i> Iniciar sessão
           </button>
           <button class="btn btn-sm" onclick="exportTopicoMarkdown()">
             <i data-lucide="download" style="width:13px;height:13px;"></i> Exportar .md
@@ -1049,20 +1075,20 @@ function renderTopicoPage() {
         </div>
         <div class="tstat">
           <div class="tstat-lbl">Dificuldade</div>
-          <div class="tstat-val" id="dificuldade-topico-val">${formatDificuldadeLabel(getTopicoDificuldade())}</div>
+          <div class="tstat-val" id="dificuldade-topico-val">${formatDifficultyBadge(state.difficulty)}</div>
         </div>
         <div class="tstat">
-          <div class="tstat-lbl">Dominio</div>
+          <div class="tstat-lbl">Domínio</div>
           <div class="tstat-val" id="topic-mastery-val">${renderMasteryMeter(state.mastery)}</div>
         </div>
         <div class="tstat">
-          <div class="tstat-lbl">Progresso da materia</div>
+          <div class="tstat-lbl">Progresso da matéria</div>
           <div class="tstat-val" id="progresso-materia-val">${getProgressoMateria(topicoMateriaKey).pct}%</div>
         </div>
       </section>
 
       <div class="personal-tip" id="topic-suggestion">
-        <strong>Proximo passo recomendado:</strong> ${escapeHtml(getTopicSuggestionText(state))}
+        <strong>Próximo passo recomendado:</strong> ${escapeHtml(getTopicSuggestionText(state))}
       </div>
 
       <section class="topico-card">
@@ -1071,16 +1097,16 @@ function renderTopicoPage() {
             <i data-lucide="route"></i> Estudar
           </button>
           <button class="tab" data-tab="anotacoes" onclick="switchTopicoTab('anotacoes', this)">
-            <i data-lucide="notebook-pen"></i> Anotacoes
+            <i data-lucide="notebook-pen"></i> Anotações
           </button>
           <button class="tab" data-tab="videos" onclick="switchTopicoTab('videos', this)">
-            <i data-lucide="youtube"></i> Videos
+            <i data-lucide="youtube"></i> Vídeos
           </button>
           <button class="tab" data-tab="questoes" onclick="switchTopicoTab('questoes', this)">
-            <i data-lucide="help-circle"></i> Questoes
+            <i data-lucide="help-circle"></i> Questões
           </button>
           <button class="tab" data-tab="revisoes" onclick="switchTopicoTab('revisoes', this)">
-            <i data-lucide="rotate-ccw"></i> Revisoes
+            <i data-lucide="rotate-ccw"></i> Revisões
           </button>
           <button class="tab" data-tab="exportar" onclick="switchTopicoTab('exportar', this)">
             <i data-lucide="database"></i> Exportar
@@ -1127,14 +1153,7 @@ function renderMasteryMeter(value) {
 }
 
 function formatDifficultyText(value) {
-  const map = {
-    nao_avaliado: 'Dificuldade nao avaliada',
-    baixa: 'Dificuldade baixa',
-    media: 'Dificuldade media',
-    alta: 'Dificuldade alta',
-    critica: 'Dificuldade critica',
-  }
-  return map[value] || map.nao_avaliado
+  return label('difficulty', value || 'nao_avaliado')
 }
 
 function renderStudyTab() {
@@ -1145,8 +1164,8 @@ function renderStudyTab() {
   tab.innerHTML = `
     <section class="study-flow">
       <div class="study-main">
-        <p class="note-kicker">Sessao recomendada</p>
-        <h3>O que fazer agora neste topico</h3>
+        <p class="note-kicker">Sessão recomendada</p>
+        <h3>O que fazer agora neste tópico</h3>
         <div class="study-steps">
           ${getStudySteps(state).map((step, index) => `
             <div class="study-step">
@@ -1161,17 +1180,17 @@ function renderStudyTab() {
       </div>
 
       <aside class="study-side">
-        <p class="note-kicker">Painel rapido</p>
+        <p class="note-kicker">Painel rápido</p>
         <h3>Registrar agora</h3>
         <div class="quick-actions-grid">
           <button class="btn btn-sm btn-accent" onclick="startTopicoFocus()">
-            <i data-lucide="play" style="width:13px;height:13px;"></i> Iniciar sessao
+            <i data-lucide="play" style="width:13px;height:13px;"></i> Iniciar sessão
           </button>
-          <button class="btn btn-sm" onclick="addNoteBlock('duvida')">Nova duvida</button>
+          <button class="btn btn-sm" onclick="addNoteBlock('duvida')">Nova dúvida</button>
           <button class="btn btn-sm" onclick="addNoteBlock('erro')">Registrar erro</button>
-          <button class="btn btn-sm" onclick="switchTopicoTab('questoes', document.querySelector('[data-tab=questoes]'))">Adicionar questao</button>
+          <button class="btn btn-sm" onclick="switchTopicoTab('questoes', document.querySelector('[data-tab=questoes]'))">Adicionar questão</button>
         </div>
-        <label class="note-kicker" style="display:block;margin-top:16px;">Termometro</label>
+        <label class="note-kicker" style="display:block;margin-top:16px;">Termômetro</label>
         <select class="difficulty-select" onchange="setTopicDifficultyFromSelect(this.value)">
           ${['nao_avaliado','baixa','media','alta','critica'].map(value => `
             <option value="${value}" ${state.difficulty === value ? 'selected' : ''}>${formatDifficultyText(value)}</option>
@@ -1185,32 +1204,32 @@ function renderStudyTab() {
 function getStudySteps(state) {
   if (state.reviews.some(review => review.status === 'pendente' && new Date(review.dueAt) <= new Date())) {
     return [
-      { title: 'Resolva as revisoes pendentes', text: 'Antes de conteudo novo, feche o que o sistema ja marcou para revisao.' },
-      { title: 'Releia erros e duvidas', text: 'Procure padroes: conceito, interpretacao, calculo ou falta de atencao.' },
-      { title: 'Atualize seu dominio', text: 'Marque dificuldade e dominio para a rota se recalcular.' },
+      { title: 'Resolva as revisões pendentes', text: 'Antes de conteúdo novo, feche o que o sistema já marcou para revisão.' },
+      { title: 'Releia erros e dúvidas', text: 'Procure padrões: conceito, interpretação, cálculo ou falta de atenção.' },
+      { title: 'Atualize seu domínio', text: 'Marque dificuldade e domínio para a rota se recalcular.' },
     ]
   }
 
   if (!state.notes.length && !state.videos.length) {
     return [
-      { title: 'Comece por teoria curta', text: 'Assista uma revisao ou crie um resumo de 3 linhas.' },
-      { title: 'Anote uma duvida ou regra', text: 'Registre o que pode virar revisao futura.' },
-      { title: 'Teste com questoes', text: 'Depois da teoria, resolva pelo menos uma questao do topico.' },
+      { title: 'Comece por teoria curta', text: 'Assista uma revisão ou crie um resumo de 3 linhas.' },
+      { title: 'Anote uma dúvida ou regra', text: 'Registre o que pode virar revisão futura.' },
+      { title: 'Teste com questões', text: 'Depois da teoria, resolva pelo menos uma questão do tópico.' },
     ]
   }
 
   if (state.notes.length && !state.questions.length) {
     return [
-      { title: 'Faca questoes', text: 'Voce ja anotou teoria. Agora teste aplicacao.' },
-      { title: 'Registre erro com motivo', text: 'Se errar, marque se foi conteudo, interpretacao, calculo ou conceito.' },
-      { title: 'Gere revisao dos pontos fracos', text: 'Duvidas, formulas e erros podem virar revisoes.' },
+      { title: 'Faça questões', text: 'Você já anotou teoria. Agora teste aplicação.' },
+      { title: 'Registre erro com motivo', text: 'Se errar, marque se foi conteúdo, interpretação, cálculo ou conceito.' },
+      { title: 'Gere revisão dos pontos fracos', text: 'Dúvidas, fórmulas e erros podem virar revisões.' },
     ]
   }
 
   return [
-    { title: 'Revise o que salvou', text: 'Leia resumo, erros e questoes importantes.' },
-    { title: 'Corrija o ponto mais fraco', text: 'Use a aba questoes ou videos para atacar a dificuldade.' },
-    { title: 'Conclua ou agende revisao', text: 'Se ainda estiver fraco, marque dificuldade alta para voltar depois.' },
+    { title: 'Revise o que salvou', text: 'Leia resumo, erros e questões importantes.' },
+    { title: 'Corrija o ponto mais fraco', text: 'Use a aba questões ou vídeos para atacar a dificuldade.' },
+    { title: 'Conclua ou agende revisão', text: 'Se ainda estiver fraco, marque dificuldade alta para voltar depois.' },
   ]
 }
 
@@ -1218,7 +1237,8 @@ function refreshTopicLearningUI() {
   const state = getTopicRichState(topicoMateriaKey, topicoKeyId)
   const statusMeta = getTopicStatusMeta(state)
   const statusChip = document.getElementById('topic-status-chip')
-  const diffChip = document.getElementById('topic-difficulty-chip')
+  const heroMasteryChip = document.getElementById('topic-hero-mastery-chip')
+  const diffEl = document.getElementById('dificuldade-topico-val')
   const mastery = document.getElementById('topic-mastery-val')
   const suggestion = document.getElementById('topic-suggestion')
 
@@ -1226,12 +1246,12 @@ function refreshTopicLearningUI() {
     statusChip.className = `learning-status ${statusMeta.className}`
     statusChip.textContent = statusMeta.label
   }
-  if (diffChip) {
-    diffChip.className = `learning-status ${statusMeta.className}`
-    diffChip.textContent = formatDifficultyText(state.difficulty)
+  if (heroMasteryChip) {
+    heroMasteryChip.textContent = `Domínio ${Number(state.mastery || 0)}%`
   }
+  if (diffEl) diffEl.innerHTML = formatDifficultyBadge(state.difficulty)
   if (mastery) mastery.innerHTML = renderMasteryMeter(state.mastery)
-  if (suggestion) suggestion.innerHTML = `<strong>Proximo passo recomendado:</strong> ${escapeHtml(getTopicSuggestionText(state))}`
+  if (suggestion) suggestion.innerHTML = `<strong>Próximo passo recomendado:</strong> ${escapeHtml(getTopicSuggestionText(state))}`
 }
 
 function setTopicDifficultyFromSelect(value) {
@@ -1252,7 +1272,7 @@ function getTopicoVideos() {
       id: createTopicEntityId('video'),
       videoId: video.videoId || video.id,
       url: video.url || `https://youtu.be/${video.id}`,
-      title: video.title || video.titulo || 'Video salvo',
+      title: video.title || video.titulo || 'Vídeo salvo',
       type: video.type || 'videoaula',
       notes: video.notes || [],
       createdAt: video.createdAt || new Date().toISOString(),
@@ -1312,7 +1332,7 @@ function getNoteBlocks() {
     const migrated = [{
       id: createNoteBlockId(),
       type: 'texto',
-      title: 'Anotacao antiga',
+      title: 'Anotação antiga',
       content: oldNote,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -1326,10 +1346,13 @@ function getNoteBlocks() {
 
 function saveNoteBlocks(blocks) {
   const normalized = normalizeNoteBlocks(blocks)
+  const hasMeaningfulNote = normalized.some(block => !isNoteBlockEmpty(block))
+  const currentState = getTopicRichState(topicoMateriaKey, topicoKeyId)
+
   saveTopicRichState(topicoMateriaKey, topicoKeyId, {
     notes: normalized,
-    status: normalized.length ? 'parcial' : getTopicRichState(topicoMateriaKey, topicoKeyId).status,
-    mastery: Math.max(getTopicRichState(topicoMateriaKey, topicoKeyId).mastery || 0, normalized.length ? 25 : 0),
+    status: hasMeaningfulNote ? 'parcial' : currentState.status,
+    mastery: Math.max(currentState.mastery || 0, hasMeaningfulNote ? 25 : 0),
   })
   store.set(getNoteBlocksKey(), normalized)
   saveTopicoAnotacao(blocksToMarkdown(normalized))
@@ -1347,6 +1370,7 @@ function normalizeNoteBlocks(blocks) {
         type,
         title: String(block.title || meta.label),
         content: String(block.content || ''),
+        source: block.source && typeof block.source === 'object' ? block.source : null,
         createdAt: block.createdAt || new Date().toISOString(),
         updatedAt: block.updatedAt || new Date().toISOString(),
       }
@@ -1356,6 +1380,12 @@ function normalizeNoteBlocks(blocks) {
 function getBlockMeta(type) {
   const meta = TOPIC_NOTE_TYPE_META[type] || TOPIC_NOTE_TYPE_META.texto
   return { title: meta.label, icon: meta.icon, template: meta.template }
+}
+
+function isNoteBlockEmpty(block) {
+  const content = String(block.content || '').trim()
+  const template = String(getBlockMeta(block.type).template || '').trim()
+  return !content || content === template
 }
 
 function addNoteBlock(type) {
@@ -1427,7 +1457,7 @@ function moveNoteBlock(id, direction) {
 function makeReviewFromNote(id) {
   const review = createReviewFromTopicNote(topicoMateriaKey, topicoKeyId, id)
   if (!review) return
-  markTopicoSaved('revisao criada')
+  markTopicoSaved('revisão criada')
   renderReviewsTab()
   refreshTopicLearningUI()
 }
@@ -1455,15 +1485,16 @@ function renderNoteBlocks() {
           ${blocks.length ? blocks.map(block => {
             const meta = getBlockMeta(block.type)
             return `
-              <button class="note-list-item ${block.id === selectedNoteId ? 'active' : ''}" onclick="selectNoteBlock('${escapeJsString(block.id)}')">
+              <button class="note-list-item ${block.id === selectedNoteId ? 'active' : ''} ${isNoteBlockEmpty(block) ? 'empty' : ''}" onclick="selectNoteBlock('${escapeJsString(block.id)}')">
                 <strong><i data-lucide="${meta.icon}" style="width:12px;height:12px;"></i> ${escapeHtml(block.title || meta.title)}</strong>
                 <small>${escapeHtml(getPreview(block.content))}</small>
+                ${block.source ? `<small>${escapeHtml(formatNoteSource(block.source))}</small>` : ''}
               </button>
             `
           }).join('') : `
             <div class="note-empty-state">
-              <strong>Nenhuma anotacao ainda.</strong>
-              Crie um resumo, duvida ou erro para comecar.
+              <strong>Nenhuma anotação ainda.</strong>
+              Crie um resumo, dúvida, erro ou fórmula.
             </div>
           `}
         </div>
@@ -1473,7 +1504,7 @@ function renderNoteBlocks() {
         ${selected ? `
           <div class="note-editor-header">
             <input class="note-title-input" value="${escapeHtmlForAttr(selected.title)}" oninput="updateNoteBlock('${escapeJsString(selected.id)}', { title: this.value })" />
-            <button class="btn btn-sm" onclick="makeReviewFromNote('${escapeJsString(selected.id)}')">Virar revisao</button>
+            <button class="btn btn-sm" onclick="makeReviewFromNote('${escapeJsString(selected.id)}')">Virar revisão</button>
             <button class="btn btn-sm" onclick="moveNoteBlock('${escapeJsString(selected.id)}', -1)" title="Mover para cima">
               <i data-lucide="chevron-up" style="width:13px;height:13px;"></i>
             </button>
@@ -1482,9 +1513,10 @@ function renderNoteBlocks() {
             </button>
             <button class="btn btn-sm" onclick="removeNoteBlock('${escapeJsString(selected.id)}')">Excluir</button>
           </div>
+          ${selected.source ? `<div class="note-source">${escapeHtml(formatNoteSource(selected.source))}</div>` : ''}
           <textarea class="note-content-textarea" oninput="updateNoteBlock('${escapeJsString(selected.id)}', { content: this.value })">${escapeHtmlForTextarea(selected.content)}</textarea>
         ` : `
-          <div class="empty-editor">Escolha ou crie um bloco de anotacao.</div>
+          <div class="empty-editor">Escolha ou crie um bloco de anotação.</div>
         `}
       </main>
     </section>
@@ -1495,7 +1527,7 @@ function renderNoteBlocks() {
 
 function getPreview(text = '') {
   const clean = String(text || '').replace(/\s+/g, ' ').trim()
-  return clean.length > 80 ? clean.slice(0, 80) + '...' : clean || 'Sem conteudo'
+  return clean.length > 80 ? clean.slice(0, 80) + '...' : clean || 'Sem conteúdo'
 }
 
 async function addTopicoVideo() {
@@ -1506,7 +1538,7 @@ async function addTopicoVideo() {
 
   const id = ytId(url)
   if (!id) {
-    alert('Link do YouTube invalido.')
+    alert('Link do YouTube inválido.')
     return
   }
 
@@ -1540,11 +1572,11 @@ function renderTopicoVideos() {
       <input class="video-input" type="text" id="video-url" placeholder="Cole um link do YouTube..." />
       <select id="video-type">
         <option value="videoaula">Videoaula</option>
-        <option value="revisao">Revisao rapida</option>
-        <option value="questao">Resolucao de questao</option>
+        <option value="revisao">Revisão rápida</option>
+        <option value="questao">Resolução de questão</option>
         <option value="aprofundamento">Aprofundamento</option>
       </select>
-      <button class="btn btn-accent btn-sm" onclick="addTopicoVideo()">Salvar video</button>
+      <button class="btn btn-accent btn-sm" onclick="addTopicoVideo()">Salvar vídeo</button>
     </div>
 
     ${selected ? `
@@ -1553,24 +1585,25 @@ function renderTopicoVideos() {
           <iframe src="https://www.youtube.com/embed/${selected.videoId}" allowfullscreen></iframe>
         </main>
         <aside class="quick-video-notes">
-          <p class="note-kicker">Anotacao rapida</p>
+          <p class="note-kicker">Anotação rápida</p>
           <h3>Enquanto assiste</h3>
-          <textarea id="quick-video-note" placeholder="Ex: nao entendi a diferenca entre escala grafica e numerica..."></textarea>
+          <textarea id="quick-video-note" placeholder="Ex: não entendi a diferença entre escala gráfica e numérica..."></textarea>
           <div class="quick-actions-grid">
             <button class="btn btn-sm" onclick="saveVideoQuickNote('resumo')">Salvar como resumo</button>
-            <button class="btn btn-sm" onclick="saveVideoQuickNote('duvida')">Salvar como duvida</button>
+            <button class="btn btn-sm" onclick="saveVideoQuickNote('duvida')">Salvar como dúvida</button>
             <button class="btn btn-sm" onclick="saveVideoQuickNote('erro')">Salvar como erro</button>
+            <button class="btn btn-sm" onclick="saveVideoQuickNote('texto')">Salvar como anotação solta</button>
           </div>
         </aside>
       </section>
     ` : `
-      <div class="empty-state">Nenhum video salvo nesse topico ainda.</div>
+      <div class="empty-state">Nenhum vídeo salvo nesse tópico ainda.</div>
     `}
 
     <div class="video-list">
       ${videos.map(video => `
         <button class="video-list-item ${video.id === selectedVideoId ? 'active' : ''}" onclick="selectVideo('${escapeJsString(video.id)}')">
-          <strong>${escapeHtml(video.title || 'Video salvo')}</strong>
+          <strong>${escapeHtml(video.title || 'Vídeo salvo')}</strong>
           <small>${formatVideoType(video.type)}</small>
         </button>
       `).join('')}
@@ -1589,12 +1622,19 @@ function saveVideoQuickNote(type) {
   const content = textarea?.value.trim()
   if (!content) return
 
+  const selectedVideo = getTopicoVideos().find(video => video.id === selectedVideoId)
   const meta = getBlockMeta(type)
   const block = {
     id: createNoteBlockId(),
     type,
-    title: `Video - ${meta.title}`,
+    title: type === 'texto' ? 'Anotação do vídeo' : `${meta.title} do vídeo`,
     content,
+    source: selectedVideo ? {
+      type: 'video',
+      videoId: selectedVideo.id,
+      youtubeId: selectedVideo.videoId,
+      videoTitle: selectedVideo.title || 'Vídeo salvo',
+    } : null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
@@ -1602,7 +1642,7 @@ function saveVideoQuickNote(type) {
   saveNoteBlocks([block, ...getNoteBlocks()])
   selectedNoteId = block.id
   textarea.value = ''
-  markTopicoSaved('anotacao criada')
+  markTopicoSaved('anotação criada')
   renderNoteBlocks()
   refreshTopicLearningUI()
 }
@@ -1610,11 +1650,11 @@ function saveVideoQuickNote(type) {
 function formatVideoType(type) {
   const map = {
     videoaula: 'Videoaula',
-    revisao: 'Revisao rapida',
-    questao: 'Resolucao de questao',
+    revisao: 'Revisão rápida',
+    questao: 'Resolução de questão',
     aprofundamento: 'Aprofundamento',
   }
-  return map[type] || 'Video'
+  return map[type] || 'Vídeo'
 }
 
 function removeTopicoVideo(index) {
@@ -1685,23 +1725,20 @@ function renderTopicoQuestoes() {
     <div id="practice-area"></div>
     <section class="question-form-card">
       <p class="note-kicker">Caderno de erros</p>
-      <h3>Adicionar questao importante</h3>
-      <textarea id="questao-enunciado" placeholder="Enunciado da questao..."></textarea>
-      <textarea id="questao-resposta" placeholder="Resposta, comentario ou resolucao..."></textarea>
+      <h3>Adicionar questão importante</h3>
+      <textarea id="questao-enunciado" placeholder="Enunciado da questão..."></textarea>
+      <textarea id="questao-resposta" placeholder="Resposta, comentário ou resolução..."></textarea>
       <div class="question-grid">
         <input id="questao-fonte" placeholder="Fonte: ENEM 2021, simulado..." />
         <select id="questao-status">
-          <option value="nao_respondida">Nao respondida</option>
-          <option value="acertei">Acertei</option>
-          <option value="errei">Errei</option>
-          <option value="chutei">Acertei chutando</option>
+          ${Object.entries(UI_LABELS.questionStatus).map(([value, text]) => `<option value="${value}">${text}</option>`).join('')}
         </select>
         <select id="questao-erro">
           <option value="">Motivo do erro</option>
           ${Object.entries(QUESTION_ERROR_REASON_LABELS).map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}
         </select>
       </div>
-      <button class="btn btn-accent btn-sm" onclick="addTopicoQuestao()">Adicionar questao</button>
+      <button class="btn btn-accent btn-sm" onclick="addTopicoQuestao()">Adicionar questão</button>
     </section>
 
     <section class="questions-list">
@@ -1714,9 +1751,22 @@ function renderTopicoQuestoes() {
           <p class="questao-enunciado">${escapeHtml(question.statement || '').replace(/\n/g, '<br>')}</p>
           ${question.answer ? `<small style="color:var(--text2);line-height:1.6;">${escapeHtml(question.answer).replace(/\n/g, '<br>')}</small>` : ''}
         </article>
-      `).join('') : '<div class="empty-state">Nenhuma questao salva ainda.</div>'}
+      `).join('') : '<div class="empty-state">Nenhuma questão salva ainda.</div>'}
     </section>
   `
+
+  container.querySelectorAll('.question-card-header span').forEach((span, index) => {
+    span.innerHTML = renderQuestionMeta(questions[index])
+  })
+}
+
+function renderQuestionMeta(question) {
+  const source = escapeHtml(question?.source || 'manual')
+  const reason = question?.errorReason ? escapeHtml(label('errorReason', question.errorReason)) : ''
+  return [
+    `Fonte: ${source}`,
+    reason ? `Motivo: ${reason}` : '',
+  ].filter(Boolean).join('<br>')
 }
 
 function renderReviewsTab() {
@@ -1733,7 +1783,7 @@ function renderReviewsTab() {
           <article class="review-card ${isDue ? 'due' : ''}">
             <div>
               <strong>${escapeHtml(review.question)}</strong>
-              <small>${isDue ? 'Revisao pendente' : review.status === 'pendente' ? 'Agendada para ' + formatShortDate(review.dueAt) : 'Resolvida'}</small>
+              <small>${isDue ? 'Revisão pendente' : review.status === 'pendente' ? 'Agendada para ' + formatShortDate(review.dueAt) : 'Resolvida'}</small>
             </div>
             ${review.status === 'pendente' ? `
               <div class="review-actions">
@@ -1749,7 +1799,7 @@ function renderReviewsTab() {
           </article>
         `
       }).join('') : `
-        <div class="empty-state">Nenhuma revisao gerada ainda. Transforme duvidas, formulas e erros em revisao.</div>
+        <div class="empty-state">Nenhuma revisão gerada ainda. Transforme dúvidas, fórmulas e erros em revisão.</div>
       `}
     </section>
   `
@@ -1763,12 +1813,12 @@ function resolveReviewUI(id, result) {
 }
 
 function deleteReviewUI(id) {
-  if (!confirm('Remover esta revisao?')) return
+  if (!confirm('Remover esta revisão?')) return
   deleteTopicReview(topicoMateriaKey, topicoKeyId, id)
   renderReviewsTab()
   refreshTopicLearningUI()
   renderStudyTab()
-  markTopicoSaved('revisao removida')
+  markTopicoSaved('revisão removida')
 }
 
 function renderExportTab() {
@@ -1778,12 +1828,12 @@ function renderExportTab() {
     <div class="obsidian-section" style="padding-top:16px;">
       <div class="obsidian-box">
         <h3>Exportar nota bonita</h3>
-        <p>Gera um Markdown com resumo, formulas, duvidas, erros, videos, questoes e revisoes.</p>
+        <p>Gera um Markdown com resumo, fórmulas, dúvidas, erros, vídeos, questões e revisões.</p>
         <button class="btn btn-accent btn-sm" onclick="exportTopicoMarkdown()">Baixar .md</button>
       </div>
       <div class="obsidian-box">
         <h3>Obsidian</h3>
-        <p>Use exportar/importar ou abra via obsidian:// sem depender de sincronizacao local.</p>
+        <p>Use exportar/importar ou abra via obsidian:// sem depender de sincronização local.</p>
         <div class="obsidian-vault-row">
           <input class="video-input" type="text" id="vault-name" value="${escapeHtmlForAttr(getVaultName())}" placeholder="Ex: ENEM-Study" />
           <button class="btn btn-sm" onclick="saveTopicoVault()">Salvar vault</button>
@@ -1792,8 +1842,8 @@ function renderExportTab() {
       </div>
       <div class="obsidian-box">
         <h3>Importar .md ou texto</h3>
-        <p>Cole uma nota pronta para virar bloco de texto neste topico.</p>
-        <textarea class="obsidian-import-area" id="obsidian-import" placeholder="Cole o conteudo da nota aqui..."></textarea>
+        <p>Cole uma nota pronta para virar bloco de texto neste tópico.</p>
+        <textarea class="obsidian-import-area" id="obsidian-import" placeholder="Cole o conteúdo da nota aqui..."></textarea>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
           <button class="btn btn-sm btn-accent" onclick="importFromObsidian()">Importar</button>
           <button class="btn btn-sm" onclick="document.getElementById('obsidian-import').value=''">Limpar</button>
@@ -1826,29 +1876,29 @@ function buildTopicoMarkdown() {
   md += `dificuldade: "${state.difficulty || 'nao_avaliado'}"\n`
   md += `---\n\n`
   md += `# ${getTopicoTitulo()}\n\n`
-  md += `## Resumo e anotacoes\n\n${anotacao || 'Sem anotacoes ainda.'}\n\n`
+  md += `## Resumo e anotações\n\n${anotacao || 'Sem anotações ainda.'}\n\n`
 
   if (videos.length) {
-    md += `## Videos salvos\n\n`
+    md += `## Vídeos salvos\n\n`
     videos.forEach(video => {
-      md += `- [${video.title || video.titulo || 'Video salvo'}](${video.url})${video.type ? ` - ${formatVideoType(video.type)}` : ''}\n`
+      md += `- [${video.title || video.titulo || 'Vídeo salvo'}](${video.url})${video.type ? ` - ${formatVideoType(video.type)}` : ''}\n`
     })
     md += '\n'
   }
 
   if (questoes.length) {
-    md += `## Questoes importantes\n\n`
+    md += `## Questões importantes\n\n`
     questoes.forEach((questao, index) => {
-      md += `### Questao ${index + 1}\n\n`
+      md += `### Questão ${index + 1}\n\n`
       md += `${questao.statement || questao.enunciado || ''}\n\n`
       md += `**Status:** ${getQuestionStatusLabel(questao.status)}\n\n`
-      if (questao.errorReason) md += `**Motivo do erro:** ${QUESTION_ERROR_REASON_LABELS[questao.errorReason] || questao.errorReason}\n\n`
+      if (questao.errorReason) md += `**Motivo do erro:** ${label('errorReason', questao.errorReason)}\n\n`
       if (questao.answer || questao.resposta) md += `**Resposta:** ${questao.answer || questao.resposta}\n\n`
     })
   }
 
   if (state.reviews.length) {
-    md += `## Revisoes geradas\n\n`
+    md += `## Revisões geradas\n\n`
     state.reviews.forEach(review => {
       md += `- ${review.question} (${review.status || 'pendente'} - ${formatShortDate(review.dueAt)})\n`
     })
@@ -1870,16 +1920,18 @@ function setDifficulty(value) {
 }
 
 function updateTopicoHeader() {
+  const state = getTopicRichState(topicoMateriaKey, topicoKeyId)
   const button = document.getElementById('topico-check-btn')
   const tempoEl = document.getElementById('tempo-topico-val')
   const difEl = document.getElementById('dificuldade-topico-val')
   const progressoEl = document.getElementById('progresso-materia-val')
   if (button) {
     button.className = `btn btn-sm ${isTopicoAtualFeito() ? 'btn-accent' : ''}`
-    button.innerHTML = `<i data-lucide="${isTopicoAtualFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i> ${isTopicoAtualFeito() ? 'Concluido' : 'Marcar como feito'}`
+    button.innerHTML = `<i data-lucide="${isTopicoAtualFeito() ? 'check-circle-2' : 'circle'}" style="width:14px;height:14px;"></i> ${isTopicoAtualFeito() ? 'Concluído' : 'Marcar como feito'}`
   }
+  if (button) button.innerHTML = button.innerHTML.replace('Conclu\u00C3\u00ADdo', 'Conclu\u00EDdo')
   if (tempoEl) tempoEl.textContent = formatTempo(getTempo(topicoMateriaKey, topicoKeyId))
-  if (difEl) difEl.innerHTML = formatDificuldadeLabel(getTopicoDificuldade())
+  if (difEl) difEl.innerHTML = formatDifficultyBadge(state.difficulty)
   if (progressoEl) progressoEl.textContent = `${getProgressoMateria(topicoMateriaKey).pct}%`
   refreshTopicLearningUI()
   lucide.createIcons()

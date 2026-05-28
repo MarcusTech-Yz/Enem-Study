@@ -67,8 +67,9 @@
       color: var(--text);
     }
     .plan-radar-card small { color: var(--text2); font-size: 12px; }
-    .plan-radar-card.urgent { border-color: rgba(255,94,94,.45); }
-    .plan-radar-card.review { border-color: rgba(200,241,53,.35); }
+    .plan-radar-card.weak { border-color: rgba(255,94,94,.38); }
+    .plan-radar-card.review { border-color: rgba(168,85,247,.35); }
+    .plan-radar-card.unstarted { border-color: rgba(96,165,250,.32); }
     .today-plan { padding: 1.2rem; }
     .today-header {
       display: flex;
@@ -130,9 +131,9 @@
       flex-wrap: wrap;
       margin-top: 10px;
     }
-    .plan-main-grid {
+    .plan-focus-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 320px;
+      grid-template-columns: minmax(0, 1.45fr) 360px;
       gap: 1rem;
       align-items: start;
     }
@@ -148,8 +149,8 @@
     .section-title h2 { font-size: 17px; letter-spacing: -.02em; }
     .week-board {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
     }
     .week-day {
       min-height: 150px;
@@ -190,6 +191,36 @@
       font-family: var(--mono);
       font-size: 9px;
     }
+    .urgency-chip {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-family: var(--mono);
+      border: 1px solid var(--border);
+    }
+    .urgency-chip.critica {
+      color: #ff6b6b;
+      background: rgba(255,94,94,.08);
+      border-color: rgba(255,94,94,.25);
+    }
+    .urgency-chip.alta {
+      color: #f59e0b;
+      background: rgba(245,158,11,.08);
+      border-color: rgba(245,158,11,.25);
+    }
+    .urgency-chip.media,
+    .urgency-chip.prioritario {
+      color: #60a5fa;
+      background: rgba(96,165,250,.08);
+      border-color: rgba(96,165,250,.25);
+    }
+    .urgency-chip.baixa {
+      color: var(--text3);
+      background: var(--bg3);
+    }
     .priority-copy {
       color: var(--text2);
       font-size: 12px;
@@ -214,9 +245,17 @@
       margin-bottom: 5px;
     }
     .priority-item span {
+      display: block;
       color: var(--text3);
       font-family: var(--mono);
       font-size: 10px;
+    }
+    .priority-item small {
+      display: block;
+      color: var(--text2);
+      font-size: 11px;
+      line-height: 1.45;
+      margin-top: 6px;
     }
     .empty-plan {
       color: var(--text3);
@@ -227,7 +266,7 @@
       .plan-config-card,
       .plan-radar,
       .week-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .plan-main-grid { grid-template-columns: 1fr; }
+      .plan-focus-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 700px) {
       .plan-config-card,
@@ -264,7 +303,7 @@
     <div class="page-header">
       <p class="date-tag">Planejamento inteligente</p>
       <h1>Seu Plano de Estudos</h1>
-      <p>O Enem Study nao monta um cronograma fixo. Ele recalcula sua rota por urgencia, dominio, revisoes e tempo real.</p>
+      <p>Recalculado por domínio, revisões, tempo real e equilíbrio entre áreas.</p>
     </div>
 
     <section class="plan-config-card">
@@ -289,13 +328,13 @@
         </select>
       </label>
       <label class="config-field">
-        <span class="config-label">Periodo</span>
+        <span class="config-label">Período</span>
         <select class="config-select" id="study-period">
-          <option value="manha">Manha</option>
+          <option value="manha">Manhã</option>
           <option value="tarde">Tarde</option>
           <option value="noite">Noite</option>
           <option value="madrugada">Madrugada</option>
-          <option value="variavel">Variavel</option>
+          <option value="variavel">Variável</option>
         </select>
       </label>
       <button class="btn btn-accent" onclick="recalculatePlan()">
@@ -306,21 +345,20 @@
 
     <section class="plan-radar" id="plan-radar"></section>
 
-    <section class="today-plan" id="today-plan"></section>
-
-    <section class="plan-main-grid">
-      <section class="week-panel">
-        <div class="section-title">
-          <div>
-            <p class="section-kicker">Rota da semana</p>
-            <h2>Esta semana</h2>
-          </div>
-          <button class="btn btn-sm" onclick="clearStoredPlan()">Limpar plano salvo</button>
-        </div>
-        <div class="week-board" id="week-board"></div>
-      </section>
-
+    <section class="plan-focus-grid">
+      <section class="today-plan" id="today-plan"></section>
       <aside class="priority-queue" id="priority-queue"></aside>
+    </section>
+
+    <section class="week-panel">
+      <div class="section-title">
+        <div>
+          <p class="section-kicker">Rota da semana</p>
+          <h2>Distribuição dos próximos dias</h2>
+        </div>
+        <button class="btn btn-sm" onclick="clearStoredPlan()">Limpar plano salvo</button>
+      </div>
+      <div class="week-board" id="week-board"></div>
     </section>
   </main>
 </div>
@@ -331,6 +369,7 @@
 <script src="js/app.js"></script>
 <script src="js/recommendation-engine.js"></script>
 <script src="js/study-engine.js"></script>
+<script src="js/learning-engine.js"></script>
 <script>
 const PLAN_DAY_LABELS = {
   '1': 'Seg',
@@ -342,6 +381,8 @@ const PLAN_DAY_LABELS = {
 }
 
 let currentPlan = null
+const PLAN_VERSION = '1.0.0'
+const SMART_PLAN_KEY = 'smart_weekly_plan_v3'
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -387,40 +428,77 @@ function recalculatePlan() {
   renderPlanPage(true)
 }
 
+function getPlanSignature(config) {
+  const profile = getUserProfile()
+
+  return JSON.stringify({
+    planVersion: PLAN_VERSION,
+    learningVersion: typeof LEARNING_ENGINE_VERSION !== 'undefined' ? LEARNING_ENGINE_VERSION : null,
+    dailyMinutes: Number(config.dailyMinutes),
+    sessionMinutes: Number(config.sessionMinutes),
+    period: config.period,
+    focoMateria: profile.focoMateria,
+    ritmoAtual: profile.ritmoAtual,
+    formatoPreferido: profile.formatoPreferido,
+    diasAteEnem: typeof getDiasAteEnem === 'function' ? getDiasAteEnem() : null,
+    learningState: typeof getLearningStateSignature === 'function' ? getLearningStateSignature() : '',
+  })
+}
+
 function renderPlanPage(forceNew = false) {
   const config = getPlanConfigFromUI()
-  currentPlan = forceNew ? generateSmartWeeklyPlan(config) : (store.get('smart_weekly_plan') || generateSmartWeeklyPlan(config))
-  store.set('smart_weekly_plan', currentPlan)
+  const signature = getPlanSignature(config)
+  const savedPayload = store.get(SMART_PLAN_KEY)
 
-  renderPlanRadar(config)
+  if (!forceNew && savedPayload?.signature === signature && savedPayload?.plan) {
+    currentPlan = savedPayload.plan
+  } else {
+    currentPlan = generateSmartWeeklyPlan(config)
+    store.set(SMART_PLAN_KEY, {
+      signature,
+      plan: currentPlan,
+      generatedAt: new Date().toISOString(),
+    })
+  }
+
+  const snapshot = typeof getLearningSnapshot === 'function' ? getLearningSnapshot(currentPlan) : null
+  renderPlanRadar(config, snapshot)
   renderTodayPlan(currentPlan)
   renderWeekBoard(currentPlan)
-  renderPriorityQueue(config)
+  renderPriorityQueue(config, snapshot)
   if (typeof lucide !== 'undefined') lucide.createIcons()
 }
 
-function renderPlanRadar(config) {
-  const radar = getStudyPlanRadar(config)
+function renderPlanRadar(config, snapshot = null) {
+  const radar = snapshot?.progress
+    ? {
+      weak: snapshot.progress.weak,
+      dueReviews: snapshot.progress.dueReviews,
+      daysToExam: Math.max(0, daysBetweenStudy(new Date(), config.examDate)),
+      unstarted: snapshot.progress.unstarted,
+    }
+    : getStudyPlanRadar(config)
+
   document.getElementById('plan-radar').innerHTML = `
-    <article class="plan-radar-card urgent">
-      <span>Urgentes</span>
-      <strong>${radar.urgent}</strong>
-      <small>Topicos com prioridade alta agora</small>
+    <article class="plan-radar-card weak">
+      <span>Pontos fracos</span>
+      <strong>${radar.weak}</strong>
+      <small>Com evidência de erro ou dificuldade</small>
     </article>
     <article class="plan-radar-card review">
-      <span>Revisoes</span>
+      <span>Revisões</span>
       <strong>${radar.dueReviews}</strong>
       <small>Pendentes para hoje</small>
     </article>
     <article class="plan-radar-card">
-      <span>Pressao</span>
+      <span>ENEM</span>
       <strong>${radar.daysToExam}</strong>
-      <small>Dias ate o ENEM</small>
+      <small>Dias até a prova</small>
     </article>
-    <article class="plan-radar-card">
-      <span>Atencao</span>
-      <strong>${radar.attention}</strong>
-      <small>Topicos em zona media</small>
+    <article class="plan-radar-card unstarted">
+      <span>Sem estudo</span>
+      <strong>${radar.unstarted}</strong>
+      <small>Conteúdos ainda sem diagnóstico</small>
     </article>
   `
 }
@@ -435,23 +513,25 @@ function renderTodayPlan(plan) {
       <div>
         <span>Cronograma de hoje</span>
         <h2>${sessions.length} bloco${sessions.length !== 1 ? 's' : ''} recomendado${sessions.length !== 1 ? 's' : ''}</h2>
+        ${sessions.length ? `<p class="priority-copy">${getTodayPlanSummary(sessions)}</p>` : ''}
       </div>
       ${first ? `
         <a class="btn btn-accent" href="${getTopicUrlFromStudyTopic(first)}">
           <i data-lucide="play" style="width:14px;height:14px;"></i>
-          Comecar primeiro bloco
+          Começar primeiro bloco
         </a>
       ` : ''}
     </div>
     <div class="today-timeline">
       ${sessions.length ? sessions.map((session, index) => renderTodaySession(session, index)).join('') : `
-        <p class="empty-plan">Nenhum bloco para hoje. Recalcule a rota ou ajuste seu tempo diario.</p>
+        <p class="empty-plan">Nenhum bloco para hoje. Recalcule a rota ou ajuste seu tempo diário.</p>
       `}
     </div>
   `
 }
 
 function renderTodaySession(session, index) {
+  const urgency = session.urgencyLevel || getUrgencyLevel(session.score)
   return `
     <article class="today-session">
       <div class="session-index">${index + 1}</div>
@@ -460,17 +540,32 @@ function renderTodaySession(session, index) {
           <span>${escapeHtml(session.inicio || '--')}</span>
           <span>${session.minutes} min</span>
           <span>${escapeHtml(session.matNome)}</span>
-          <span>urgencia ${session.score}</span>
+          <span class="urgency-chip ${urgency}">${formatUrgencyLabel(urgency)}</span>
         </div>
         <h3>${escapeHtml(session.titulo)}</h3>
-        <p>${escapeHtml(session.reason)}</p>
+        <p><strong>Por que agora?</strong> ${escapeHtml(session.reason)}</p>
         <div class="session-actions">
-          <a class="btn btn-sm btn-accent" href="${getTopicUrlFromStudyTopic(session)}">Abrir topico</a>
+          <a class="btn btn-sm btn-accent" href="${getTopicUrlFromStudyTopic(session)}">Abrir tópico</a>
           <button class="btn btn-sm" onclick="postponeSession('${escapeHtml(session.topicId)}')">Adiar</button>
         </div>
       </div>
     </article>
   `
+}
+
+function getTodayPlanSummary(sessions) {
+  const total = sessions.reduce((sum, session) => sum + Number(session.minutes || 0), 0)
+  const materias = [...new Set(sessions.map(session => session.matNome).filter(Boolean))].slice(0, 3).join(' + ')
+  return `Tempo estimado: ${total} min${materias ? ` · Foco: ${materias}` : ''}.`
+}
+
+function formatUrgencyLabel(scoreOrLevel) {
+  const level = typeof scoreOrLevel === 'string' ? scoreOrLevel : getUrgencyLevel(scoreOrLevel)
+  if (level === 'critica') return 'Crítica'
+  if (level === 'alta') return 'Alta'
+  if (level === 'media') return 'Média'
+  if (level === 'prioritario') return 'Prioritário'
+  return 'Baixa'
 }
 
 function renderWeekBoard(plan) {
@@ -483,33 +578,41 @@ function renderWeekBoard(plan) {
         ${sessions.length ? sessions.map(session => `
           <a class="week-session" href="${getTopicUrlFromStudyTopic(session)}">
             <strong>${escapeHtml(session.titulo)}</strong>
-            <span>${escapeHtml(session.matNome)} · ${session.minutes} min · ${session.score}</span>
+            <span>${escapeHtml(session.matNome)} · ${session.minutes} min · ${formatUrgencyLabel(session.urgencyLevel || session.score)}</span>
           </a>
         `).join('') : '<p class="empty-plan">Livre</p>'}
       </div>
     `
   }).join('')
-}
 
-function renderPriorityQueue(config) {
-  const recommendations = getStudyRecommendations(8, config)
-  document.getElementById('priority-queue').innerHTML = `
-    <p class="section-kicker">Fila inteligente</p>
-    <h2 style="font-size:17px;margin-top:4px;">Mais urgentes agora</h2>
-    <p class="priority-copy">Conteudos que mais precisam de atencao pelo seu foco, revisoes, erros, dominio e pressao ate a prova.</p>
-    <div class="priority-list">
-      ${recommendations.map(item => `
-        <a class="priority-item" href="${getTopicUrlFromStudyTopic(item.topic)}">
-          <strong>${escapeHtml(item.topic.titulo)}</strong>
-          <span>${escapeHtml(item.topic.matNome)} · urgencia ${item.score}</span>
-        </a>
-      `).join('')}
-    </div>
-  `
 }
 
 function getTopicUrlFromStudyTopic(sessionOrTopic) {
   return `topico.html?m=${encodeURIComponent(sessionOrTopic.materiaKey)}&id=${encodeURIComponent(sessionOrTopic.tKey)}`
+}
+
+function renderPriorityQueue(config, snapshot = null) {
+  const recommendations = snapshot
+    ? snapshot.topics
+      .filter(item => item.score > -30)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+    : getStudyRecommendations(8, config)
+
+  document.getElementById('priority-queue').innerHTML = `
+    <p class="section-kicker">Fila inteligente</p>
+    <h2 style="font-size:17px;margin-top:4px;">Próximos da rota</h2>
+    <p class="priority-copy">Conteúdos importantes pelo seu foco, revisões, erros, domínio e cobertura. A fila explica o motivo dominante.</p>
+    <div class="priority-list">
+      ${recommendations.map(item => `
+        <a class="priority-item" href="${getTopicUrlFromStudyTopic(item.topic)}">
+          <strong>${escapeHtml(item.topic.titulo)}</strong>
+          <span>${escapeHtml(item.topic.matNome)} · ${formatUrgencyLabel(item.level || item.score)}</span>
+          <small>Motivo: ${escapeHtml(item.dominantReason || item.reasons?.[0] || 'equilíbrio da rota')}</small>
+        </a>
+      `).join('')}
+    </div>
+  `
 }
 
 function postponeSession(topicId) {
@@ -517,6 +620,8 @@ function postponeSession(topicId) {
   saveUserTopicState(topicId, {
     ...state,
     skippedUntil: addDaysISO(1),
+    postponedCount: Number(state.postponedCount || 0) + 1,
+    lastPostponedAt: new Date().toISOString(),
   })
   renderPlanPage(true)
 }
@@ -524,6 +629,8 @@ function postponeSession(topicId) {
 function clearStoredPlan() {
   if (!confirm('Limpar plano semanal salvo e recalcular?')) return
   localStorage.removeItem('smart_weekly_plan')
+  localStorage.removeItem('smart_weekly_plan_v2')
+  localStorage.removeItem(SMART_PLAN_KEY)
   renderPlanPage(true)
 }
 

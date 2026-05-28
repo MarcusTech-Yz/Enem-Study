@@ -197,7 +197,7 @@ class Quiz {
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <span class="practice-count">
               <i data-lucide="list-checks" style="width:13px;height:13px;"></i>
-              ${opts.loading ? 'carregando...' : count + ' disp.'}
+              ${opts.loading ? 'carregando...' : count + ' disponíveis'}
             </span>
             <button class="btn btn-accent btn-sm" ${canStart ? '' : 'disabled'}
               onclick="window.__quizInstances['${this.containerId}'].start()">

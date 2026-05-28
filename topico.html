@@ -11,7 +11,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <style>
-    .topico-shell { display: flex; flex-direction: column; gap: 1rem; }
+    .topico-shell { display: flex; flex-direction: column; gap: 1rem; padding-bottom: 110px; }
     .topico-hero,
     .topico-card {
       background: var(--bg2);
@@ -135,24 +135,59 @@
       width: fit-content;
     }
     .mastery-badge.none {
-      color: var(--text3);
+      color: var(--state-neutral);
       border: 1px solid var(--border2);
       background: var(--bg3);
     }
     .mastery-badge.d1 {
-      color: var(--red);
-      border: 1px solid rgba(255,94,94,.35);
-      background: rgba(255,94,94,.08);
+      color: var(--state-critical);
+      border: 1px solid rgba(239,68,68,.35);
+      background: rgba(239,68,68,.08);
     }
     .mastery-badge.d2 {
-      color: var(--amber);
-      border: 1px solid rgba(245,166,35,.35);
-      background: rgba(245,166,35,.08);
+      color: var(--state-medium);
+      border: 1px solid rgba(250,204,21,.35);
+      background: rgba(250,204,21,.08);
     }
     .mastery-badge.d3 {
-      color: var(--green);
+      color: var(--state-low);
       border: 1px solid rgba(74,222,128,.35);
       background: rgba(74,222,128,.08);
+    }
+    .badge-difficulty {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      border: 1px solid var(--border2);
+      font-size: 13px;
+      width: fit-content;
+    }
+    .badge-difficulty.nao_avaliado {
+      color: var(--state-neutral);
+      border-color: rgba(139,139,139,.35);
+      background: rgba(139,139,139,.06);
+    }
+    .badge-difficulty.baixa {
+      color: var(--state-low);
+      border-color: rgba(74,222,128,.45);
+      background: rgba(74,222,128,.08);
+    }
+    .badge-difficulty.media {
+      color: var(--state-medium);
+      border-color: rgba(250,204,21,.45);
+      background: rgba(250,204,21,.08);
+    }
+    .badge-difficulty.alta {
+      color: var(--state-high);
+      border-color: rgba(251,146,60,.45);
+      background: rgba(251,146,60,.08);
+    }
+    .badge-difficulty.critica {
+      color: var(--state-critical);
+      border-color: rgba(239,68,68,.45);
+      background: rgba(239,68,68,.08);
     }
     .tabs {
       display: flex;
@@ -647,10 +682,12 @@
       font-size: 13px;
       width: fit-content;
     }
-    .learning-status.forte { color: var(--green); border-color: rgba(74,222,128,.35); background: rgba(74,222,128,.08); }
-    .learning-status.medio { color: var(--amber); border-color: rgba(245,166,35,.35); background: rgba(245,166,35,.08); }
-    .learning-status.fraco { color: var(--red); border-color: rgba(255,94,94,.35); background: rgba(255,94,94,.08); }
-    .learning-status.em-estudo { color: var(--blue); border-color: rgba(96,165,250,.35); background: rgba(96,165,250,.08); }
+    .learning-status.nao-iniciado { color: var(--state-neutral); border-color: rgba(139,139,139,.35); background: rgba(139,139,139,.06); }
+    .learning-status.forte { color: var(--state-low); border-color: rgba(74,222,128,.35); background: rgba(74,222,128,.08); }
+    .learning-status.medio { color: var(--state-medium); border-color: rgba(250,204,21,.35); background: rgba(250,204,21,.08); }
+    .learning-status.fraco { color: var(--state-critical); border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08); }
+    .learning-status.em-estudo,
+    .learning-status.dominio { color: var(--state-info); border-color: rgba(96,165,250,.35); background: rgba(96,165,250,.08); }
     .mastery-meter {
       display: grid;
       gap: 7px;
@@ -667,7 +704,7 @@
     .mastery-bar span {
       display: block;
       height: 100%;
-      background: var(--accent);
+      background: var(--state-low);
       border-radius: inherit;
     }
     .study-flow {
@@ -774,6 +811,8 @@
       padding-right: 2px;
     }
     .note-list-item { padding: 10px; }
+    .note-list-item.empty { opacity: .55; }
+    .note-list-item:not(.empty) { border-color: rgba(186,255,31,.25); }
     .note-list-item strong {
       display: block;
       font-size: 12px;
@@ -819,6 +858,13 @@
       font-family: var(--mono);
       font-size: 13px;
       line-height: 1.7;
+    }
+    .note-source {
+      padding: 8px 12px;
+      color: var(--text3);
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      font-family: var(--mono);
     }
     .empty-editor {
       display: grid;
@@ -923,9 +969,10 @@
       padding: 12px;
       background: var(--bg3);
     }
-    .question-card.errei { border-color: rgba(255,94,94,.35); }
-    .question-card.acertei { border-color: rgba(74,222,128,.3); }
-    .question-card.chutei { border-color: rgba(245,166,35,.35); }
+    .question-card.nao_respondida { border-color: rgba(139,139,139,.35); }
+    .question-card.errei { border-color: rgba(239,68,68,.5); }
+    .question-card.acertei { border-color: rgba(74,222,128,.45); }
+    .question-card.chutei { border-color: rgba(250,204,21,.5); }
     .question-card-header,
     .review-card {
       display: flex;
@@ -939,9 +986,14 @@
       font-size: 11px;
       font-family: var(--mono);
     }
+    .question-card-header span {
+      display: grid;
+      gap: 2px;
+      text-align: right;
+    }
     .review-card.due {
-      border-color: rgba(200,241,53,.35);
-      background: rgba(200,241,53,.05);
+      border-color: rgba(167,139,250,.45);
+      background: rgba(167,139,250,.06);
     }
     .review-actions {
       display: flex;

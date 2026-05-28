@@ -9,6 +9,83 @@
   <link rel="stylesheet" href="css/style.css" />
   <style>
     /* ── Insights ── */
+    .progress-route-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.5rem;
+      border: 1px solid rgba(200,241,53,.28);
+      border-radius: var(--radius);
+      background:
+        radial-gradient(circle at top right, rgba(200,241,53,.08), transparent 35%),
+        var(--bg2);
+      margin-bottom: 1rem;
+    }
+    .progress-route-card h2 {
+      font-size: 22px;
+      margin: 6px 0;
+      letter-spacing: -.02em;
+      line-height: 1.2;
+    }
+    .progress-route-card p {
+      color: var(--text2);
+      font-size: 14px;
+      line-height: 1.55;
+      max-width: 720px;
+    }
+    .section-kicker {
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+    .diagnosis-grid { display: grid; gap: 12px; }
+    .diagnosis-card {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 12px;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg3);
+    }
+    .diagnosis-card.primary {
+      border-color: rgba(200,241,53,.35);
+      background: rgba(200,241,53,.055);
+    }
+    .diagnosis-card.warn {
+      border-color: rgba(245,166,35,.35);
+      background: rgba(245,166,35,.055);
+    }
+    .diagnosis-card.risk {
+      border-color: rgba(255,94,94,.35);
+      background: rgba(255,94,94,.045);
+    }
+    .diagnosis-card.info {
+      border-color: rgba(96,165,250,.35);
+      background: rgba(96,165,250,.055);
+    }
+    .diagnosis-icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,.04);
+      color: var(--text2);
+    }
+    .diagnosis-label {
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 4px;
+    }
+    .diagnosis-title { display: block; font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .diagnosis-sub { display: block; font-size: 12px; color: var(--text2); line-height: 1.5; }
     .insight-card {
       display: flex; align-items: flex-start; gap: 12px;
       padding: 14px 16px;
@@ -81,6 +158,7 @@
     .mat-info { flex: 1; }
     .mat-nome { font-size: 13px; font-weight: 500; }
     .mat-detalhe { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+    .mat-metrics { font-size: 11px; color: var(--text2); margin-top: 3px; }
     .mat-pct  { font-size: 11px; color: var(--text3); font-family: var(--mono); width: 36px; text-align: right; }
     .mat-bar  { width: 120px; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
     .mat-fill { height: 100%; border-radius: 2px; transition: width .4s; }
@@ -129,6 +207,11 @@
     }
     .streak-dia.feito { background: rgba(200,241,53,.15); border-color: rgba(200,241,53,.4); }
     .streak-dia.hoje  { border-color: var(--accent); }
+    @media (max-width: 700px) {
+      .progress-route-card { flex-direction: column; align-items: stretch; }
+      .mat-row { align-items: flex-start; }
+      .mat-bar { width: 76px; }
+    }
   </style>
 </head>
 <body>
@@ -160,6 +243,8 @@
       <h1>Progresso</h1>
       <p id="prog-motivacao" style="color:var(--text2);font-size:14px;margin-top:4px;"></p>
     </div>
+
+    <section class="progress-route-card" id="progress-route-card"></section>
 
     <!-- Stats topo -->
     <div class="stats-row" id="stats-row" style="margin-bottom:1.5rem;"></div>
@@ -216,12 +301,27 @@
 <script src="data/conquista_toast.js"></script>
 <script src="js/app.js"></script>
 <script src="js/recommendation-engine.js"></script>
+<script src="js/study-engine.js"></script>
+<script src="js/learning-engine.js"></script>
 <script>
-const prog   = getProgressoGlobal()
-const pct    = prog.total > 0 ? Math.round(prog.feitos / prog.total * 100) : 0
+const learningSnapshot = typeof getLearningSnapshot === 'function' ? getLearningSnapshot() : null
+const learningProgress = learningSnapshot?.progress || null
+const prog   = learningProgress
+  ? { total: learningProgress.total, feitos: learningProgress.completed }
+  : getProgressoGlobal()
+const pct    = learningProgress?.coveragePct ?? (prog.total > 0 ? Math.round(prog.feitos / prog.total * 100) : 0)
 const streak = getStreak()
-const tempo  = getTempoTotal()
+const tempo  = learningProgress?.totalTime ?? getTempoTotal()
 const personalizacao = getPersonalizacao()
+const planExecution = learningProgress?.planExecution || {
+  plannedBlocks: getQuantidadeTopicosHoje(),
+  completedBlocks: 0,
+  adherencePct: 0,
+  plannedMinutes: Number(personalizacao.tempoDiaMin || 0),
+  realSeconds: 0,
+  postponedToday: 0,
+  nextSession: null,
+}
 
 // ── Motivação ──
 const motivacoes = {
@@ -237,27 +337,47 @@ const motivKey = Object.keys(motivacoes).reverse().find(k => pct >= parseInt(k))
 document.getElementById('prog-motivacao').textContent =
   `${motivacoes[motivKey]} ${personalizacao.ritmoMensagem}`
 
+const nextRouteStep = planExecution.nextSession
+const routeTitle = prog.feitos === 0
+  ? 'Você começou bem, mas ainda não concluiu nenhum tópico.'
+  : `Sua rota já consolidou ${prog.feitos} tópico${prog.feitos !== 1 ? 's' : ''}.`
+const routeText = prog.feitos === 0 && tempo > 0
+  ? `Você já estudou ${formatTempo(tempo)}. Agora finalize um tópico para transformar esse tempo em cobertura real.`
+  : `Hoje: ${planExecution.completedBlocks}/${planExecution.plannedBlocks} blocos concluídos, ${formatTempo(planExecution.realSeconds || 0)} registrados${nextRouteStep ? `, próximo passo: ${nextRouteStep.titulo}` : ''}.`
+
+document.getElementById('progress-route-card').innerHTML = `
+  <div>
+    <p class="section-kicker">Estado da rota</p>
+    <h2>${routeTitle}</h2>
+    <p>${routeText}</p>
+  </div>
+  <a href="${nextRouteStep ? getTopicUrlFromStudyTopic(nextRouteStep) : 'plano.html'}" class="btn btn-accent">
+    <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
+    Continuar rota
+  </a>
+`
+
 // ── Stats ──
 document.getElementById('stats-row').innerHTML = `
   <div class="stat-card">
-    <p class="stat-label">Tópicos feitos</p>
-    <p class="stat-value accent">${prog.feitos}</p>
-    <p class="stat-sub">de ${prog.total} tópicos</p>
+    <p class="stat-label">Execução hoje</p>
+    <p class="stat-value accent">${planExecution.completedBlocks}/${planExecution.plannedBlocks}</p>
+    <p class="stat-sub">${formatTempo(planExecution.realSeconds || 0)} registrados</p>
   </div>
   <div class="stat-card">
-    <p class="stat-label">Cobertura ENEM</p>
+    <p class="stat-label">Cobertura</p>
     <p class="stat-value">${pct}<span style="font-size:16px;font-weight:400;color:var(--text3)">%</span></p>
-    <p class="stat-sub">do conteúdo total</p>
+    <p class="stat-sub">${prog.feitos} de ${prog.total} tópicos</p>
   </div>
   <div class="stat-card">
-    <p class="stat-label">Streak atual</p>
-    <p class="stat-value amber">${streak.count}</p>
-    <p class="stat-sub">dia${streak.count !== 1 ? 's' : ''} seguido${streak.count !== 1 ? 's' : ''}</p>
+    <p class="stat-label">Domínio médio</p>
+    <p class="stat-value amber">${learningProgress?.masteryAvg ?? 0}<span style="font-size:16px;font-weight:400;color:var(--text3)">%</span></p>
+    <p class="stat-sub">com base nos tópicos iniciados</p>
   </div>
   <div class="stat-card">
-    <p class="stat-label">Tempo total</p>
+    <p class="stat-label">Tempo estudado</p>
     <p class="stat-value blue" style="font-size:20px;padding-top:3px;">${formatTempo(tempo)}</p>
-    <p class="stat-sub">estudando</p>
+    <p class="stat-sub">${streak.count} dia${streak.count !== 1 ? 's' : ''} de sequência</p>
   </div>
 `
 
@@ -416,15 +536,104 @@ if (insights.length === 0 && prog.feitos === 0) {
   `).join('')
 }
 
+if (learningSnapshot) {
+  const next = learningSnapshot.topics
+    .filter(item => item.score > -30)
+    .sort((a, b) => b.score - a.score)[0]
+  const timeItems = Object.values(learningSnapshot.byMateria)
+    .filter(item => item.totalTime > 0)
+    .sort((a, b) => b.totalTime - a.totalTime)
+  const mostTime = timeItems[0]
+  const totalTimeByMateria = timeItems.reduce((sum, item) => sum + item.totalTime, 0)
+  const mostTimePct = mostTime && totalTimeByMateria ? Math.round(mostTime.totalTime / totalTimeByMateria * 100) : 0
+  const uncovered = Object.values(learningSnapshot.byMateria).filter(item => item.started === 0)
+
+  const diagnosis = []
+  if (next) {
+    diagnosis.push({
+      type: 'primary',
+      icon: 'route',
+      label: 'Próximo passo',
+      title: next.topic.titulo,
+      sub: `${next.topic.matNome}: ${next.dominantReason || next.reasons?.[0] || 'equilíbrio da rota'}.`,
+      link: getTopicUrlFromStudyTopic(next.topic),
+    })
+  }
+
+  if (mostTime && mostTimePct >= 50 && timeItems.length > 1) {
+    diagnosis.push({
+      type: 'warn',
+      icon: 'pie-chart',
+      label: 'Atenção',
+      title: `${mostTimePct}% do tempo foi em ${mostTime.nome}`,
+      sub: mostTime.key === getUserProfile().focoMateria
+        ? 'Isso combina com sua prioridade atual, mas acompanhe as matérias sem cobertura.'
+        : 'Pode ser concentração excessiva. Use a rota para não deixar outras áreas zeradas.',
+      link: `materia.html?m=${mostTime.key}`,
+    })
+  }
+
+  if (prog.feitos === 0 && tempo > 0) {
+    diagnosis.push({
+      type: 'risk',
+      icon: 'alert-triangle',
+      label: 'Risco',
+      title: 'Tempo registrado sem tópico concluído',
+      sub: 'Você estudou, mas a cobertura só sobe quando um tópico é finalizado.',
+      link: 'plano.html',
+    })
+  }
+
+  if (uncovered.length) {
+    diagnosis.push({
+      type: 'info',
+      icon: 'radar',
+      label: 'Matérias descobertas',
+      title: `${uncovered.length} matéria${uncovered.length !== 1 ? 's' : ''} ainda sem estudo`,
+      sub: uncovered.slice(0, 3).map(item => item.nome).join(', ') + (uncovered.length > 3 ? ' e mais.' : '.'),
+      link: `materia.html?m=${uncovered[0].key}`,
+    })
+  }
+
+  insightsWrap.innerHTML = `
+    <div class="diagnosis-grid">
+      ${diagnosis.slice(0, 4).map(item => `
+        <a class="diagnosis-card ${item.type}" href="${item.link || 'plano.html'}" style="text-decoration:none;color:var(--text);">
+          <span class="diagnosis-icon"><i data-lucide="${item.icon}" style="width:16px;height:16px;"></i></span>
+          <span>
+            <span class="diagnosis-label">${item.label}</span>
+            <span class="diagnosis-title">${item.title}</span>
+            <span class="diagnosis-sub">${item.sub}</span>
+          </span>
+        </a>
+      `).join('')}
+    </div>
+  `
+}
+
 // ── Por matéria ──
 const matList = document.getElementById('materias-list')
-const todasMats = Object.entries(ENEM).map(([key, mat]) => {
-  const { feitos, total, pct: p } = getProgressoMateria(key)
-  const tempoMat = getTempoMateria(key)
-  return { key, mat, feitos, total, p, tempoMat }
-}).sort((a, b) => a.p - b.p) // ordena das mais fracas para as mais fortes
+const todasMats = learningSnapshot
+  ? Object.values(learningSnapshot.byMateria).map(item => ({
+    key: item.key,
+    mat: { nome: item.nome, icone: item.icone },
+    feitos: item.completed,
+    total: item.total,
+    p: item.coveragePct,
+    tempoMat: item.totalTime,
+    masteryAvg: item.masteryAvg,
+    weak: item.weak,
+    dueReviews: item.dueReviews,
+  }))
+  : Object.entries(ENEM).map(([key, mat]) => {
+    const { feitos, total, pct: p } = getProgressoMateria(key)
+    const tempoMat = getTempoMateria(key)
+    return { key, mat, feitos, total, p, tempoMat, masteryAvg: 0, weak: 0, dueReviews: 0 }
+  })
 
-for (const { key, mat, feitos, total, p, tempoMat } of todasMats) {
+todasMats.sort((a, b) => a.p - b.p) // ordena das mais fracas para as mais fortes
+
+for (const { key, mat, feitos, total, p, tempoMat, masteryAvg, weak, dueReviews } of todasMats) {
   const cor   = p === 0 ? 'var(--border2)' : p < 20 ? 'var(--red)' : p < 50 ? 'var(--amber)' : 'var(--accent)'
   const tag   = p === 0 ? 'início' : p < 20 ? 'fraca' : p < 50 ? 'média' : 'forte'
   const cls   = p === 0 ? 'inicio' : p < 20 ? 'fraca' : p < 50 ? 'media' : 'forte'
@@ -435,6 +644,7 @@ for (const { key, mat, feitos, total, p, tempoMat } of todasMats) {
       <div class="mat-info">
         <div class="mat-nome">${mat.nome}</div>
         <div class="mat-detalhe">${feitos}/${total} tópicos · ${tempoStr}</div>
+        <div class="mat-metrics">Domínio ${masteryAvg || 0}% · ${weak || 0} ponto${weak === 1 ? '' : 's'} fraco${weak === 1 ? '' : 's'} · ${dueReviews || 0} revisão${dueReviews === 1 ? '' : 'ões'}</div>
       </div>
       <div class="mat-bar"><div class="mat-fill" style="width:${p}%;background:${cor};"></div></div>
       <span class="mat-pct">${p}%</span>
@@ -453,7 +663,17 @@ if (temposTodos.length === 0) {
   tempoWrap.innerHTML = `<p style="font-size:13px;color:var(--text3);">Nenhum tempo registrado ainda.</p>`
 } else {
   const maxTempo = temposTodos[0].tempo
-  tempoWrap.innerHTML = temposTodos.map(m => `
+  const totalDistribuido = temposTodos.reduce((sum, m) => sum + m.tempo, 0)
+  const topTempo = temposTodos[0]
+  const topPct = Math.round(topTempo.tempo / totalDistribuido * 100)
+  const focoAtual = getUserProfile().focoMateria
+  const contextoTempo = focoAtual === topTempo.key
+    ? `${topTempo.nome} concentra ${topPct}% do seu tempo. Isso combina com sua prioridade atual.`
+    : `${topTempo.nome} concentra ${topPct}% do seu tempo. Confira se isso não está deixando outras áreas sem cobertura.`
+
+  tempoWrap.innerHTML = `
+    <p style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:12px;">${contextoTempo}</p>
+    ${temposTodos.map(m => `
     <div class="tempo-barra-item">
       <span class="tempo-barra-nome">${m.nome}</span>
       <div class="tempo-barra-wrap">
@@ -461,7 +681,8 @@ if (temposTodos.length === 0) {
       </div>
       <span class="tempo-barra-val">${formatTempo(m.tempo)}</span>
     </div>
-  `).join('')
+  `).join('')}
+  `
 }
 
 // ── Streak detalhado ──

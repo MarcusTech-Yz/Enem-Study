@@ -4,9 +4,9 @@
 const TOPIC_STATE_KEY = 'topic_state_v1'
 
 const TOPIC_PRIORITY_META = {
-  alta: { recorrenciaEnem: 5, dificuldadeBase: 3, tempoEstimadoMin: 30 },
-  media: { recorrenciaEnem: 3, dificuldadeBase: 2, tempoEstimadoMin: 25 },
-  baixa: { recorrenciaEnem: 1, dificuldadeBase: 1, tempoEstimadoMin: 20 },
+  alta: { pesoPedagogico: 5, recorrenciaEnem: null, fonteRecorrencia: 'curadoria_manual', dificuldadeBase: 3, tempoEstimadoMin: 30 },
+  media: { pesoPedagogico: 3, recorrenciaEnem: null, fonteRecorrencia: 'curadoria_manual', dificuldadeBase: 2, tempoEstimadoMin: 25 },
+  baixa: { pesoPedagogico: 1, recorrenciaEnem: null, fonteRecorrencia: 'curadoria_manual', dificuldadeBase: 1, tempoEstimadoMin: 20 },
 }
 
 const TOPIC_FEEDBACK_META = {
@@ -100,6 +100,8 @@ function getAllRecommendationTopics() {
         descricao: topic.descricao,
         prioridade,
         recorrenciaEnem: meta.recorrenciaEnem,
+        pesoPedagogico: meta.pesoPedagogico,
+        fonteRecorrencia: meta.fonteRecorrencia,
         dificuldadeBase: meta.dificuldadeBase,
         tempoEstimadoMin: meta.tempoEstimadoMin,
         tipo: inferTopicTypes(topic, prioridade),
@@ -225,7 +227,7 @@ function getMateriaWeaknessBonus(materiaKey) {
 function calculateTopicScore(topic, profile = getUserProfile(), state = getUserTopicState(topic.id), options = {}) {
   let score = 0
 
-  score += Number(topic.recorrenciaEnem || 3) * 2
+  score += Number(topic.pesoPedagogico || topic.recorrenciaEnem || 3) * 2
   score += Number(state.dificuldadeDoUsuario || 0) * 3
   score += getMateriaWeaknessBonus(topic.materiaKey)
   score += calculateReviewBonus(state)
@@ -325,8 +327,8 @@ function getReasonForTopic(topic) {
     reasons.push(`voce marcou ${formatMateriaFoco(profile.focoMateria)} como prioridade`)
   }
 
-  if (Number(topic.recorrenciaEnem || 0) >= 4) {
-    reasons.push('esse tema e recorrente no ENEM')
+  if (Number(topic.pesoPedagogico || topic.recorrenciaEnem || 0) >= 4) {
+    reasons.push('esse tema tem peso alto na curadoria ENEM')
   }
 
   if (!state.concluido && mastery > 0 && mastery <= 30) {
