@@ -142,9 +142,15 @@ function setTopicoDificuldade(value) {
   store.set(`dific_${topicoMateriaKey}`, all)
 }
 
+function getDefaultTopicTab() {
+  const tab = getFormatoPreferidoAction().tab
+  return ['anotacoes', 'videos', 'questoes'].includes(tab) ? tab : 'anotacoes'
+}
+
 function renderTopicoPage() {
   document.title = `ENEM · ${getTopicoTitulo()}`
   const formatoAcao = getFormatoPreferidoAction()
+  const defaultTab = getDefaultTopicTab()
 
   document.getElementById('main-content').innerHTML = `
     <div class="topico-shell">
@@ -199,13 +205,13 @@ function renderTopicoPage() {
 
       <section class="topico-card">
         <div class="tabs">
-          <button class="tab ativo" data-tab="anotacoes" onclick="switchTopicoTab('anotacoes', this)">
+          <button class="tab ${defaultTab === 'anotacoes' ? 'ativo' : ''}" data-tab="anotacoes" onclick="switchTopicoTab('anotacoes', this)">
             <i data-lucide="notebook-pen"></i> Anotações
           </button>
-          <button class="tab" data-tab="videos" onclick="switchTopicoTab('videos', this)">
+          <button class="tab ${defaultTab === 'videos' ? 'ativo' : ''}" data-tab="videos" onclick="switchTopicoTab('videos', this)">
             <i data-lucide="youtube"></i> Vídeos
           </button>
-          <button class="tab" data-tab="questoes" onclick="switchTopicoTab('questoes', this)">
+          <button class="tab ${defaultTab === 'questoes' ? 'ativo' : ''}" data-tab="questoes" onclick="switchTopicoTab('questoes', this)">
             <i data-lucide="help-circle"></i> Questões
           </button>
           <button class="tab" data-tab="obsidian" onclick="switchTopicoTab('obsidian', this)">
@@ -213,7 +219,7 @@ function renderTopicoPage() {
           </button>
         </div>
 
-        <div class="tab-panel ativo" id="tab-anotacoes">
+        <div class="tab-panel ${defaultTab === 'anotacoes' ? 'ativo' : ''}" id="tab-anotacoes">
           <div class="note-head">
             <div>
               <p class="note-kicker">Caderno do tópico</p>
@@ -280,7 +286,7 @@ function renderTopicoPage() {
           </div>
         </div>
 
-        <div class="tab-panel" id="tab-videos">
+        <div class="tab-panel ${defaultTab === 'videos' ? 'ativo' : ''}" id="tab-videos">
           <div class="video-add-row">
             <input class="video-input" type="text" id="video-url" placeholder="Cole um link do YouTube..." />
             <button class="btn btn-accent btn-sm" onclick="addTopicoVideo()">Salvar vídeo</button>
@@ -288,7 +294,7 @@ function renderTopicoPage() {
           <div class="videos-grid" id="videos-grid"></div>
         </div>
 
-        <div class="tab-panel" id="tab-questoes">
+        <div class="tab-panel ${defaultTab === 'questoes' ? 'ativo' : ''}" id="tab-questoes">
           <div id="practice-area"></div>
           <details class="manual-questions">
             <summary>Questões manuais deste tópico</summary>

@@ -159,23 +159,11 @@ function initAchievementSearch() {
   input.addEventListener('input', applyAchievementSearch)
 }
 
-function initSimulateButton() {
-  const button = document.getElementById('simulate-btn')
-  if (!button) return
-  button.addEventListener('click', () => {
-    showConquistaToast({
-      nome: 'Conquista de teste',
-      descricao: 'Esse botão serve para validar visual e som do toast.',
-      icon: 'sparkles',
-    })
-  })
-}
 
 function initConquistasPage() {
   renderSteamAchievements()
   initAchievementTabs()
   initAchievementSearch()
-  initSimulateButton()
   setNavActive()
   lucide.createIcons()
 }

@@ -9,6 +9,7 @@ const DEFAULT_USER_PROFILE = {
   nome: '',
   enemAno: 2026,
   tempoDiaMin: 60,
+  periodoEstudo: 'noite',
   focoMateria: 'equilibrado',
   ritmoAtual: 'irregular',
   formatoPreferido: 'misturado',
@@ -51,6 +52,10 @@ function finishOnboarding(profile) {
     store.set('tempo_diario', finalProfile.tempoDiaMin)
   }
 
+  if (finalProfile.periodoEstudo) {
+    store.set('periodo_estudo', finalProfile.periodoEstudo)
+  }
+
   if (finalProfile.enemAno) {
     store.set('enem_ano', finalProfile.enemAno)
   }
@@ -83,21 +88,35 @@ function getGreetingName() {
 }
 
 function getQuantidadeTopicosHoje() {
-  const tempo = Number(getUserProfile().tempoDiaMin || 60)
+  const profile = getUserProfile()
+  const tempo = Number(profile.tempoDiaMin || 60)
+  let quantidade = 2
 
-  if (tempo <= 30) return 1
-  if (tempo <= 60) return 2
-  if (tempo <= 120) return 4
-  return 5
+  if (tempo <= 30) quantidade = 1
+  else if (tempo <= 60) quantidade = 2
+  else if (tempo <= 120) quantidade = 4
+  else quantidade = 5
+
+  if (profile.ritmoAtual === 'recomecando') return Math.min(quantidade, 2)
+  if (profile.ritmoAtual === 'irregular') return Math.min(quantidade, 3)
+
+  return quantidade
 }
 
 function getMetaSessaoPadrao() {
-  const tempo = Number(getUserProfile().tempoDiaMin || 60)
+  const profile = getUserProfile()
+  const tempo = Number(profile.tempoDiaMin || 60)
+  let meta = 25
 
-  if (tempo <= 30) return 10
-  if (tempo <= 60) return 25
-  if (tempo <= 120) return 25
-  return 45
+  if (tempo <= 30) meta = 10
+  else if (tempo <= 60) meta = 25
+  else if (tempo <= 120) meta = 25
+  else meta = 45
+
+  if (profile.ritmoAtual === 'recomecando') return Math.min(meta, 15)
+  if (profile.ritmoAtual === 'irregular') return Math.min(meta, 25)
+
+  return meta
 }
 
 function getEnemTargetDate() {
@@ -125,6 +144,41 @@ function getRitmoEnemLabel() {
   if (dias <= 120) return 'reta final'
   if (dias <= 240) return 'ritmo de consolidação'
   return 'construção de base'
+}
+
+function getUrgenciaEnem() {
+  const dias = getDiasAteEnem()
+
+  if (dias <= 90) {
+    return {
+      nivel: 'reta-final',
+      label: 'Reta final',
+      revisaoPeso: 2,
+      teoriaPeso: 0.7,
+      questoesPeso: 1.7,
+      mensagem: 'Agora vale mais revisar, resolver questões e fechar lacunas.'
+    }
+  }
+
+  if (dias <= 240) {
+    return {
+      nivel: 'consolidacao',
+      label: 'Consolidação',
+      revisaoPeso: 1.2,
+      teoriaPeso: 1,
+      questoesPeso: 1.2,
+      mensagem: 'Você ainda tem tempo para equilibrar teoria e prática.'
+    }
+  }
+
+  return {
+    nivel: 'base',
+    label: 'Construção de base',
+    revisaoPeso: 0.8,
+    teoriaPeso: 1.4,
+    questoesPeso: 0.9,
+    mensagem: 'O foco agora é construir base sem atropelar o processo.'
+  }
 }
 
 function formatTempoOnboarding(min) {
@@ -170,6 +224,42 @@ function formatFormato(value) {
   }
 
   return map[value] || value
+}
+
+function formatPeriodoEstudo(value) {
+  return getStudyWindowConfig(value).label
+}
+
+function getStudyWindowConfig(periodo = getUserProfile().periodoEstudo) {
+  const map = {
+    manha: {
+      label: 'Manhã',
+      horarios: ['08:00', '09:00', '10:00'],
+      mensagem: 'Seu plano vai tentar encaixar os blocos pela manhã.'
+    },
+    tarde: {
+      label: 'Tarde',
+      horarios: ['14:00', '15:00', '16:00'],
+      mensagem: 'Seu plano vai concentrar os blocos durante a tarde.'
+    },
+    noite: {
+      label: 'Noite',
+      horarios: ['19:00', '20:00', '21:00'],
+      mensagem: 'Seu plano vai respeitar uma rotina de estudo noturna.'
+    },
+    madrugada: {
+      label: 'Madrugada',
+      horarios: ['22:00', '23:00'],
+      mensagem: 'Seu plano vai sugerir blocos mais curtos para evitar desgaste.'
+    },
+    variavel: {
+      label: 'Variável',
+      horarios: ['14:00', '19:00'],
+      mensagem: 'Seu plano será flexível e ajustável.'
+    }
+  }
+
+  return map[periodo] || map.variavel
 }
 
 function getFocusMateriaMessage() {
@@ -240,9 +330,41 @@ function getFormatoPreferidoAction() {
   return actions[formato] || actions.misturado
 }
 
+function getRitmoBehavior() {
+  const ritmo = getUserProfile().ritmoAtual
+
+  const map = {
+    recomecando: {
+      minParaStreak: 5,
+      tom: 'leve',
+      mensagem: 'Hoje, 5 minutos já contam. O foco é voltar.'
+    },
+    irregular: {
+      minParaStreak: 10,
+      tom: 'simples',
+      mensagem: 'Hoje o objetivo é só não quebrar o ciclo.'
+    },
+    razoavel: {
+      minParaStreak: 20,
+      tom: 'equilibrado',
+      mensagem: 'Dá para misturar teoria e revisão.'
+    },
+    constante: {
+      minParaStreak: 25,
+      tom: 'forte',
+      mensagem: 'Seu ritmo permite uma sessao mais profunda.'
+    }
+  }
+
+  return map[ritmo] || map.irregular
+}
+
 function getPersonalizacao() {
   const profile = getUserProfile()
   const ritmoConfig = getRitmoConfig()
+  const ritmoBehavior = getRitmoBehavior()
+  const studyWindow = getStudyWindowConfig(profile.periodoEstudo)
+  const urgenciaEnem = getUrgenciaEnem()
 
   return {
     nome: profile.nome?.trim() || 'Estudante',
@@ -253,10 +375,64 @@ function getPersonalizacao() {
     ritmoLabel: ritmoConfig.label,
     ritmoMensagem: ritmoConfig.dailyBonusText,
     ritmoIntensidade: ritmoConfig.intensity,
+    ritmoMinParaStreak: ritmoBehavior.minParaStreak,
+    ritmoTom: ritmoBehavior.tom,
+    ritmoAcaoMensagem: ritmoBehavior.mensagem,
     focoMensagem: getFocusMateriaMessage(),
     formatoAcao: getFormatoPreferidoAction(),
-    enemRitmoLabel: getRitmoEnemLabel()
+    enemRitmoLabel: getRitmoEnemLabel(),
+    urgenciaEnem,
+    periodoEstudo: profile.periodoEstudo || 'noite',
+    periodoLabel: studyWindow.label,
+    periodoMensagem: studyWindow.mensagem,
+    horariosSugeridos: studyWindow.horarios
   }
+}
+
+function getTodayPersonalizedReason() {
+  const p = getPersonalizacao()
+  const blocos = p.qtdTopicosHoje === 1 ? '1 bloco' : `${p.qtdTopicosHoje} blocos`
+
+  return `${p.nome}, montei sua rota para ${blocos} de ~${p.metaSessaoPadrao} min. ${p.urgenciaEnem.mensagem} ${p.focoMensagem} ${p.ritmoAcaoMensagem} ${p.periodoMensagem}`
+}
+
+function getMateriaPriorityWeight(materiaKey) {
+  const profile = getUserProfile()
+
+  if (!profile.focoMateria || profile.focoMateria === 'equilibrado') return 1
+  return materiaKey === profile.focoMateria ? 2.2 : 1
+}
+
+function scoreTopico(candidato) {
+  let score = 10
+
+  score *= getMateriaPriorityWeight(candidato.materiaKey)
+
+  if (candidato.prioridade === 'alta') score += 6
+  if (candidato.prioridade === 'media') score += 3
+  if (isTopicoFeito(candidato.materiaKey, candidato.tKey)) score -= 999
+
+  return score
+}
+
+function getReasonForTopic(topic) {
+  const profile = getUserProfile()
+  const ritmo = getRitmoConfig()
+  const urgency = getUrgenciaEnem()
+
+  if (profile.focoMateria && profile.focoMateria !== 'equilibrado' && topic.materiaKey === profile.focoMateria) {
+    return `Você marcou ${formatMateriaFoco(profile.focoMateria)} como prioridade.`
+  }
+
+  if (urgency.nivel === 'reta-final') {
+    return 'Como o ENEM está perto, priorizei um tópico útil para revisar e praticar.'
+  }
+
+  if (ritmo.intensity === 'leve') {
+    return 'Escolhi um tópico direto para manter seu ritmo sem pesar.'
+  }
+
+  return 'Esse tópico mantém sua rota equilibrada entre as áreas.'
 }
 
 function seedInitialGradeFromProfile(profile = getUserProfile()) {
@@ -268,7 +444,7 @@ function seedInitialGradeFromProfile(profile = getUserProfile()) {
   const rotacao = foco && foco !== 'equilibrado' && materias.includes(foco)
     ? [foco, ...materias.filter(k => k !== foco)]
     : materias
-  const horarios = ['08:00', '09:00', '10:00', '14:00', '15:00']
+  const horarios = getStudyWindowConfig(profile.periodoEstudo).horarios
   const duracao = String(profile.tempoDiaMin || 60)
   let mIdx = 0
   let changed = false

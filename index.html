@@ -35,7 +35,18 @@
       font-size: 22px; font-weight: 600;
       letter-spacing: -.03em; line-height: 1.2; margin-bottom: 4px;
     }
-    .ta-meta { font-size: 12px; opacity: .6; font-family: var(--mono); margin-bottom: 1.25rem; }
+    .ta-meta { font-size: 12px; opacity: .6; font-family: var(--mono); margin-bottom: .85rem; }
+    .ta-reason {
+      font-size: 12px;
+      line-height: 1.55;
+      color: rgba(15,15,15,.68);
+      max-width: 620px;
+      margin: 0 0 1.25rem;
+    }
+    .ta-reason strong {
+      color: #0F0F0F;
+      font-weight: 700;
+    }
     .ta-acoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .ta-btn-comecar {
       display: inline-flex; align-items: center; gap: 7px;
@@ -344,6 +355,23 @@ const ONBOARDING_STEPS = [
     ]
   },
   {
+    key: 'periodoEstudo',
+    type: 'options',
+    kicker: 'Passo 4 de 7',
+    title: 'Em qual período você costuma estudar?',
+    subtitle: 'Isso ajuda o plano a sugerir horários mais realistas.',
+    mascot: 'Horário bom é o horário que cabe na sua vida.',
+    mascotImage: 'Assets/mascote/mascote-08-enem.png',
+    mascotClass: 'mascot-window',
+    options: [
+      { label: 'Manhã', value: 'manha', insight: 'O plano vai sugerir blocos mais cedo.' },
+      { label: 'Tarde', value: 'tarde', insight: 'O plano vai concentrar estudos à tarde.' },
+      { label: 'Noite', value: 'noite', insight: 'O plano vai encaixar sessões no período noturno.' },
+      { label: 'Madrugada', value: 'madrugada', insight: 'O plano vai sugerir blocos mais curtos para evitar desgaste.' },
+      { label: 'Varia muito', value: 'variavel', insight: 'O plano vai ser mais flexível.' },
+    ]
+  },
+  {
     key: 'focoMateria',
     type: 'options',
     kicker: 'Passo 4 de 6',
@@ -412,6 +440,7 @@ let onboardingDraft = {
   ...getUserProfile(),
   enemAno: getUserProfile().enemAno || 2026,
   tempoDiaMin: getUserProfile().tempoDiaMin || 60,
+  periodoEstudo: getUserProfile().periodoEstudo || 'noite',
   focoMateria: getUserProfile().focoMateria || 'equilibrado',
   ritmoAtual: getUserProfile().ritmoAtual || 'irregular',
   formatoPreferido: getUserProfile().formatoPreferido || 'misturado',
@@ -624,6 +653,7 @@ function renderOnboardingAnswer(step) {
           <li>Nome no app: <strong>${escapeHtml(onboardingDraft.nome || 'Estudante')}</strong></li>
           <li>ENEM: <strong>${escapeHtml(onboardingDraft.enemAno)}</strong></li>
           <li>Tempo por dia: <strong>${escapeHtml(formatTempoOnboarding(onboardingDraft.tempoDiaMin))}</strong></li>
+          <li>Período de estudo: <strong>${escapeHtml(formatPeriodoEstudo(onboardingDraft.periodoEstudo))}</strong></li>
           <li>Foco inicial: <strong>${escapeHtml(formatMateriaFoco(onboardingDraft.focoMateria))}</strong></li>
           <li>Ritmo atual: <strong>${escapeHtml(formatRitmo(onboardingDraft.ritmoAtual))}</strong></li>
           <li>Formato preferido: <strong>${escapeHtml(formatFormato(onboardingDraft.formatoPreferido))}</strong></li>
@@ -695,7 +725,7 @@ function getSugestaoTopicos(n) {
         for (const h of conteudo.habilidades) {
           const tKey = `${conteudo.id}__${h.id}`
           if (!feitos.includes(tKey)) {
-            result.push({ materiaKey: matKey, matNome: mat.nome, matIcone: mat.icone, tKey, texto: h.topico })
+            result.push({ materiaKey: matKey, matNome: mat.nome, matIcone: mat.icone, tKey, texto: h.topico, prioridade: h.prioridade })
             break
           }
         }
@@ -739,7 +769,9 @@ function getSugestaoTopicos(n) {
   }
 
   // Preenche até n tópicos
-  return candidatos.slice(0, n)
+  return candidatos
+    .sort((a, b) => scoreTopico(b) - scoreTopico(a))
+    .slice(0, n)
 }
 
 /* ─────────────────────────────────────────
@@ -808,7 +840,7 @@ function renderEstudo() {
   const contextoEl = document.getElementById('home-context')
 
   if (contextoEl) {
-    contextoEl.textContent = `${personalizacao.focoMensagem} ${personalizacao.ritmoMensagem}`
+    contextoEl.textContent = getTodayPersonalizedReason()
   }
 
   // Barra e textos de progresso
@@ -860,6 +892,7 @@ function renderEstudo() {
         <p class="ta-label">Tópico atual</p>
         <p class="ta-nome">${atual.texto}</p>
         <p class="ta-meta">${atual.matNome} · ~${metaSessao} min</p>
+        <p class="ta-reason"><strong>Por que este tópico?</strong> ${escapeHtml(getReasonForTopic(atual))}</p>
         <div class="ta-acoes">
           <a class="ta-btn-comecar" href="${focoUrl}">
             <i data-lucide="play" style="width:14px;height:14px;"></i>
