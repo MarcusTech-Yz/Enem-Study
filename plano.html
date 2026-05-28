@@ -159,6 +159,13 @@
       border-radius: var(--radius-sm);
       padding: 10px;
     }
+    .week-day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
     .week-day.today { border-color: var(--accent); }
     .week-day-name {
       color: var(--text3);
@@ -166,11 +173,11 @@
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: .09em;
-      margin-bottom: 8px;
     }
     .week-day.today .week-day-name { color: var(--accent); }
     .week-session {
-      display: block;
+      display: grid;
+      gap: 8px;
       color: var(--text);
       text-decoration: none;
       border: 1px solid var(--border);
@@ -178,6 +185,15 @@
       padding: 8px;
       margin-bottom: 6px;
       background: rgba(255,255,255,.018);
+    }
+    .week-session.manual {
+      border-color: rgba(200,241,53,.28);
+      background: rgba(200,241,53,.045);
+    }
+    .week-session a {
+      color: var(--text);
+      text-decoration: none;
+      min-width: 0;
     }
     .week-session strong {
       display: block;
@@ -191,6 +207,55 @@
       font-family: var(--mono);
       font-size: 9px;
     }
+    .week-session-actions,
+    .week-panel-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .mini-action-btn,
+    .mini-add-btn,
+    .week-add-topic {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.025);
+      color: var(--text2);
+      border-radius: 999px;
+      font-family: var(--font);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .mini-action-btn { padding: 4px 8px; }
+    .mini-add-btn {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      color: var(--accent);
+      border-color: rgba(200,241,53,.26);
+    }
+    .week-add-topic {
+      width: 100%;
+      margin-top: 4px;
+      padding: 7px 9px;
+      border-style: dashed;
+    }
+    .mini-action-btn:hover,
+    .mini-add-btn:hover,
+    .week-add-topic:hover { border-color: rgba(200,241,53,.38); color: var(--text); }
+    .plan-warning {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 11px 12px;
+      border: 1px solid rgba(245,166,35,.35);
+      border-radius: var(--radius-sm);
+      background: rgba(245,166,35,.055);
+      color: var(--text2);
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+    .plan-warning.active { display: flex; }
     .urgency-chip {
       display: inline-flex;
       align-items: center;
@@ -220,6 +285,11 @@
     .urgency-chip.baixa {
       color: var(--text3);
       background: var(--bg3);
+    }
+    .urgency-chip.manual {
+      color: var(--accent);
+      background: rgba(200,241,53,.08);
+      border-color: rgba(200,241,53,.25);
     }
     .priority-copy {
       color: var(--text2);
@@ -257,10 +327,99 @@
       line-height: 1.45;
       margin-top: 6px;
     }
+    .priority-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
     .empty-plan {
       color: var(--text3);
       font-size: 13px;
       padding: 1rem 0;
+    }
+    .plan-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(8px);
+    }
+    .plan-modal.active { display: flex; }
+    .plan-modal-card {
+      width: min(680px, 100%);
+      max-height: min(720px, 92vh);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      box-shadow: 0 18px 70px rgba(0,0,0,.35);
+    }
+    .plan-modal-head,
+    .plan-modal-controls {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .plan-modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .plan-modal-head h2 { font-size: 18px; letter-spacing: -.02em; }
+    .plan-modal-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 120px 120px;
+      gap: 10px;
+    }
+    .plan-topic-search {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 10px 11px;
+      outline: none;
+      font-family: var(--font);
+      font-size: 13px;
+    }
+    .plan-topic-results {
+      display: grid;
+      gap: 8px;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    .plan-topic-result {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg3);
+      color: var(--text);
+      padding: 10px;
+      cursor: pointer;
+    }
+    .plan-topic-result:hover { border-color: rgba(200,241,53,.35); }
+    .plan-topic-result strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .plan-topic-result span {
+      display: block;
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 10px;
     }
     @media (max-width: 1100px) {
       .plan-config-card,
@@ -268,11 +427,114 @@
       .week-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .plan-focus-grid { grid-template-columns: 1fr; }
     }
+    @media (max-width: 768px) {
+      .plan-page {
+        gap: 1rem;
+      }
+
+      .plan-config-card {
+        grid-template-columns: 1fr;
+        padding: .9rem;
+      }
+
+      .plan-config-card .btn {
+        width: 100%;
+      }
+
+      .plan-radar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .plan-radar-card {
+        padding: .9rem;
+      }
+
+      .plan-radar-card strong {
+        font-size: 25px;
+      }
+
+      .today-plan,
+      .week-panel,
+      .priority-queue {
+        padding: 1rem;
+      }
+
+      .today-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .today-header .btn {
+        width: 100%;
+      }
+
+      .today-session {
+        grid-template-columns: 32px minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .session-index {
+        width: 30px;
+        height: 30px;
+      }
+
+      .session-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .session-actions .btn,
+      .session-actions button {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .week-board {
+        grid-template-columns: 1fr;
+      }
+
+      .week-day {
+        min-height: 0;
+      }
+
+      .week-session-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .week-session-actions .mini-action-btn {
+        text-align: center;
+      }
+
+      .week-panel-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+      }
+
+      .priority-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .plan-modal {
+        align-items: flex-end;
+        padding: 0;
+      }
+
+      .plan-modal-card {
+        width: 100%;
+        max-height: calc(92vh - env(safe-area-inset-bottom));
+        border-radius: 18px 18px 0 0;
+      }
+    }
     @media (max-width: 700px) {
       .plan-config-card,
       .plan-radar,
       .week-board { grid-template-columns: 1fr; }
       .today-header { flex-direction: column; }
+      .section-title { align-items: flex-start; flex-direction: column; }
+      .plan-modal-controls { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -356,11 +618,50 @@
           <p class="section-kicker">Rota da semana</p>
           <h2>Distribuição dos próximos dias</h2>
         </div>
-        <button class="btn btn-sm" onclick="clearStoredPlan()">Limpar plano salvo</button>
+        <div class="week-panel-actions">
+          <button class="btn btn-sm" onclick="recalculatePlan()">Recalcular rota</button>
+          <button class="btn btn-sm" onclick="fillEmptyPlanSlots()">Preencher vazios</button>
+          <button class="btn btn-sm" onclick="focusPlanEditor()">Editar cronograma</button>
+          <button class="btn btn-sm" onclick="clearStoredPlan()">Limpar automáticos</button>
+          <button class="btn btn-sm" onclick="clearFullPlan()">Limpar tudo</button>
+        </div>
       </div>
+      <div class="plan-warning" id="plan-warning"></div>
       <div class="week-board" id="week-board"></div>
     </section>
   </main>
+</div>
+
+<div class="plan-modal" id="plan-topic-modal" aria-hidden="true">
+  <div class="plan-modal-card" role="dialog" aria-modal="true" aria-labelledby="plan-topic-modal-title">
+    <div class="plan-modal-head">
+      <div>
+        <p class="section-kicker" id="plan-topic-modal-kicker">Adicionar tópico</p>
+        <h2 id="plan-topic-modal-title">Adicionar tópico ao plano</h2>
+      </div>
+      <button class="btn btn-sm" onclick="closePlanTopicPicker()">Fechar</button>
+    </div>
+    <div class="plan-modal-controls">
+      <input class="plan-topic-search" id="plan-topic-search" type="search" placeholder="Buscar conteúdo, habilidade ou palavra-chave..." autocomplete="off" />
+      <select class="config-select" id="manual-session-minutes">
+        <option value="30">30 min</option>
+        <option value="45">45 min</option>
+        <option value="60">60 min</option>
+      </select>
+      <select class="config-select" id="manual-session-time">
+        <option value="08:00">08:00</option>
+        <option value="09:00">09:00</option>
+        <option value="10:00">10:00</option>
+        <option value="14:00">14:00</option>
+        <option value="15:00">15:00</option>
+        <option value="16:00">16:00</option>
+        <option value="19:00">19:00</option>
+        <option value="20:00">20:00</option>
+        <option value="21:00">21:00</option>
+      </select>
+    </div>
+    <div class="plan-topic-results" id="plan-topic-results"></div>
+  </div>
 </div>
 
 <script src="data/topicos.js"></script>
@@ -381,6 +682,8 @@ const PLAN_DAY_LABELS = {
 }
 
 let currentPlan = null
+let currentAutoPlan = null
+let topicPickerState = { dayKey: '1', sessionId: null, mode: 'add' }
 const PLAN_VERSION = '1.0.0'
 const SMART_PLAN_KEY = 'smart_weekly_plan_v3'
 
@@ -428,6 +731,15 @@ function recalculatePlan() {
   renderPlanPage(true)
 }
 
+function fillEmptyPlanSlots() {
+  clearAllPlanDayClears()
+  renderPlanPage(true)
+}
+
+function focusPlanEditor() {
+  document.getElementById('week-board')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 function getPlanSignature(config) {
   const profile = getUserProfile()
 
@@ -450,21 +762,23 @@ function renderPlanPage(forceNew = false) {
   const signature = getPlanSignature(config)
   const savedPayload = store.get(SMART_PLAN_KEY)
 
-  if (!forceNew && savedPayload?.signature === signature && savedPayload?.plan) {
-    currentPlan = savedPayload.plan
+  if (!forceNew && savedPayload?.signature === signature && (savedPayload?.autoPlan || savedPayload?.plan)) {
+    currentAutoPlan = savedPayload.autoPlan || savedPayload.plan
   } else {
-    currentPlan = generateSmartWeeklyPlan(config)
+    currentAutoPlan = generateSmartWeeklyPlan(config)
     store.set(SMART_PLAN_KEY, {
       signature,
-      plan: currentPlan,
+      autoPlan: currentAutoPlan,
       generatedAt: new Date().toISOString(),
     })
   }
 
+  currentPlan = composePlanWithManual(currentAutoPlan, config)
   const snapshot = typeof getLearningSnapshot === 'function' ? getLearningSnapshot(currentPlan) : null
   renderPlanRadar(config, snapshot)
   renderTodayPlan(currentPlan)
   renderWeekBoard(currentPlan)
+  renderPlanWarning(currentPlan)
   renderPriorityQueue(config, snapshot)
   if (typeof lucide !== 'undefined') lucide.createIcons()
 }
@@ -532,6 +846,7 @@ function renderTodayPlan(plan) {
 
 function renderTodaySession(session, index) {
   const urgency = session.urgencyLevel || getUrgencyLevel(session.score)
+  const isManual = session.source === 'manual'
   return `
     <article class="today-session">
       <div class="session-index">${index + 1}</div>
@@ -543,7 +858,7 @@ function renderTodaySession(session, index) {
           <span class="urgency-chip ${urgency}">${formatUrgencyLabel(urgency)}</span>
         </div>
         <h3>${escapeHtml(session.titulo)}</h3>
-        <p><strong>Por que agora?</strong> ${escapeHtml(session.reason)}</p>
+        <p><strong>Por que agora?</strong> ${escapeHtml(isManual ? 'Voce colocou este topico manualmente na sua rota. O sistema vai considerar isso no seu progresso.' : session.reason)}</p>
         <div class="session-actions">
           <a class="btn btn-sm btn-accent" href="${getTopicUrlFromStudyTopic(session)}">Abrir tópico</a>
           <button class="btn btn-sm" onclick="postponeSession('${escapeHtml(session.topicId)}')">Adiar</button>
@@ -561,6 +876,7 @@ function getTodayPlanSummary(sessions) {
 
 function formatUrgencyLabel(scoreOrLevel) {
   const level = typeof scoreOrLevel === 'string' ? scoreOrLevel : getUrgencyLevel(scoreOrLevel)
+  if (level === 'manual') return 'Escolhido por voce'
   if (level === 'critica') return 'Crítica'
   if (level === 'alta') return 'Alta'
   if (level === 'media') return 'Média'
@@ -568,7 +884,7 @@ function formatUrgencyLabel(scoreOrLevel) {
   return 'Baixa'
 }
 
-function renderWeekBoard(plan) {
+function renderWeekBoardLegacy(plan) {
   const todayKey = getTodayStudyKey()
   document.getElementById('week-board').innerHTML = Object.keys(PLAN_DAY_LABELS).map(dayKey => {
     const sessions = plan[dayKey] || []
@@ -591,7 +907,7 @@ function getTopicUrlFromStudyTopic(sessionOrTopic) {
   return `topico.html?m=${encodeURIComponent(sessionOrTopic.materiaKey)}&id=${encodeURIComponent(sessionOrTopic.tKey)}`
 }
 
-function renderPriorityQueue(config, snapshot = null) {
+function renderPriorityQueueLegacy(config, snapshot = null) {
   const recommendations = snapshot
     ? snapshot.topics
       .filter(item => item.score > -30)
@@ -615,6 +931,91 @@ function renderPriorityQueue(config, snapshot = null) {
   `
 }
 
+function renderWeekBoard(plan) {
+  const todayKey = getTodayStudyKey()
+  document.getElementById('week-board').innerHTML = Object.keys(PLAN_DAY_LABELS).map(dayKey => {
+    const sessions = plan[dayKey] || []
+    return `
+      <div class="week-day ${dayKey === todayKey ? 'today' : ''}">
+        <div class="week-day-header">
+          <p class="week-day-name">${PLAN_DAY_LABELS[dayKey]}${dayKey === todayKey ? ' · hoje' : ''}</p>
+          <button class="mini-add-btn" onclick="clearPlanDayFromButton('${dayKey}')" title="Limpar dia">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+        ${sessions.length ? sessions.map(session => renderWeekSession(session, dayKey)).join('') : '<p class="empty-plan">Livre</p>'}
+        <button class="week-add-topic" onclick="openPlanTopicPicker('${dayKey}')">+ Adicionar topico</button>
+      </div>
+    `
+  }).join('')
+}
+
+function renderWeekSession(session, dayKey) {
+  const isManual = session.source === 'manual'
+  const meta = isManual ? 'Escolhido por voce · fixado' : formatUrgencyLabel(session.urgencyLevel || session.score)
+
+  return `
+    <div class="week-session ${isManual ? 'manual' : 'auto'}">
+      <a href="${getTopicUrlFromStudyTopic(session)}">
+        <strong>${escapeHtml(session.titulo)}</strong>
+        <span>${escapeHtml(session.matNome)} · ${session.minutes} min · ${meta}</span>
+      </a>
+      <div class="week-session-actions">
+        <button class="mini-action-btn" onclick="openPlanTopicPicker('${dayKey}', '${escapeHtml(session.id)}')">Trocar</button>
+        ${isManual ? `<button class="mini-action-btn" onclick="deleteManualSession('${dayKey}', '${escapeHtml(session.id)}')">Remover</button>` : ''}
+        <a class="mini-action-btn" href="${getTopicUrlFromStudyTopic(session)}" style="text-decoration:none;">Abrir</a>
+      </div>
+    </div>
+  `
+}
+
+function renderPlanWarning(plan) {
+  const warning = typeof getPlanCoverageWarning === 'function' ? getPlanCoverageWarning(plan) : null
+  const el = document.getElementById('plan-warning')
+  if (!el) return
+
+  if (!warning) {
+    el.classList.remove('active')
+    el.innerHTML = ''
+    return
+  }
+
+  el.classList.add('active')
+  el.innerHTML = `
+    <i data-lucide="triangle-alert" style="width:16px;height:16px;color:var(--amber);flex-shrink:0;"></i>
+    <span>${escapeHtml(warning.message)}</span>
+  `
+}
+
+function renderPriorityQueue(config, snapshot = null) {
+  const recommendations = snapshot
+    ? snapshot.topics
+      .filter(item => item.score > -30)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+    : getStudyRecommendations(8, config)
+
+  document.getElementById('priority-queue').innerHTML = `
+    <p class="section-kicker">Fila inteligente</p>
+    <h2 style="font-size:17px;margin-top:4px;">Proximos da rota</h2>
+    <p class="priority-copy">Conteudos importantes pelo seu foco, revisoes, erros, dominio e cobertura. A fila explica o motivo dominante.</p>
+    <div class="priority-list">
+      ${recommendations.map(item => `
+        <div class="priority-item">
+          <a href="${getTopicUrlFromStudyTopic(item.topic)}" style="text-decoration:none;color:var(--text);">
+            <strong>${escapeHtml(item.topic.titulo)}</strong>
+            <span>${escapeHtml(item.topic.matNome)} · ${formatUrgencyLabel(item.level || item.score)}</span>
+            <small>Motivo: ${escapeHtml(item.dominantReason || item.reasons?.[0] || 'equilibrio da rota')}</small>
+          </a>
+          <div class="priority-actions">
+            <button class="mini-action-btn" onclick="addRecommendedTopicToToday('${escapeHtml(item.topic.id)}')">Adicionar</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `
+}
+
 function postponeSession(topicId) {
   const state = getUserTopicState(topicId)
   saveUserTopicState(topicId, {
@@ -627,12 +1028,128 @@ function postponeSession(topicId) {
 }
 
 function clearStoredPlan() {
-  if (!confirm('Limpar plano semanal salvo e recalcular?')) return
+  if (!confirm('Limpar blocos automaticos e recalcular? Os blocos manuais continuam.')) return
   localStorage.removeItem('smart_weekly_plan')
   localStorage.removeItem('smart_weekly_plan_v2')
   localStorage.removeItem(SMART_PLAN_KEY)
   renderPlanPage(true)
 }
+
+function clearFullPlan() {
+  if (!confirm('Limpar blocos manuais e automaticos?')) return
+  localStorage.removeItem('smart_weekly_plan')
+  localStorage.removeItem('smart_weekly_plan_v2')
+  localStorage.removeItem(SMART_PLAN_KEY)
+  localStorage.removeItem(MANUAL_PLAN_KEY)
+  localStorage.removeItem(CLEARED_PLAN_DAYS_KEY)
+  renderPlanPage(true)
+}
+
+function clearPlanDayFromButton(dayKey) {
+  const label = PLAN_DAY_LABELS[dayKey] || 'dia'
+  if (!confirm(`Apagar todos os topicos previstos para ${label}?`)) return
+  clearPlanDay(dayKey)
+  renderPlanPage(false)
+}
+
+function getSessionById(dayKey, sessionId) {
+  return (currentPlan?.[dayKey] || []).find(session => session.id === sessionId) || null
+}
+
+function openPlanTopicPicker(dayKey, sessionId = null) {
+  const session = sessionId ? getSessionById(dayKey, sessionId) : null
+  topicPickerState = {
+    dayKey,
+    sessionId,
+    mode: sessionId ? 'replace' : 'add',
+    replaceAutoSessionId: session && session.source !== 'manual' ? session.id : null,
+  }
+
+  document.getElementById('plan-topic-modal-kicker').textContent = PLAN_DAY_LABELS[dayKey] || 'Plano'
+  document.getElementById('plan-topic-modal-title').textContent = sessionId ? 'Trocar tópico do plano' : 'Adicionar tópico ao plano'
+  document.getElementById('manual-session-minutes').value = String(session?.minutes || getPlanConfigFromUI().sessionMinutes || 60)
+  document.getElementById('manual-session-time').value = session?.inicio || getStudyWindowConfig(getPlanConfigFromUI().period).horarios[0] || '14:00'
+
+  const modal = document.getElementById('plan-topic-modal')
+  const input = document.getElementById('plan-topic-search')
+  modal.classList.add('active')
+  modal.setAttribute('aria-hidden', 'false')
+  input.value = ''
+  renderPlanTopicResults(getStudyRecommendations(8, getPlanConfigFromUI()).map(item => ({ topic: item.topic })))
+  setTimeout(() => input.focus(), 30)
+}
+
+function closePlanTopicPicker() {
+  const modal = document.getElementById('plan-topic-modal')
+  modal.classList.remove('active')
+  modal.setAttribute('aria-hidden', 'true')
+}
+
+function renderPlanTopicResults(results) {
+  const wrap = document.getElementById('plan-topic-results')
+  if (!results.length) {
+    wrap.innerHTML = '<p class="empty-plan">Nenhum tópico encontrado.</p>'
+    return
+  }
+
+  wrap.innerHTML = results.map(({ topic }) => `
+    <button class="plan-topic-result" onclick="selectTopicForManualPlan('${escapeHtml(topic.id)}')">
+      <span>
+        <strong>${escapeHtml(topic.titulo)}</strong>
+        <span>${escapeHtml(topic.matNome)} · ${escapeHtml(topic.conteudoNome || 'conteudo')} · ${escapeHtml(topic.habilidade || topic.habilidadeId || '')}</span>
+      </span>
+      <i data-lucide="plus" style="width:15px;height:15px;color:var(--accent);flex-shrink:0;"></i>
+    </button>
+  `).join('')
+
+  if (typeof lucide !== 'undefined') lucide.createIcons()
+}
+
+function selectTopicForManualPlan(topicId) {
+  const topic = getStudyTopics().find(item => item.id === topicId)
+  if (!topic) return
+
+  const options = {
+    minutes: Number(document.getElementById('manual-session-minutes').value),
+    inicio: document.getElementById('manual-session-time').value,
+    replacesSessionId: topicPickerState.replaceAutoSessionId,
+  }
+
+  if (topicPickerState.mode === 'replace' && !topicPickerState.replaceAutoSessionId) {
+    replaceManualPlanSession(topicPickerState.dayKey, topicPickerState.sessionId, topic, options)
+  } else {
+    addManualPlanSession(topicPickerState.dayKey, topic, options)
+  }
+
+  closePlanTopicPicker()
+  renderPlanPage(false)
+}
+
+function deleteManualSession(dayKey, sessionId) {
+  removeManualPlanSession(dayKey, sessionId)
+  renderPlanPage(false)
+}
+
+function addRecommendedTopicToToday(topicId) {
+  const topic = getStudyTopics().find(item => item.id === topicId)
+  if (!topic) return
+
+  addManualPlanSession(getTodayStudyKey(), topic, {
+    minutes: Number(getPlanConfigFromUI().sessionMinutes || 60),
+    inicio: getStudyWindowConfig(getPlanConfigFromUI().period).horarios[0] || '14:00',
+  })
+  renderPlanPage(false)
+}
+
+const planSearchInput = document.getElementById('plan-topic-search')
+const handlePlanTopicSearch = debounceStudy(event => {
+  renderPlanTopicResults(searchStudyTopics(event.target.value))
+}, 180)
+
+planSearchInput.addEventListener('input', handlePlanTopicSearch)
+document.getElementById('plan-topic-modal').addEventListener('click', event => {
+  if (event.target.id === 'plan-topic-modal') closePlanTopicPicker()
+})
 
 hydrateConfig()
 renderPlanPage(false)

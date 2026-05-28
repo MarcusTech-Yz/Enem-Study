@@ -1022,6 +1022,147 @@
         grid-template-columns: 1fr;
       }
     }
+    @media (max-width: 768px) {
+      .topico-shell {
+        gap: .85rem;
+        padding-bottom: calc(150px + env(safe-area-inset-bottom));
+      }
+
+      .topico-hero,
+      .topico-card {
+        border-radius: var(--radius);
+      }
+
+      .topico-hero {
+        padding: 1rem;
+      }
+
+      .topico-tag {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        line-height: 1.45;
+      }
+
+      .topico-title {
+        font-size: 22px;
+        letter-spacing: -.02em;
+      }
+
+      .topico-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .topico-actions .btn,
+      .topico-actions button {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .topico-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .tstat {
+        padding: .8rem;
+      }
+
+      .tstat-val {
+        font-size: 14px;
+      }
+
+      .tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        scrollbar-width: none;
+      }
+
+      .tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tab {
+        flex: 0 0 auto;
+        min-height: 40px;
+      }
+
+      .topico-card {
+        padding: 1rem;
+      }
+
+      .note-head,
+      .mastery-box,
+      .questao-footer,
+      .question-card-header,
+      .review-card {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .note-toolbar {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+      }
+
+      .note-tool {
+        flex: 0 0 auto;
+      }
+
+      .notes-workspace {
+        min-height: 0;
+      }
+
+      .notes-list {
+        max-height: none;
+      }
+
+      .notes-actions,
+      .question-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .note-content-textarea,
+      .empty-editor {
+        min-height: 260px;
+      }
+
+      .video-add-row,
+      .obsidian-vault-row {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .video-add-row input,
+      .obsidian-vault-row input {
+        min-width: 0;
+      }
+
+      .video-list-item {
+        min-width: 180px;
+      }
+
+      .review-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 430px) {
+      .topico-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .mastery-row {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .mastery-btn {
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 <body>

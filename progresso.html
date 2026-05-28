@@ -207,10 +207,53 @@
     }
     .streak-dia.feito { background: rgba(200,241,53,.15); border-color: rgba(200,241,53,.4); }
     .streak-dia.hoje  { border-color: var(--accent); }
-    @media (max-width: 700px) {
-      .progress-route-card { flex-direction: column; align-items: stretch; }
-      .mat-row { align-items: flex-start; }
-      .mat-bar { width: 76px; }
+    @media (max-width: 768px) {
+      .progress-route-card {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1.15rem;
+      }
+      .progress-route-card .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .projecao-card {
+        padding: 1rem;
+      }
+      .projecao-linha {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .mat-row {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr) 44px;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .mat-info {
+        min-width: 0;
+      }
+      .mat-bar {
+        grid-column: 2 / -1;
+        width: 100%;
+      }
+      .mat-pct {
+        width: auto;
+      }
+      .mat-tag {
+        grid-column: 2 / -1;
+        width: fit-content;
+      }
+      .tempo-barra-item {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .tempo-barra-nome,
+      .tempo-barra-val {
+        width: auto;
+        text-align: left;
+      }
     }
   </style>
 </head>

@@ -74,7 +74,18 @@
       color: var(--accent);
       align-self: center;
     }
-    @media (max-width: 700px) {
+    @media (max-width: 768px) {
+      .content-search {
+        margin: 1rem 0 1.1rem;
+      }
+      .topic-search-results {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        top: 148px;
+        max-height: calc(100vh - 244px);
+        z-index: 900;
+      }
       .topic-search-item {
         flex-direction: column;
         gap: 6px;
@@ -174,7 +185,7 @@ function renderTopicSearchResults(results) {
         <strong>${escapeHtml(topic.titulo)}</strong>
         <span>${escapeHtml(topic.matNome)} · ${escapeHtml(topic.conteudoNome || 'conteudo')} · ${escapeHtml(topic.habilidade || topic.habilidadeId || '')}</span>
       </div>
-      <small>${topic.recorrenciaEnem}/5 recorrencia</small>
+      <small>peso ${topic.pesoPedagogico || topic.recorrenciaEnem || 3}/5</small>
     </a>
   `).join('')
 }

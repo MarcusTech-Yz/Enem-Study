@@ -1528,7 +1528,7 @@
 
     @media (max-width: 768px) {
       .perfil-hero {
-        min-height: 0;
+        min-height: 260px;
         border-radius: 22px;
       }
 
@@ -1573,6 +1573,153 @@
       }
 
       .spotlight-metrics {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .perfil-page .main {
+        padding-bottom: calc(100px + env(safe-area-inset-bottom));
+      }
+
+      .perfil-shell {
+        gap: 1rem;
+      }
+
+      .perfil-wallpaper-video {
+        object-position: center;
+      }
+
+      .hero-topbar {
+        gap: .65rem;
+        padding: 0;
+      }
+
+      .hero-scene-badge,
+      .hero-track {
+        width: fit-content;
+        max-width: 100%;
+      }
+
+      .hero-content {
+        align-items: center;
+        text-align: center;
+        padding: 5.3rem 1rem 1.2rem;
+      }
+
+      .hero-identity {
+        align-items: center;
+        text-align: center;
+        width: 100%;
+      }
+
+      .perfil-meta,
+      .perfil-meta-card {
+        width: 100%;
+        max-width: none;
+      }
+
+      .perfil-meta-card {
+        border-radius: 18px;
+        padding: .95rem;
+      }
+
+      .perfil-nome-row,
+      .perfil-sub,
+      .hero-progress-row {
+        justify-content: center;
+      }
+
+      .perfil-nome {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        line-height: 1.08;
+      }
+
+      .perfil-frase {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .perfil-avatar {
+        width: 92px;
+        height: 92px;
+      }
+
+      .hero-side,
+      .cta-panel,
+      .rank-panel {
+        width: 100%;
+      }
+
+      .cta-panel .btn,
+      .customizer-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .showcase-grid,
+      .stats-mosaic,
+      .lounge-grid,
+      .ambient-grid,
+      .heroes-grid,
+      .asset-grid,
+      .frame-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .showcase-card,
+      .stat-panel,
+      .lounge-card,
+      .ambient-card,
+      .hero-card,
+      .customizer-shell,
+      .customizer-block {
+        border-radius: 18px;
+      }
+
+      .section-row,
+      .achievement-summary,
+      .customizer-head,
+      .customizer-section-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .sort-pills {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+      }
+
+      .sort-pill {
+        flex: 0 0 auto;
+      }
+
+      .ambient-stage {
+        min-height: 190px;
+      }
+
+      .chart-container {
+        height: 190px;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .hero-content {
+        padding-top: 5.1rem;
+      }
+
+      .perfil-nome {
+        font-size: 22px;
+      }
+
+      .perfil-sub {
+        gap: 8px;
+      }
+
+      .spotlight-metrics,
+      .hero-stats-row {
         grid-template-columns: 1fr;
       }
     }

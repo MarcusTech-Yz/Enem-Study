@@ -166,6 +166,73 @@
     .pulo-alerta-titulo { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
     .pulo-alerta-sub { font-size: 12px; color: var(--text2); margin-bottom: 1rem; }
     .pulo-opcoes { display: flex; gap: 8px; flex-wrap: wrap; }
+    @media (max-width: 768px) {
+      .topico-atual {
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+      }
+
+      .topico-atual::before {
+        width: 120px;
+        height: 120px;
+      }
+
+      .ta-nome {
+        font-size: 20px;
+      }
+
+      .ta-acoes {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .ta-btn-comecar,
+      .ta-btn-ver,
+      .ta-btn-pular {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .dia-progresso {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 12px;
+      }
+
+      .dia-prog-info {
+        align-items: flex-start;
+      }
+
+      .streak-pill {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .proximo-item,
+      .proximo-link {
+        align-items: flex-start;
+      }
+
+      .proximo-nome {
+        white-space: normal;
+      }
+
+      .proximo-focus {
+        width: 44px;
+        height: 44px;
+      }
+
+      .pulo-alerta {
+        padding: 1rem;
+      }
+
+      .pulo-opcoes {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>

@@ -3,6 +3,194 @@
 // Depende de data/topicos.js, js/app.js, js/recommendation-engine.js e js/study-engine.js.
 
 const LEARNING_ENGINE_VERSION = '1.0.0'
+const MANUAL_PLAN_KEY = 'manual_plan_overrides_v1'
+const CLEARED_PLAN_DAYS_KEY = 'cleared_plan_days_v1'
+
+function getDefaultPlanWeek() {
+  return { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }
+}
+
+function getManualPlanOverrides() {
+  return {
+    ...getDefaultPlanWeek(),
+    ...(store.get(MANUAL_PLAN_KEY) || {}),
+  }
+}
+
+function saveManualPlanOverrides(overrides) {
+  const normalized = getDefaultPlanWeek()
+
+  Object.keys(normalized).forEach(dayKey => {
+    normalized[dayKey] = Array.isArray(overrides?.[dayKey]) ? overrides[dayKey] : []
+  })
+
+  store.set(MANUAL_PLAN_KEY, normalized)
+  return normalized
+}
+
+function getClearedPlanDays() {
+  return Array.isArray(store.get(CLEARED_PLAN_DAYS_KEY)) ? store.get(CLEARED_PLAN_DAYS_KEY).map(String) : []
+}
+
+function saveClearedPlanDays(days) {
+  const normalized = [...new Set((days || []).map(String).filter(dayKey => getDefaultPlanWeek()[dayKey]))]
+  store.set(CLEARED_PLAN_DAYS_KEY, normalized)
+  return normalized
+}
+
+function markPlanDayCleared(dayKey) {
+  return saveClearedPlanDays([...getClearedPlanDays(), String(dayKey)])
+}
+
+function unmarkPlanDayCleared(dayKey) {
+  return saveClearedPlanDays(getClearedPlanDays().filter(item => item !== String(dayKey)))
+}
+
+function clearPlanDay(dayKey) {
+  const manual = getManualPlanOverrides()
+  manual[dayKey] = []
+  saveManualPlanOverrides(manual)
+  markPlanDayCleared(dayKey)
+}
+
+function clearAllPlanDayClears() {
+  return saveClearedPlanDays([])
+}
+
+function createManualPlanSessionId() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID()
+  return `manual_${Date.now()}_${Math.random().toString(36).slice(2)}`
+}
+
+function createManualPlanSession(dayKey, topic, options = {}) {
+  const minutes = Number(options.minutes || 60)
+
+  return {
+    id: options.id || createManualPlanSessionId(),
+    topicId: topic.id,
+    materiaKey: topic.materiaKey,
+    key: topic.materiaKey,
+    area: topic.area || inferTopicArea(topic.materiaKey),
+    tKey: topic.tKey,
+    titulo: topic.titulo,
+    matNome: topic.matNome,
+    matIcone: topic.matIcone,
+    inicio: options.inicio || '14:00',
+    minutes,
+    duracao: String(minutes),
+    score: 0,
+    urgencyLevel: 'manual',
+    reason: 'Voce escolheu este topico manualmente para sua rota.',
+    reasons: ['escolhido manualmente'],
+    source: 'manual',
+    locked: true,
+    dayKey: String(dayKey),
+    replacesSessionId: options.replacesSessionId || null,
+    createdAt: options.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+function addManualPlanSession(dayKey, topic, options = {}) {
+  const manual = getManualPlanOverrides()
+  const session = createManualPlanSession(dayKey, topic, options)
+
+  manual[dayKey] = [...(manual[dayKey] || []), session]
+  saveManualPlanOverrides(manual)
+
+  return session
+}
+
+function removeManualPlanSession(dayKey, sessionId) {
+  const manual = getManualPlanOverrides()
+  manual[dayKey] = (manual[dayKey] || []).filter(session => session.id !== sessionId)
+  saveManualPlanOverrides(manual)
+}
+
+function replaceManualPlanSession(dayKey, sessionId, topic, options = {}) {
+  const manual = getManualPlanOverrides()
+  const current = (manual[dayKey] || []).find(session => session.id === sessionId)
+  const next = createManualPlanSession(dayKey, topic, {
+    ...options,
+    id: sessionId,
+    createdAt: current?.createdAt,
+  })
+
+  manual[dayKey] = (manual[dayKey] || []).map(session => session.id === sessionId ? next : session)
+  saveManualPlanOverrides(manual)
+
+  return next
+}
+
+function normalizeAutoPlanSession(session) {
+  return {
+    ...session,
+    source: session.source || 'auto',
+    locked: !!session.locked,
+  }
+}
+
+function composePlanWithManual(autoPlan = getDefaultPlanWeek(), planConfig = getStudyPlanConfig()) {
+  const manual = getManualPlanOverrides()
+  const result = getDefaultPlanWeek()
+  const dailyMinutes = Number(planConfig.dailyMinutes || getUserProfile().tempoDiaMin || 60)
+  const clearedDays = new Set(getClearedPlanDays())
+
+  Object.keys(result).forEach(dayKey => {
+    const manualSessions = (manual[dayKey] || []).map(session => ({ ...session, source: 'manual', locked: true }))
+
+    if (clearedDays.has(String(dayKey))) {
+      result[dayKey] = manualSessions
+      return
+    }
+
+    const manualMinutes = manualSessions.reduce((sum, session) => sum + Number(session.minutes || session.duracao || 0), 0)
+    const usedTopicIds = new Set(manualSessions.map(session => session.topicId))
+    const replacedAutoIds = new Set(manualSessions.map(session => session.replacesSessionId).filter(Boolean))
+    const remainingMinutes = Math.max(0, dailyMinutes - manualMinutes)
+    let filledMinutes = 0
+
+    const autoSessions = (autoPlan?.[dayKey] || [])
+      .map(normalizeAutoPlanSession)
+      .filter(session => !usedTopicIds.has(session.topicId))
+      .filter(session => !replacedAutoIds.has(session.id))
+      .filter(session => {
+        const minutes = Number(session.minutes || session.duracao || 0)
+        if (filledMinutes + minutes > remainingMinutes) return false
+        filledMinutes += minutes
+        return true
+      })
+
+    result[dayKey] = [...manualSessions, ...autoSessions]
+  })
+
+  return result
+}
+
+function getPlanCoverageWarning(plan = null) {
+  if (!plan) return null
+
+  const sessions = Object.values(plan).flat()
+  if (!sessions.length) return null
+
+  const byMateria = sessions.reduce((acc, session) => {
+    acc[session.materiaKey] = (acc[session.materiaKey] || 0) + 1
+    return acc
+  }, {})
+  const [topMateria, topCount] = Object.entries(byMateria).sort((a, b) => b[1] - a[1])[0] || []
+  const topShare = topCount ? Math.round(topCount / sessions.length * 100) : 0
+  const enemData = typeof ENEM !== 'undefined' ? ENEM : {}
+  const uncovered = Object.keys(enemData).filter(key => !byMateria[key] && key !== 'redacao')
+
+  if (topShare < 55 && uncovered.length < 3) return null
+
+  return {
+    topMateria,
+    topShare,
+    uncovered,
+    message: `${formatMateriaFoco(topMateria)} concentra ${topShare}% da semana. ${uncovered.slice(0, 3).map(formatMateriaFoco).join(', ')} ficaram sem cobertura.`,
+  }
+}
 
 function isLearningPastOrToday(isoDate) {
   if (!isoDate) return false
@@ -243,7 +431,8 @@ function getPlanExecutionSnapshot(plan = null) {
   const todayKey = typeof getTodayStudyKey === 'function' ? getTodayStudyKey() : String(new Date().getDay())
   const savedV3 = store.get('smart_weekly_plan_v3')
   const savedV2 = store.get('smart_weekly_plan_v2')
-  const currentPlan = plan || savedV3?.plan || savedV2?.plan || null
+  const basePlan = savedV3?.autoPlan || savedV3?.plan || savedV2?.plan || null
+  const currentPlan = plan || (basePlan ? composePlanWithManual(basePlan) : null)
   const sessions = currentPlan?.[todayKey] || []
   const plannedMinutes = sessions.reduce((sum, session) => sum + Number(session.minutes || session.duracao || 0), 0)
   const completedSessions = sessions.filter(session => {
