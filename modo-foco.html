@@ -261,6 +261,51 @@
       background: var(--accent);
     }
 
+    .feedback-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(0,0,0,.72);
+    }
+
+    .feedback-overlay.open { display: flex; }
+
+    .feedback-modal {
+      width: min(520px, 100%);
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .feedback-title {
+      font-size: 18px;
+      font-weight: 650;
+      margin-bottom: 6px;
+    }
+
+    .feedback-sub {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .feedback-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .feedback-choice {
+      justify-content: flex-start;
+      min-height: 46px;
+    }
+
     @media (max-width: 700px) {
       .focus-topbar {
         grid-template-columns: 1fr;
@@ -386,10 +431,36 @@
     </div>
   </div>
 
+  <div class="feedback-overlay" id="feedback-overlay">
+    <div class="feedback-modal">
+      <p class="feedback-title">Como foi essa sessao?</p>
+      <p class="feedback-sub">Esse feedback recalcula sua rota, define revisao futura e muda o peso desse topico nas proximas recomendacoes.</p>
+      <div class="feedback-grid">
+        <button class="btn btn-accent feedback-choice" onclick="finalizarComFeedback('dominei')">
+          <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i>
+          Dominei
+        </button>
+        <button class="btn feedback-choice" onclick="finalizarComFeedback('parcial')">
+          <i data-lucide="loader-circle" style="width:14px;height:14px;"></i>
+          Mais ou menos
+        </button>
+        <button class="btn feedback-choice" onclick="finalizarComFeedback('dificuldade')">
+          <i data-lucide="triangle-alert" style="width:14px;height:14px;"></i>
+          Errei bastante
+        </button>
+        <button class="btn feedback-choice" onclick="finalizarComFeedback('pular')">
+          <i data-lucide="skip-forward" style="width:14px;height:14px;"></i>
+          Pular por agora
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="data/topicos.js"></script>
   <script src="data/conquistas.js"></script>
   <script src="data/conquista_toast.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/recommendation-engine.js"></script>
 
   <script>
     const params = new URLSearchParams(window.location.search)
@@ -673,14 +744,29 @@
         if (!ok) return
       }
 
-      const result = concludeActiveFocusTopic()
-      if (!result.ok) {
-        avisarSessao(result.message)
+      pauseActiveFocusSession()
+      salvarSessao()
+      document.getElementById('feedback-overlay').classList.add('open')
+      lucide.createIcons()
+    }
+
+    function finalizarComFeedback(feedback) {
+      const session = getActiveFocusSession()
+      if (!session) {
+        window.location.href = 'index.html'
         return
       }
 
+      saveActiveFocusTime()
+
+      if (typeof recordTopicFeedbackByParts === 'function') {
+        recordTopicFeedbackByParts(session.materiaKey, session.tKey, feedback)
+      } else if (feedback !== 'pular') {
+        marcarTopicoFeito(session.materiaKey, session.tKey)
+      }
+
+      clearActiveFocusSession()
       clearInterval(intervalo)
-      alert(result.message)
       window.location.href = 'index.html'
     }
 

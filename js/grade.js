@@ -6,6 +6,7 @@ function renderGrade() {
   const grade   = getGrade()
   const hojeIdx = new Date().getDay()
   const grid    = document.getElementById('grade-grid')
+  if (!grid) return
   grid.innerHTML = ''
 
   for (let i = 0; i < 7; i++) {
@@ -145,7 +146,7 @@ document.getElementById('modal').addEventListener('click', function(e) {
 })
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('modal-inicio').addEventListener('input', checkConflito)
-  document.getElementById('modal-duracao').addEventListener('input', checkConflito)
+  document.getElementById('modal-inicio')?.addEventListener('input', checkConflito)
+  document.getElementById('modal-duracao')?.addEventListener('input', checkConflito)
   renderGrade()
 })

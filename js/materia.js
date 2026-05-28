@@ -222,6 +222,17 @@ function avaliarH(conteudoId, hId, val) {
   const dific = getDificuldades(materiaKey)
   const novo  = dific[tKey] === val ? 0 : val
   setDificuldadeH(materiaKey, tKey, novo)
+  if (typeof saveUserTopicState === 'function' && typeof getRecommendationTopicId === 'function') {
+    const topicId = getRecommendationTopicId(materiaKey, tKey)
+    const statePatch = novo === 1
+      ? { status: 'dificuldade', dificuldadeDoUsuario: 3, proximaRevisao: typeof addDaysISO === 'function' ? addDaysISO(3) : null }
+      : novo === 2
+        ? { status: 'parcial', dificuldadeDoUsuario: 2, proximaRevisao: typeof addDaysISO === 'function' ? addDaysISO(7) : null }
+        : novo === 3
+          ? { status: 'dominado', dificuldadeDoUsuario: 0, proximaRevisao: typeof addDaysISO === 'function' ? addDaysISO(14) : null }
+          : { status: 'novo', dificuldadeDoUsuario: 0, proximaRevisao: null }
+    saveUserTopicState(topicId, statePatch)
+  }
   const el = document.getElementById('topico-' + tKey)
   if (el) el.querySelectorAll('.dific-btn').forEach((b, i) => b.classList.toggle('active', novo === i + 1))
 }

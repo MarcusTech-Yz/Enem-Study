@@ -215,6 +215,7 @@
 <script src="data/conquistas.js"></script>
 <script src="data/conquista_toast.js"></script>
 <script src="js/app.js"></script>
+<script src="js/recommendation-engine.js"></script>
 <script>
 const prog   = getProgressoGlobal()
 const pct    = prog.total > 0 ? Math.round(prog.feitos / prog.total * 100) : 0
@@ -312,6 +313,20 @@ projecaoWrap.innerHTML = `
 // ── Insights inteligentes ──
 const insightsWrap = document.getElementById('insights-wrap')
 const insights = []
+
+if (typeof getRecommendedTopics === 'function') {
+  const proximo = getRecommendedTopics(1)[0]
+  if (proximo) {
+    insights.push({
+      tipo: 'ok',
+      icone: '↻',
+      titulo: `Rota recalculada: ${proximo.titulo}`,
+      sub: `${proximo.matNome}: ${proximo.reason}`,
+      link: `topico.html?m=${proximo.materiaKey}&id=${encodeURIComponent(proximo.tKey)}`,
+      linkTxt: 'Ver próximo tópico →'
+    })
+  }
+}
 
 // Analisa distribuição de tempo
 const temposPorMat = Object.keys(ENEM).map(k => ({

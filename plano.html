@@ -8,94 +8,233 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="css/style.css" />
   <style>
-    .plano-config {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.25rem 1.5rem;
-      margin-bottom: 1.5rem;
+    .plan-page { display: flex; flex-direction: column; gap: 1.25rem; }
+    .plan-config-card,
+    .plan-radar-card,
+    .today-plan,
+    .week-panel,
+    .priority-queue {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
     }
-    .config-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 0; border-bottom: 1px solid var(--border);
+    .plan-config-card {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 1rem;
+      align-items: end;
     }
-    .config-row:last-child { border-bottom: none; padding-bottom: 0; }
-    .config-label { font-size: 13px; color: var(--text2); }
+    .config-field { display: grid; gap: 6px; }
+    .config-label {
+      font-size: 10px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-family: var(--mono);
+    }
     .config-select {
-      background: var(--bg3); border: 1px solid var(--border2);
-      color: var(--text); font-family: var(--font); font-size: 12px;
-      border-radius: 6px; padding: 5px 10px; cursor: pointer; outline: none;
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      border-radius: var(--radius-sm);
+      padding: 9px 10px;
+      outline: none;
     }
     .config-select:focus { border-color: var(--accent); }
-
-    /* Semana */
-    .semana-grid {
+    .plan-radar {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .plan-radar-card { padding: 1rem; }
+    .plan-radar-card span {
+      display: block;
+      color: var(--text3);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-family: var(--mono);
+    }
+    .plan-radar-card strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      margin: 9px 0 5px;
+      color: var(--text);
+    }
+    .plan-radar-card small { color: var(--text2); font-size: 12px; }
+    .plan-radar-card.urgent { border-color: rgba(255,94,94,.45); }
+    .plan-radar-card.review { border-color: rgba(200,241,53,.35); }
+    .today-plan { padding: 1.2rem; }
+    .today-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .today-header span,
+    .section-kicker {
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+    .today-header h2 { font-size: 20px; margin-top: 4px; letter-spacing: -.02em; }
+    .today-timeline { display: grid; gap: 12px; }
+    .today-session {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .session-index {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #101010;
+      font-weight: 800;
+      font-family: var(--mono);
+    }
+    .session-meta {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 10px;
+      margin-bottom: 5px;
+    }
+    .session-content h3 {
+      font-size: 15px;
+      margin-bottom: 5px;
+      line-height: 1.35;
+    }
+    .session-content p {
+      color: var(--text2);
+      line-height: 1.55;
+      font-size: 12px;
+    }
+    .session-actions {
+      display: flex;
       gap: 8px;
-      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      margin-top: 10px;
     }
-    .dia-col {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 12px;
-      min-height: 120px;
+    .plan-main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 1rem;
+      align-items: start;
     }
-    .dia-col.today { border-color: var(--accent); }
-    .dia-nome {
-      font-size: 10px; font-weight: 500; letter-spacing: .1em;
-      text-transform: uppercase; color: var(--text3); margin-bottom: 8px;
+    .week-panel,
+    .priority-queue { padding: 1rem; }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
-    .dia-col.today .dia-nome { color: var(--accent); }
-
-    .plano-pill {
-      display: flex; align-items: center; justify-content: space-between;
-      background: var(--bg3); border: 1px solid var(--border);
-      border-radius: 6px; padding: 6px 8px; margin-bottom: 5px;
-      font-size: 11px; gap: 4px;
+    .section-title h2 { font-size: 17px; letter-spacing: -.02em; }
+    .week-board {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
     }
-    .plano-pill-nome { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .plano-pill-rm {
-      background: none; border: none; color: var(--text3);
-      cursor: pointer; padding: 0; font-size: 11px; flex-shrink: 0;
-      transition: color .15s;
+    .week-day {
+      min-height: 150px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
     }
-    .plano-pill-rm:hover { color: var(--red); }
-    .dia-add {
-      width: 100%; background: none; border: 1px dashed var(--border);
-      color: var(--text3); border-radius: 6px; padding: 5px;
-      font-size: 11px; cursor: pointer; transition: all .15s; margin-top: 4px;
-      font-family: var(--font);
+    .week-day.today { border-color: var(--accent); }
+    .week-day-name {
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      margin-bottom: 8px;
     }
-    .dia-add:hover { border-color: var(--border2); color: var(--text2); }
-
-    /* Cronograma */
-    .crono-item {
-      display: flex; align-items: flex-start; gap: 12px;
-      padding: 12px 0; border-bottom: 1px solid var(--border);
+    .week-day.today .week-day-name { color: var(--accent); }
+    .week-session {
+      display: block;
+      color: var(--text);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 6px;
+      background: rgba(255,255,255,.018);
     }
-    .crono-item:last-child { border-bottom: none; }
-    .crono-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--border2); flex-shrink: 0; margin-top: 4px;
+    .week-session strong {
+      display: block;
+      font-size: 11px;
+      line-height: 1.35;
+      margin-bottom: 4px;
     }
-    .crono-dot.hoje { background: var(--accent); }
-    .crono-info { flex: 1; }
-    .crono-hora { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-bottom: 3px; }
-    .crono-nome { font-size: 13px; }
-    .crono-mat  { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
-
-    /* Modal */
-    .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s; }
-    .modal-overlay.open { opacity:1;pointer-events:all; }
-    .modal { background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;width:340px;max-width:95vw; }
-    .modal h3 { font-size:15px;font-weight:600;margin-bottom:1rem; }
-    .form-row { margin-bottom:12px; }
-    .form-label { font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);margin-bottom:6px;display:block; }
-    .form-row select, .form-row input {
-      width:100%;background:var(--bg3);border:1px solid var(--border2);
-      color:var(--text);font-family:var(--font);font-size:13px;
-      border-radius:var(--radius-sm);padding:8px 10px;outline:none;
+    .week-session span {
+      display: block;
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 9px;
     }
-    .form-row select:focus, .form-row input:focus { border-color:var(--accent); }
-    .modal-btns { display:flex;gap:8px;justify-content:flex-end;margin-top:1rem; }
+    .priority-copy {
+      color: var(--text2);
+      font-size: 12px;
+      line-height: 1.5;
+      margin: 4px 0 12px;
+    }
+    .priority-list { display: grid; gap: 8px; }
+    .priority-item {
+      display: block;
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      background: var(--bg3);
+    }
+    .priority-item:hover { border-color: rgba(200,241,53,.35); }
+    .priority-item strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.4;
+      margin-bottom: 5px;
+    }
+    .priority-item span {
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 10px;
+    }
+    .empty-plan {
+      color: var(--text3);
+      font-size: 13px;
+      padding: 1rem 0;
+    }
+    @media (max-width: 1100px) {
+      .plan-config-card,
+      .plan-radar,
+      .week-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .plan-main-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .plan-config-card,
+      .plan-radar,
+      .week-board { grid-template-columns: 1fr; }
+      .today-header { flex-direction: column; }
+    }
   </style>
 </head>
 <body>
@@ -113,7 +252,7 @@
     </nav>
     <div style="margin-top:auto;padding-top:1rem;display:flex;flex-direction:column;gap:4px;">
       <a href="materias.html" style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;padding:6px 0;">
-        <i data-lucide="book-open" style="width:13px;height:13px;"></i> Todas as matérias
+        <i data-lucide="book-open" style="width:13px;height:13px;"></i> Todas as materias
       </a>
       <a href="exportar.html" style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;padding:6px 0;">
         <i data-lucide="download" style="width:13px;height:13px;"></i> Exportar dados
@@ -121,219 +260,275 @@
     </div>
   </aside>
 
-  <main class="main">
+  <main class="main plan-page">
     <div class="page-header">
-      <p class="date-tag">Planejamento</p>
+      <p class="date-tag">Planejamento inteligente</p>
       <h1>Seu Plano de Estudos</h1>
-      <p>Ajuste conforme sua rotina. A grade se adapta automaticamente.</p>
+      <p>O Enem Study nao monta um cronograma fixo. Ele recalcula sua rota por urgencia, dominio, revisoes e tempo real.</p>
     </div>
 
-    <!-- Configurações -->
-    <div class="plano-config">
-      <div class="config-row">
+    <section class="plan-config-card">
+      <label class="config-field">
         <span class="config-label">Tempo por dia</span>
-        <select class="config-select" id="cfg-tempo">
+        <select class="config-select" id="daily-minutes">
           <option value="30">30 min</option>
-          <option value="60" selected>1 hora</option>
+          <option value="60">1 hora</option>
           <option value="90">1h30</option>
           <option value="120">2 horas</option>
           <option value="180">3 horas+</option>
         </select>
-      </div>
-      <div class="config-row">
-        <span class="config-label">Meta padrão de sessão</span>
-        <select class="config-select" id="cfg-pomo">
-          <option value="10">10 min</option>
-          <option value="25" selected>25 min</option>
+      </label>
+      <label class="config-field">
+        <span class="config-label">Tamanho do bloco</span>
+        <select class="config-select" id="session-minutes">
+          <option value="15">15 min</option>
+          <option value="25">25 min</option>
+          <option value="30">30 min</option>
           <option value="45">45 min</option>
-          <option value="0">Livre</option>
+          <option value="60">60 min</option>
         </select>
-      </div>
-      <div class="config-row">
-        <span class="config-label">Data do ENEM</span>
-        <span style="font-size:12px;color:var(--text3);font-family:var(--mono);" id="dias-restantes"></span>
-      </div>
-    </div>
-
-    <!-- Botões de ação -->
-    <div style="display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;">
-      <button class="btn btn-accent" onclick="sugestaoAutomatica()">
-        <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Recalcular automaticamente
+      </label>
+      <label class="config-field">
+        <span class="config-label">Periodo</span>
+        <select class="config-select" id="study-period">
+          <option value="manha">Manha</option>
+          <option value="tarde">Tarde</option>
+          <option value="noite">Noite</option>
+          <option value="madrugada">Madrugada</option>
+          <option value="variavel">Variavel</option>
+        </select>
+      </label>
+      <button class="btn btn-accent" onclick="recalculatePlan()">
+        <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
+        Recalcular rota
       </button>
-      <button class="btn" onclick="confirmarLimpar()">Limpar tudo</button>
-    </div>
+    </section>
 
-    <!-- Grade semanal -->
-    <p class="card-title" style="margin-bottom:12px;">Esta semana</p>
-    <div class="semana-grid" id="semana-grid"></div>
+    <section class="plan-radar" id="plan-radar"></section>
 
-    <!-- Cronograma de hoje -->
-    <div class="card" id="crono-card">
-      <p class="card-title" style="margin-bottom:1rem;">Cronograma de hoje</p>
-      <div id="crono-hoje"></div>
-    </div>
+    <section class="today-plan" id="today-plan"></section>
+
+    <section class="plan-main-grid">
+      <section class="week-panel">
+        <div class="section-title">
+          <div>
+            <p class="section-kicker">Rota da semana</p>
+            <h2>Esta semana</h2>
+          </div>
+          <button class="btn btn-sm" onclick="clearStoredPlan()">Limpar plano salvo</button>
+        </div>
+        <div class="week-board" id="week-board"></div>
+      </section>
+
+      <aside class="priority-queue" id="priority-queue"></aside>
+    </section>
   </main>
-</div>
-
-<!-- Modal add -->
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <h3 id="modal-titulo">Adicionar ao dia</h3>
-    <div class="form-row">
-      <label class="form-label">Matéria</label>
-      <select id="modal-materia"></select>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div class="form-row">
-        <label class="form-label">Início</label>
-        <input type="time" id="modal-inicio" value="09:00" />
-      </div>
-      <div class="form-row">
-        <label class="form-label">Duração (min)</label>
-        <input type="number" id="modal-duracao" value="60" min="15" max="300" step="15" />
-      </div>
-    </div>
-    <div class="modal-btns">
-      <button class="btn" onclick="fecharModal()">Cancelar</button>
-      <button class="btn btn-accent" onclick="salvarMateria()">Adicionar</button>
-    </div>
-  </div>
 </div>
 
 <script src="data/topicos.js"></script>
 <script src="data/conquistas.js"></script>
 <script src="data/conquista_toast.js"></script>
 <script src="js/app.js"></script>
-<script src="js/grade.js"></script>
+<script src="js/recommendation-engine.js"></script>
+<script src="js/study-engine.js"></script>
 <script>
-const DIAS_SEMANA = ['Seg','Ter','Qua','Qui','Sex','Sáb']
-const DIAS_IDX    = [1,2,3,4,5,6]
-const hojeIdx     = new Date().getDay()
-
-// Dias restantes para o ENEM (padrão nov 2026)
-const enem = new Date('2026-11-08')
-const hoje = new Date()
-const diff  = Math.ceil((enem - hoje) / 86400000)
-document.getElementById('dias-restantes').textContent = diff > 0
-  ? `${diff} dias para o ENEM` : 'ENEM chegou!'
-
-function renderSemana() {
-  const grade = getGrade()
-  const grid  = document.getElementById('semana-grid')
-  grid.innerHTML = ''
-
-  DIAS_IDX.forEach((diaIdx, i) => {
-    const isHoje   = diaIdx === hojeIdx
-    const materias = grade[diaIdx] || []
-    const pillsHTML = materias.map((m, idx) => {
-      const dados = ENEM[m.key]
-      return `<div class="plano-pill">
-        <span class="plano-pill-nome">${dados?.nome?.split(' ')[0] || m.key}</span>
-        <button class="plano-pill-rm" onclick="removerMateria(${diaIdx},${idx})">✕</button>
-      </div>`
-    }).join('')
-
-    grid.innerHTML += `
-      <div class="dia-col ${isHoje ? 'today' : ''}">
-        <p class="dia-nome">${DIAS_SEMANA[i]}${isHoje ? ' · hoje' : ''}</p>
-        ${pillsHTML}
-        <button class="dia-add" onclick="abrirModal(${diaIdx})">+ Adicionar</button>
-      </div>
-    `
-  })
-  lucide.createIcons()
-  renderCronoHoje()
+const PLAN_DAY_LABELS = {
+  '1': 'Seg',
+  '2': 'Ter',
+  '3': 'Qua',
+  '4': 'Qui',
+  '5': 'Sex',
+  '6': 'Sab',
 }
 
-function renderCronoHoje() {
-  const grade    = getGrade()
-  const materias = grade[hojeIdx] || []
-  const crono    = document.getElementById('crono-hoje')
-  if (materias.length === 0) {
-    crono.innerHTML = `<p style="font-size:13px;color:var(--text3);">Nenhuma matéria programada para hoje. Adicione acima ou use "Recalcular".</p>`
-    return
-  }
-  crono.innerHTML = materias.map(m => {
-    const dados = ENEM[m.key]
-    return `<div class="crono-item">
-      <div class="crono-dot hoje"></div>
-      <div class="crono-info">
-        <p class="crono-hora">${m.inicio || '—'}${m.duracao ? ' · ' + m.duracao + ' min' : ''}</p>
-        <p class="crono-nome">${dados?.nome || m.key}</p>
+let currentPlan = null
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+}
+
+function getPlanConfigFromUI() {
+  return getStudyPlanConfig({
+    dailyMinutes: Number(document.getElementById('daily-minutes').value),
+    sessionMinutes: Number(document.getElementById('session-minutes').value),
+    period: document.getElementById('study-period').value,
+  })
+}
+
+function hydrateConfig() {
+  const profile = getUserProfile()
+  const daily = document.getElementById('daily-minutes')
+  const session = document.getElementById('session-minutes')
+  const period = document.getElementById('study-period')
+
+  daily.value = String(profile.tempoDiaMin || 60)
+  session.value = String(Number(store.get('focus_meta_min') || getMetaSessaoPadrao() || 30))
+  if (![...session.options].some(opt => opt.value === session.value)) session.value = '30'
+  period.value = profile.periodoEstudo || 'noite'
+
+  ;[daily, session, period].forEach(input => {
+    input.addEventListener('change', () => {
+      saveUserProfile({
+        tempoDiaMin: Number(daily.value),
+        periodoEstudo: period.value,
+      })
+      store.set('focus_meta_min', Number(session.value))
+      renderPlanPage(true)
+    })
+  })
+}
+
+function recalculatePlan() {
+  renderPlanPage(true)
+}
+
+function renderPlanPage(forceNew = false) {
+  const config = getPlanConfigFromUI()
+  currentPlan = forceNew ? generateSmartWeeklyPlan(config) : (store.get('smart_weekly_plan') || generateSmartWeeklyPlan(config))
+  store.set('smart_weekly_plan', currentPlan)
+
+  renderPlanRadar(config)
+  renderTodayPlan(currentPlan)
+  renderWeekBoard(currentPlan)
+  renderPriorityQueue(config)
+  if (typeof lucide !== 'undefined') lucide.createIcons()
+}
+
+function renderPlanRadar(config) {
+  const radar = getStudyPlanRadar(config)
+  document.getElementById('plan-radar').innerHTML = `
+    <article class="plan-radar-card urgent">
+      <span>Urgentes</span>
+      <strong>${radar.urgent}</strong>
+      <small>Topicos com prioridade alta agora</small>
+    </article>
+    <article class="plan-radar-card review">
+      <span>Revisoes</span>
+      <strong>${radar.dueReviews}</strong>
+      <small>Pendentes para hoje</small>
+    </article>
+    <article class="plan-radar-card">
+      <span>Pressao</span>
+      <strong>${radar.daysToExam}</strong>
+      <small>Dias ate o ENEM</small>
+    </article>
+    <article class="plan-radar-card">
+      <span>Atencao</span>
+      <strong>${radar.attention}</strong>
+      <small>Topicos em zona media</small>
+    </article>
+  `
+}
+
+function renderTodayPlan(plan) {
+  const todayKey = getTodayStudyKey()
+  const sessions = plan[todayKey] || []
+  const first = sessions[0]
+
+  document.getElementById('today-plan').innerHTML = `
+    <div class="today-header">
+      <div>
+        <span>Cronograma de hoje</span>
+        <h2>${sessions.length} bloco${sessions.length !== 1 ? 's' : ''} recomendado${sessions.length !== 1 ? 's' : ''}</h2>
       </div>
-    </div>`
+      ${first ? `
+        <a class="btn btn-accent" href="${getTopicUrlFromStudyTopic(first)}">
+          <i data-lucide="play" style="width:14px;height:14px;"></i>
+          Comecar primeiro bloco
+        </a>
+      ` : ''}
+    </div>
+    <div class="today-timeline">
+      ${sessions.length ? sessions.map((session, index) => renderTodaySession(session, index)).join('') : `
+        <p class="empty-plan">Nenhum bloco para hoje. Recalcule a rota ou ajuste seu tempo diario.</p>
+      `}
+    </div>
+  `
+}
+
+function renderTodaySession(session, index) {
+  return `
+    <article class="today-session">
+      <div class="session-index">${index + 1}</div>
+      <div class="session-content">
+        <div class="session-meta">
+          <span>${escapeHtml(session.inicio || '--')}</span>
+          <span>${session.minutes} min</span>
+          <span>${escapeHtml(session.matNome)}</span>
+          <span>urgencia ${session.score}</span>
+        </div>
+        <h3>${escapeHtml(session.titulo)}</h3>
+        <p>${escapeHtml(session.reason)}</p>
+        <div class="session-actions">
+          <a class="btn btn-sm btn-accent" href="${getTopicUrlFromStudyTopic(session)}">Abrir topico</a>
+          <button class="btn btn-sm" onclick="postponeSession('${escapeHtml(session.topicId)}')">Adiar</button>
+        </div>
+      </div>
+    </article>
+  `
+}
+
+function renderWeekBoard(plan) {
+  const todayKey = getTodayStudyKey()
+  document.getElementById('week-board').innerHTML = Object.keys(PLAN_DAY_LABELS).map(dayKey => {
+    const sessions = plan[dayKey] || []
+    return `
+      <div class="week-day ${dayKey === todayKey ? 'today' : ''}">
+        <p class="week-day-name">${PLAN_DAY_LABELS[dayKey]}${dayKey === todayKey ? ' · hoje' : ''}</p>
+        ${sessions.length ? sessions.map(session => `
+          <a class="week-session" href="${getTopicUrlFromStudyTopic(session)}">
+            <strong>${escapeHtml(session.titulo)}</strong>
+            <span>${escapeHtml(session.matNome)} · ${session.minutes} min · ${session.score}</span>
+          </a>
+        `).join('') : '<p class="empty-plan">Livre</p>'}
+      </div>
+    `
   }).join('')
 }
 
-// Sobrescreve abrirModal do grade.js para funcionar com o novo layout
-function abrirModal(diaIdx) {
-  window._diaAtivo = diaIdx
-  const sel = document.getElementById('modal-materia')
-  sel.innerHTML = Object.entries(ENEM)
-    .map(([k, m]) => `<option value="${k}">${m.nome}</option>`).join('')
-  document.getElementById('modal-titulo').textContent = `Adicionar — ${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][diaIdx]}`
-  document.getElementById('modal').classList.add('open')
+function renderPriorityQueue(config) {
+  const recommendations = getStudyRecommendations(8, config)
+  document.getElementById('priority-queue').innerHTML = `
+    <p class="section-kicker">Fila inteligente</p>
+    <h2 style="font-size:17px;margin-top:4px;">Mais urgentes agora</h2>
+    <p class="priority-copy">Conteudos que mais precisam de atencao pelo seu foco, revisoes, erros, dominio e pressao ate a prova.</p>
+    <div class="priority-list">
+      ${recommendations.map(item => `
+        <a class="priority-item" href="${getTopicUrlFromStudyTopic(item.topic)}">
+          <strong>${escapeHtml(item.topic.titulo)}</strong>
+          <span>${escapeHtml(item.topic.matNome)} · urgencia ${item.score}</span>
+        </a>
+      `).join('')}
+    </div>
+  `
 }
 
-function fecharModal() {
-  document.getElementById('modal').classList.remove('open')
-  window._diaAtivo = null
+function getTopicUrlFromStudyTopic(sessionOrTopic) {
+  return `topico.html?m=${encodeURIComponent(sessionOrTopic.materiaKey)}&id=${encodeURIComponent(sessionOrTopic.tKey)}`
 }
 
-function salvarMateria() {
-  if (window._diaAtivo === null || window._diaAtivo === undefined) return
-  const key     = document.getElementById('modal-materia').value
-  const inicio  = document.getElementById('modal-inicio').value
-  const duracao = document.getElementById('modal-duracao').value
-  const grade   = getGrade()
-  grade[window._diaAtivo].push({ key, inicio, duracao })
-  saveGrade(grade)
-  fecharModal()
-  renderSemana()
-}
-
-function removerMateria(diaIdx, itemIdx) {
-  const grade = getGrade()
-  grade[diaIdx].splice(itemIdx, 1)
-  saveGrade(grade)
-  renderSemana()
-}
-
-function sugestaoAutomatica() {
-  const grade  = getGrade()
-  const fracas = getMateriasMaisFracas(Object.keys(ENEM).length)
-  const horas  = ['08:00','09:30','14:00','15:30','19:00']
-  let fIdx = 0
-  DIAS_IDX.forEach((dia, i) => {
-    if (grade[dia].length === 0 && fIdx < fracas.length) {
-      grade[dia] = [{ key: fracas[fIdx].key, inicio: horas[i % horas.length], duracao: '60' }]
-      fIdx++
-    }
+function postponeSession(topicId) {
+  const state = getUserTopicState(topicId)
+  saveUserTopicState(topicId, {
+    ...state,
+    skippedUntil: addDaysISO(1),
   })
-  saveGrade(grade)
-  renderSemana()
+  renderPlanPage(true)
 }
 
-function confirmarLimpar() {
-  if (!confirm('Limpar toda a grade semanal?')) return
-  saveGrade({ 0:[],1:[],2:[],3:[],4:[],5:[],6:[] })
-  renderSemana()
+function clearStoredPlan() {
+  if (!confirm('Limpar plano semanal salvo e recalcular?')) return
+  localStorage.removeItem('smart_weekly_plan')
+  renderPlanPage(true)
 }
 
-document.getElementById('modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal')) fecharModal()
-})
-
-const cfgMetaSessao = document.getElementById('cfg-pomo')
-if (cfgMetaSessao) {
-  const metaSalva = Number(store.get('focus_meta_min') ?? 25)
-  cfgMetaSessao.value = Number.isFinite(metaSalva) ? String(metaSalva) : '25'
-  cfgMetaSessao.addEventListener('change', () => {
-    store.set('focus_meta_min', Number(cfgMetaSessao.value))
-  })
-}
-
-renderSemana()
+hydrateConfig()
+renderPlanPage(false)
 </script>
 </body>
 </html>

@@ -269,6 +269,7 @@
 <script src="data/conquistas.js"></script>
 <script src="data/conquista_toast.js"></script>
 <script src="js/app.js"></script>
+<script src="js/recommendation-engine.js"></script>
 <script>
 /* ─────────────────────────────────────────
    Saudação e data
@@ -709,69 +710,16 @@ function getOnboardingTitle(step = ONBOARDING_STEPS[onboardingStepIndex]) {
    SUGESTÃO DE TÓPICOS
 ───────────────────────────────────────── */
 function getSugestaoTopicos(n) {
-  const result    = []
-  const gradeHoje = getMateriaHoje()
-
-  // Se tem grade configurada para hoje, usa ela
-  if (gradeHoje.length > 0) {
-    const keys = gradeHoje.map(m => m.key)
-    for (const matKey of keys) {
-      if (result.length >= n) break
-      const mat    = ENEM[matKey]
-      const feitos = getTopicosFeitos(matKey)
-      if (!mat?.conteudos) continue
-      for (const conteudo of mat.conteudos) {
-        if (result.length >= n) break
-        for (const h of conteudo.habilidades) {
-          const tKey = `${conteudo.id}__${h.id}`
-          if (!feitos.includes(tKey)) {
-            result.push({ materiaKey: matKey, matNome: mat.nome, matIcone: mat.icone, tKey, texto: h.topico, prioridade: h.prioridade })
-            break
-          }
-        }
-      }
-    }
-    return result
+  if (typeof generateTodayStudyBlocks === 'function') {
+    const blocks = generateTodayStudyBlocks().filter(block => block.type === 'topico')
+    if (blocks.length) return blocks.map(block => block.topic)
   }
 
-  // Sem grade: rotação balanceada priorizando matérias principais do ENEM
-  // (não usa Object.keys em ordem — isso sempre entregava a mesma matéria)
-  const profile = getUserProfile()
-  const foco = profile.focoMateria
-  const ROTACAO_PADRAO = ['matematica', 'portugues', 'historia', 'geografia', 'ciencias', 'filosofia', 'ingles']
-  const todasKeys      = Object.keys(ENEM)
-  // Garante que qualquer matéria nova no ENEM object apareça no final
-  const rotacaoBase = [
-    ...ROTACAO_PADRAO.filter(k => todasKeys.includes(k)),
-    ...todasKeys.filter(k => !ROTACAO_PADRAO.includes(k) && k !== 'redacao')
-  ]
-  const rotacao = foco && foco !== 'equilibrado' && todasKeys.includes(foco)
-    ? [foco, ...rotacaoBase.filter(k => k !== foco)]
-    : rotacaoBase
-
-  // Pega um tópico de cada matéria em sequência (round-robin)
-  // para garantir variedade mesmo sem plano
-  const candidatos = []
-  for (const matKey of rotacao) {
-    const mat    = ENEM[matKey]
-    const feitos = getTopicosFeitos(matKey)
-    if (!mat?.conteudos) continue
-    for (const conteudo of mat.conteudos) {
-      for (const h of conteudo.habilidades) {
-        const tKey = `${conteudo.id}__${h.id}`
-        if (!feitos.includes(tKey)) {
-          candidatos.push({ materiaKey: matKey, matNome: mat.nome, matIcone: mat.icone, tKey, texto: h.topico, prioridade: h.prioridade })
-          break // um por matéria por rodada
-        }
-      }
-      break // um conteúdo por matéria
-    }
+  if (typeof getRecommendedTopics === 'function') {
+    return getRecommendedTopics(n)
   }
 
-  // Preenche até n tópicos
-  return candidatos
-    .sort((a, b) => scoreTopico(b) - scoreTopico(a))
-    .slice(0, n)
+  return getRecomendados(n)
 }
 
 /* ─────────────────────────────────────────
@@ -874,8 +822,7 @@ function renderEstudo() {
 
   // Tópico atual
   const atual = topicos.find(t =>
-    !pulados.includes(t.tKey) &&
-    !isTopicoFeito(t.materiaKey, t.tKey)
+    !pulados.includes(t.id || `${t.materiaKey}:${t.tKey}`)
   )
   const atualWrap = document.getElementById('topico-atual-wrap')
 
@@ -918,8 +865,7 @@ function renderEstudo() {
   // Próximos
   const proximos = topicos.filter(t =>
     t !== atual &&
-    !pulados.includes(t.tKey) &&
-    !isTopicoFeito(t.materiaKey, t.tKey)
+    !pulados.includes(t.id || `${t.materiaKey}:${t.tKey}`)
   ).slice(0, 3)
 
   document.getElementById('proximos-wrap').innerHTML = proximos.length > 0 ? `
@@ -962,10 +908,9 @@ function renderEstudo() {
 function pularTopico() {
   const topicos = getSugestaoTopicos(getQuantidadeTopicosHoje())
   const atual = topicos.find(t =>
-    !pulados.includes(t.tKey) &&
-    !isTopicoFeito(t.materiaKey, t.tKey)
+    !pulados.includes(t.id || `${t.materiaKey}:${t.tKey}`)
   )
-  if (atual) pulados.push(atual.tKey)
+  if (atual) pulados.push(atual.id || `${atual.materiaKey}:${atual.tKey}`)
   renderEstudo()
 }
 

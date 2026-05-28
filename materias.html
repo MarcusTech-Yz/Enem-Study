@@ -4,14 +4,92 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="Assets/favicon.svg" type="image/svg+xml" />
-  <title>ENEM · Matérias</title>
+  <title>ENEM · Materias</title>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .content-search {
+      position: relative;
+      margin: 1.35rem 0 1.5rem;
+    }
+    .content-search input {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      outline: none;
+      font-family: var(--font);
+      font-size: 14px;
+    }
+    .content-search input:focus { border-color: var(--accent); }
+    .topic-search-results {
+      display: none;
+      position: absolute;
+      z-index: 20;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg2);
+      padding: 8px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.42);
+      max-height: 430px;
+      overflow-y: auto;
+    }
+    .topic-search-results.active {
+      display: grid;
+      gap: 6px;
+    }
+    .topic-search-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      text-decoration: none;
+      color: var(--text);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+    }
+    .topic-search-item:hover {
+      background: var(--bg3);
+      border-color: var(--border2);
+    }
+    .topic-search-item strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+    .topic-search-item span,
+    .topic-search-item small {
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .topic-search-item small {
+      color: var(--accent);
+      align-self: center;
+    }
+    @media (max-width: 700px) {
+      .topic-search-item {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .topic-search-item span,
+      .topic-search-item small {
+        white-space: normal;
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="layout">
   <aside class="sidebar">
-        <div class="sidebar-logo"><span></span> enem.study</div>
+    <div class="sidebar-logo"><span></span> enem.study</div>
     <nav>
       <p class="nav-label">Menu</p>
       <ul class="nav-links">
@@ -25,45 +103,97 @@
 
   <main class="main">
     <div class="page-header">
-      <p class="date-tag">Conteúdo</p>
-      <h1>Matérias</h1>
-      <p>Clique em uma matéria para ver tópicos, anotações e materiais.</p>
+      <p class="date-tag">Conteudo</p>
+      <h1>Materias</h1>
+      <p>Busque um conteudo na hora ou abra uma materia para explorar a trilha completa.</p>
     </div>
+
+    <div class="content-search">
+      <input id="topic-search-input" type="search" placeholder="Buscar conteudo, habilidade, palavra-chave..." autocomplete="off" />
+      <div id="topic-search-results" class="topic-search-results"></div>
+    </div>
+
     <div class="materias-grid" id="materias-grid"></div>
   </main>
 </div>
 
 <script src="data/topicos.js"></script>
 <script src="js/app.js"></script>
+<script src="js/recommendation-engine.js"></script>
+<script src="js/study-engine.js"></script>
 <script>
-  const grid = document.getElementById('materias-grid')
+const grid = document.getElementById('materias-grid')
+const searchInput = document.getElementById('topic-search-input')
+const searchResults = document.getElementById('topic-search-results')
 
-  for (const [key, mat] of Object.entries(ENEM)) {
-    const { feitos, total, pct } = getProgressoMateria(key)
-    const corBarra = pct < 30 ? 'var(--red)' : pct < 60 ? 'var(--amber)' : 'var(--accent)'
-    const dific    = getDificuldades(key)
-    const fracos   = Object.values(dific).filter(v => v === 1).length
-    const tempo    = getTempoMateria(key)
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+}
 
-    grid.innerHTML += `
-      <a href="materia.html?m=${key}" class="materia-card">
-        <i data-lucide="${mat.icone}" style="width:22px;height:22px;color:var(--text3);margin-bottom:12px;display:block;"></i>
-        <div class="materia-card-nome">${mat.nome}</div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width:${pct}%;background:${corBarra};"></div>
+for (const [key, mat] of Object.entries(ENEM)) {
+  const { feitos, total, pct } = getProgressoMateria(key)
+  const corBarra = pct < 30 ? 'var(--red)' : pct < 60 ? 'var(--amber)' : 'var(--accent)'
+  const dific = getDificuldades(key)
+  const fracos = Object.values(dific).filter(v => v === 1).length
+  const tempo = getTempoMateria(key)
+
+  grid.innerHTML += `
+    <a href="materia.html?m=${key}" class="materia-card">
+      <i data-lucide="${mat.icone}" style="width:22px;height:22px;color:var(--text3);margin-bottom:12px;display:block;"></i>
+      <div class="materia-card-nome">${mat.nome}</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${pct}%;background:${corBarra};"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+        <p class="progress-label">${pct}% · ${feitos}/${total}</p>
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${tempo > 0 ? `<span style="font-size:10px;color:var(--blue);font-family:var(--mono);">${formatTempo(tempo)}</span>` : ''}
+          ${fracos > 0 ? `<span style="font-size:10px;color:var(--red);font-family:var(--mono);">${fracos} fraco${fracos > 1 ? 's' : ''}</span>` : ''}
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
-          <p class="progress-label">${pct}% · ${feitos}/${total}</p>
-          <div style="display:flex;gap:8px;align-items:center;">
-            ${tempo > 0 ? `<span style="font-size:10px;color:var(--blue);font-family:var(--mono);">${formatTempo(tempo)}</span>` : ''}
-            ${fracos > 0 ? `<span style="font-size:10px;color:var(--red);font-family:var(--mono);">${fracos} fraco${fracos>1?'s':''}</span>` : ''}
-          </div>
-        </div>
-      </a>
-    `
+      </div>
+    </a>
+  `
+}
+
+function renderTopicSearchResults(results) {
+  if (!results.length) {
+    searchResults.innerHTML = ''
+    searchResults.classList.remove('active')
+    return
   }
 
-  lucide.createIcons()
+  searchResults.classList.add('active')
+  searchResults.innerHTML = results.map(({ topic }) => `
+    <a class="topic-search-item" href="topico.html?m=${encodeURIComponent(topic.materiaKey)}&id=${encodeURIComponent(topic.tKey)}">
+      <div>
+        <strong>${escapeHtml(topic.titulo)}</strong>
+        <span>${escapeHtml(topic.matNome)} · ${escapeHtml(topic.conteudoNome || 'conteudo')} · ${escapeHtml(topic.habilidade || topic.habilidadeId || '')}</span>
+      </div>
+      <small>${topic.recorrenciaEnem}/5 recorrencia</small>
+    </a>
+  `).join('')
+}
+
+const handleTopicSearch = debounceStudy(event => {
+  renderTopicSearchResults(searchStudyTopics(event.target.value))
+}, 180)
+
+searchInput.addEventListener('input', handleTopicSearch)
+searchInput.addEventListener('focus', () => {
+  if (searchInput.value.trim().length >= 2) {
+    renderTopicSearchResults(searchStudyTopics(searchInput.value))
+  }
+})
+document.addEventListener('click', event => {
+  if (!event.target.closest('.content-search')) searchResults.classList.remove('active')
+})
+
+lucide.createIcons()
 </script>
 </body>
 </html>
