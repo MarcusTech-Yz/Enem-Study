@@ -171,10 +171,11 @@ function isPerfilMobileViewport() {
 
 function isPerfilLiteMode() {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const coarsePointer = window.matchMedia('(pointer: coarse)').matches
   const lowMemory = 'deviceMemory' in navigator && navigator.deviceMemory <= 4
   const lowCPU = 'hardwareConcurrency' in navigator && navigator.hardwareConcurrency <= 4
 
-  return isPerfilMobileViewport() || reducedMotion || lowMemory || lowCPU
+  return reducedMotion || isPerfilMobileViewport() || (coarsePointer && (lowMemory || lowCPU))
 }
 
 function getResponsiveVideoFile(item) {
