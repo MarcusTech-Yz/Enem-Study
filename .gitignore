@@ -81,6 +81,10 @@ pipeline/
 
 # Large/local assets
 Assets/
+!Assets/
+Assets/*
+!Assets/readme/
+!Assets/readme/readme.png
 *.mp4
 *.mov
 *.webm
