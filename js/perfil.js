@@ -169,6 +169,14 @@ function isPerfilMobileViewport() {
   return window.matchMedia('(max-width: 768px)').matches
 }
 
+function isPerfilLiteMode() {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const lowMemory = 'deviceMemory' in navigator && navigator.deviceMemory <= 4
+  const lowCPU = 'hardwareConcurrency' in navigator && navigator.hardwareConcurrency <= 4
+
+  return isPerfilMobileViewport() || reducedMotion || lowMemory || lowCPU
+}
+
 function getResponsiveVideoFile(item) {
   if (!item) return ''
   return isPerfilMobileViewport() && item.mobile ? item.mobile : item.file
@@ -204,6 +212,11 @@ function applyVideoThumb(file, thumb) {
 
 function generateVideoThumb(file) {
   if (!file) return Promise.resolve('')
+
+  if (isPerfilLiteMode()) {
+    return Promise.resolve('')
+  }
+
   if (PERFIL_VIDEO_THUMBS.has(file)) return Promise.resolve(PERFIL_VIDEO_THUMBS.get(file))
   if (PERFIL_VIDEO_THUMB_TASKS.has(file)) return PERFIL_VIDEO_THUMB_TASKS.get(file)
 
@@ -254,6 +267,14 @@ function generateVideoThumb(file) {
 }
 
 function hydrateVideoThumbs() {
+  if (isPerfilLiteMode()) {
+    document.querySelectorAll('[data-video-thumb]').forEach(node => {
+      node.style.backgroundImage = ''
+      node.classList.remove('is-thumb-ready')
+    })
+    return
+  }
+
   document.querySelectorAll('[data-video-thumb]').forEach(node => {
     const file = node.dataset.videoThumb
     if (!file) return
@@ -272,6 +293,21 @@ function applyPerfilWallpaper() {
   const video = document.getElementById('perfil-wallpaper-video')
   const source = document.getElementById('perfil-wallpaper-source')
   if (!video || !source) return
+
+  if (isPerfilLiteMode()) {
+    video.pause()
+    video.removeAttribute('src')
+    source.removeAttribute('src')
+    video.style.display = 'none'
+    video.load()
+
+    document.body.style.setProperty(
+      '--perfil-wallpaper-fallback',
+      'linear-gradient(135deg, #070b10, #101827 55%, #111827)'
+    )
+
+    return
+  }
 
   if (wallpaper.tipo === 'video') {
     const videoFile = getResponsiveVideoFile(wallpaper)
@@ -605,7 +641,7 @@ function renderHero() {
   const heroVideo = getHeroVideoDef()
   const isLofi = isLofiHeroStyle()
   const heroMood = isLofi ? 'is-lofi' : 'is-hud'
-  const heroLofiVideo = heroVideo.file
+  const heroLofiVideo = isPerfilLiteMode() ? '' : heroVideo.file
 
   document.getElementById('perfil-hero').className = `perfil-hero ${heroMood}`
   document.getElementById('perfil-hero').innerHTML = `
