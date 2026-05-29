@@ -126,8 +126,38 @@ function exportarMateria(key) {
   setStatus(`✓ ${ENEM[key].nome}.md baixado`)
 }
 
+async function copiarMarkdownTexto(markdown, statusMessage) {
+  try {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+      throw new Error('Clipboard API indisponivel')
+    }
+    await navigator.clipboard.writeText(markdown)
+    setStatus(statusMessage)
+  } catch {
+    const textarea = document.createElement('textarea')
+    textarea.value = markdown
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.select()
+
+    try {
+      document.execCommand('copy')
+      setStatus(statusMessage)
+    } catch {
+      setStatus('Nao consegui copiar automaticamente. Use o botao de baixar .md.')
+    }
+
+    textarea.remove()
+  }
+}
+
+function copiarMateriaMarkdown(key) {
+  copiarMarkdownTexto(materiaParaMd(key), `Markdown de ${ENEM[key].nome} copiado`)
+}
+
 // ── Exportar dia de hoje (.md download) ───────────────
-function exportarHoje() {
+function buildHojeMarkdown() {
   const hoje     = new Date()
   const hojeStr  = hoje.toLocaleDateString('pt-BR')
   const sessoes  = store.get('sessoes_' + getTodayStr()) || []
@@ -158,6 +188,11 @@ function exportarHoje() {
     }
   }
 
+  return { md, hojeStr }
+}
+
+function exportarHoje() {
+  const { md, hojeStr } = buildHojeMarkdown()
   const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
@@ -168,13 +203,18 @@ function exportarHoje() {
   setStatus('✓ Arquivo do dia baixado')
 }
 
+function copiarHojeMarkdown() {
+  const { md } = buildHojeMarkdown()
+  copiarMarkdownTexto(md, 'Markdown do dia copiado')
+}
+
 // ── Exportar tudo como ZIP ─────────────────────────────
 async function exportarTudo() {
   setStatus('Gerando ZIP...')
   setBtnLoading('btn-zip', true)
 
   const zip = new JSZip()
-  const vault = zip.folder('enem-vault')
+  const vault = zip.folder('enem-markdown')
 
   // _indice.md na raiz
   vault.file('_indice.md', gerarIndice())
@@ -201,12 +241,12 @@ async function exportarTudo() {
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
   a.href     = url
-  a.download = `enem-vault-${getTodayStr()}.zip`
+  a.download = `enem-markdown-${getTodayStr()}.zip`
   a.click()
   URL.revokeObjectURL(url)
 
   setBtnLoading('btn-zip', false)
-  setStatus('✓ ZIP gerado! Descompacte e cole na pasta do seu vault no Obsidian.')
+  setStatus('✓ ZIP gerado! Abra os .md no editor Markdown que preferir.')
 }
 
 // ── Helpers de UI ──────────────────────────────────────

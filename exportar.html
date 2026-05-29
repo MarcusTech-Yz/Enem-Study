@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="Assets/favicon.svg" type="image/svg+xml" />
-  <title>ENEM · Exportar para Obsidian</title>
+  <title>ENEM · Exportar Markdown</title>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="css/style.css" />
@@ -123,23 +123,23 @@
 
   <main class="main">
     <div class="page-header">
-      <p class="date-tag">Obsidian</p>
+      <p class="date-tag">Markdown</p>
       <h1>Exportar anotações</h1>
-      <p>Baixe suas notas em Markdown, prontas para colar no vault do Obsidian.</p>
+      <p>Baixe suas notas em .md para usar em qualquer editor Markdown, inclusive Obsidian, Notion e VS Code.</p>
     </div>
 
     <!-- Hero info -->
     <div class="export-hero">
       <div class="export-hero-icon">
-        <i data-lucide="folder-open" style="width:24px;height:24px;"></i>
+        <i data-lucide="file-text" style="width:24px;height:24px;"></i>
       </div>
       <div>
-        <h2>Como usar no Obsidian</h2>
+        <h2>Como usar os arquivos Markdown</h2>
         <p>
-          Baixe o ZIP completo e descompacte dentro da pasta do seu vault.<br>
-          Cada matéria vira uma pasta com o arquivo <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px;">.md</code> e uma pasta
-          <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px;">assets/</code> com as imagens.<br>
-          O <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px;">_indice.md</code> na raiz vira o seu dashboard dentro do Obsidian, com links para todas as matérias.
+          Baixe um arquivo individual ou o pacote completo com todas as matérias.<br>
+          Cada matéria vira uma nota <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px;">.md</code>, e imagens ficam em
+          <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px;">assets/</code> quando existirem.<br>
+          O <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px;">_indice.md</code> funciona como índice geral para navegar pelas matérias.
         </p>
       </div>
     </div>
@@ -155,8 +155,8 @@
           </div>
           <h3>Exportar tudo</h3>
         </div>
-        <p>Gera um ZIP com todas as matérias, tópicos, anotações, imagens e o índice geral. Pronto para colar direto no vault.</p>
-        <div class="preview-box">enem-vault/
+        <p>Gera um ZIP com todas as matérias, tópicos, anotações, imagens e o índice geral. Pronto para guardar, importar ou abrir em outro app.</p>
+        <div class="preview-box">enem-markdown/
 ├── _indice.md
 ├── Matemática/
 │   ├── Matemática.md
@@ -189,10 +189,16 @@
 ## Sessões
 - Matemática · 25min
 - História · 50min</div>
-        <button class="btn btn-blue" onclick="exportarHoje()">
-          <i data-lucide="file-text" style="width:14px;height:14px;"></i>
-          Baixar arquivo do dia
-        </button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-blue" onclick="exportarHoje()">
+            <i data-lucide="file-text" style="width:14px;height:14px;"></i>
+            Baixar arquivo do dia
+          </button>
+          <button class="btn btn-sm btn-ghost" onclick="copiarHojeMarkdown()">
+            <i data-lucide="copy" style="width:12px;height:12px;"></i>
+            Copiar Markdown
+          </button>
+        </div>
       </div>
 
     </div>
@@ -209,7 +215,7 @@
     <!-- Importação -->
     <div class="card" style="margin-top:1rem;">
       <div class="section-header">
-        <p class="card-title" style="margin-bottom:0;">Importar do Obsidian</p>
+        <p class="card-title" style="margin-bottom:0;">Importar Markdown</p>
         <span style="font-size:11px;color:var(--text3);">Arraste um .md ou um .zip exportado pelo app</span>
       </div>
 
@@ -224,7 +230,7 @@
         <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;">.zip</code> aqui
         <br><span style="font-size:11px;opacity:.5;margin-top:4px;display:block;">
           Arquivos exportados pelo app: detecta automaticamente.<br>
-          Anotações avulsas do Obsidian: você escolhe a matéria.
+          Anotações avulsas em Markdown: você escolhe a matéria.
         </span>
       </div>
       <input type="file" id="import-input" accept=".md,.zip" style="display:none" onchange="handleImportInput(event)" />
@@ -284,6 +290,10 @@
         <button class="btn btn-sm btn-ghost" onclick="exportarMateria('${key}')">
           <i data-lucide="download" style="width:12px;height:12px;"></i>
           .md
+        </button>
+        <button class="btn btn-sm btn-ghost" onclick="copiarMateriaMarkdown('${key}')">
+          <i data-lucide="copy" style="width:12px;height:12px;"></i>
+          copiar
         </button>
       </div>
     `

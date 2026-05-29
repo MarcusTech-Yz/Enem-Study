@@ -180,8 +180,8 @@ function renderTopicoPage() {
           <button class="btn btn-sm" onclick="openObsidianNote()">
             <i data-lucide="external-link" style="width:13px;height:13px;"></i> Obsidian
           </button>
-          <button class="btn btn-sm" onclick="exportTopicoMarkdown()">
-            <i data-lucide="download" style="width:13px;height:13px;"></i> Exportar .md
+          <button class="btn btn-sm" onclick="copyTopicoMarkdown()">
+            <i data-lucide="copy" style="width:13px;height:13px;"></i> Copiar .md
           </button>
         </div>
       </section>
@@ -382,6 +382,132 @@ function updateTopicoHeader() {
   if (difEl) difEl.innerHTML = formatDificuldadeLabel(getTopicoDificuldade())
   if (progressoEl) progressoEl.textContent = `${getProgressoMateria(topicoMateriaKey).pct}%`
   lucide.createIcons()
+}
+
+function renderExportTab() {
+  const container = document.getElementById('tab-exportar')
+  if (!container) return
+  container.innerHTML = `
+    <div class="obsidian-section" style="padding-top:16px;">
+      <div class="obsidian-box">
+        <h3>Exportar Markdown</h3>
+        <p>Baixe ou copie uma nota completa deste topico em formato .md. Funciona com Obsidian, Notion, VS Code e qualquer editor Markdown.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-accent btn-sm" onclick="exportTopicoMarkdown()">
+            <i data-lucide="download" style="width:13px;height:13px;"></i>
+            Baixar .md
+          </button>
+          <button class="btn btn-sm" onclick="copyTopicoMarkdown()">
+            <i data-lucide="copy" style="width:13px;height:13px;"></i>
+            Copiar Markdown
+          </button>
+        </div>
+      </div>
+
+      <div class="obsidian-box">
+        <h3>Importar Markdown</h3>
+        <p>Cole uma anotacao em Markdown para adicionar ou substituir as anotacoes deste topico.</p>
+        <textarea class="obsidian-import-area" id="markdown-import" placeholder="Cole o conteudo da nota aqui..."></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="btn btn-sm btn-accent" onclick="importMarkdown('append')">Adicionar como bloco</button>
+          <button class="btn btn-sm" onclick="importMarkdown('replace')">Substituir anotacoes</button>
+          <button class="btn btn-sm" onclick="document.getElementById('markdown-import').value=''">Limpar</button>
+        </div>
+      </div>
+
+      <details class="manual-questions">
+        <summary>Obsidian experimental</summary>
+        <div class="obsidian-box" style="margin-top:12px;">
+          <h3>Abrir no Obsidian</h3>
+          <p>Opcional. Tenta abrir uma nota no Obsidian usando o protocolo obsidian://. Pode nao funcionar em todos os navegadores.</p>
+          <div class="obsidian-vault-row">
+            <input class="video-input" type="text" id="vault-name" value="${escapeHtmlForAttr(getVaultName())}" placeholder="Ex: ENEM-Study" />
+            <button class="btn btn-sm" onclick="saveTopicoVault()">Salvar vault</button>
+            <button class="btn btn-sm" onclick="openObsidianNote()">Abrir</button>
+          </div>
+        </div>
+      </details>
+    </div>
+  `
+  lucide.createIcons()
+}
+
+function buildTopicoMarkdown() {
+  const videos = getTopicoVideos()
+  const questoes = getTopicoQuestoes()
+  const blocks = getNoteBlocks()
+  const state = getTopicRichState(topicoMateriaKey, topicoKeyId)
+  const tempo = getTempo(topicoMateriaKey, topicoKeyId)
+
+  let md = `---\n`
+  md += `materia: "${topicoMateria.nome}"\n`
+  md += `conteudo: "${conteudo.nome}"\n`
+  md += `topico: "${getTopicoTitulo()}"\n`
+  md += `habilidade: "${habilidade.id}"\n`
+  md += `id: "${topicoKeyId}"\n`
+  md += `concluido: ${isTopicoAtualFeito()}\n`
+  md += `tempo_estudado: "${formatTempo(tempo)}"\n`
+  md += `dominio: ${state.mastery || 0}\n`
+  md += `dificuldade: "${state.difficulty || 'nao_avaliado'}"\n`
+  md += `exportado_em: "${new Date().toISOString()}"\n`
+  md += `---\n\n`
+
+  md += `# ${getTopicoTitulo()}\n\n`
+  md += `> ${getTopicoDescricao()}\n\n`
+
+  md += `## Dados do topico\n\n`
+  md += `- **Materia:** ${topicoMateria.nome}\n`
+  md += `- **Conteudo:** ${conteudo.nome}\n`
+  md += `- **Habilidade:** ${habilidade.id}\n`
+  md += `- **Tempo estudado:** ${formatTempo(tempo)}\n`
+  md += `- **Concluido:** ${isTopicoAtualFeito() ? 'sim' : 'nao'}\n`
+  md += `- **Dominio:** ${state.mastery || 0}%\n`
+  md += `- **Dificuldade:** ${state.difficulty || 'nao_avaliado'}\n\n`
+
+  md += `## Anotacoes\n\n`
+  if (blocks.length) {
+    blocks.forEach(block => {
+      const meta = getBlockMeta(block.type)
+      const title = block.title || meta.title
+      md += `### ${title}\n\n`
+      md += `${block.content || 'Sem conteudo.'}\n\n`
+    })
+  } else {
+    md += `Sem anotacoes ainda.\n\n`
+  }
+
+  if (videos.length) {
+    md += `## Videos\n\n`
+    videos.forEach(video => {
+      const title = video.title || video.titulo || 'Video salvo'
+      const type = video.type ? ` - ${formatVideoType(video.type)}` : ''
+      md += `- [${title}](${video.url})${type}\n`
+    })
+    md += `\n`
+  }
+
+  if (questoes.length) {
+    md += `## Questoes\n\n`
+    questoes.forEach((questao, index) => {
+      md += `### Questao ${index + 1}\n\n`
+      md += `${questao.statement || questao.enunciado || ''}\n\n`
+      if (questao.status) md += `**Status:** ${getQuestionStatusLabel(questao.status)}\n\n`
+      if (questao.errorReason) md += `**Motivo do erro:** ${label('errorReason', questao.errorReason)}\n\n`
+      if (questao.answer || questao.resposta) {
+        md += `**Resposta/comentario:** ${questao.answer || questao.resposta}\n\n`
+      }
+    })
+  }
+
+  if (state.reviews?.length) {
+    md += `## Revisoes geradas\n\n`
+    state.reviews.forEach(review => {
+      md += `- ${review.question} (${review.status || 'pendente'} - ${formatShortDate(review.dueAt)})\n`
+    })
+    md += `\n`
+  }
+
+  return md
 }
 
 function setDifficulty(value) {
@@ -631,6 +757,68 @@ function exportTopicoMarkdown() {
   a.download = `${sanitizeFileName(getTopicoTitulo())}.md`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+async function copyTopicoMarkdown() {
+  const markdown = buildTopicoMarkdown()
+
+  try {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+      throw new Error('Clipboard API indisponivel')
+    }
+    await navigator.clipboard.writeText(markdown)
+    markTopicoSaved('markdown copiado')
+  } catch {
+    const textarea = document.createElement('textarea')
+    textarea.value = markdown
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.select()
+
+    try {
+      document.execCommand('copy')
+      markTopicoSaved('markdown copiado')
+    } catch {
+      alert('NÃ£o consegui copiar automaticamente. Use o botÃ£o de baixar .md.')
+    }
+
+    textarea.remove()
+  }
+}
+
+function importMarkdown(mode = 'append') {
+  const importEl = document.getElementById('markdown-import') || document.getElementById('obsidian-import')
+  if (!importEl) return
+
+  const content = importEl.value.trim()
+  if (!content) return
+
+  if (mode === 'replace') {
+    const ok = confirm('Isso vai substituir suas anotaÃ§Ãµes atuais deste tÃ³pico. Continuar?')
+    if (!ok) return
+  }
+
+  const importedBlock = {
+    id: createNoteBlockId(),
+    type: 'texto',
+    title: 'Markdown importado',
+    content,
+  }
+
+  if (mode === 'replace') {
+    saveNoteBlocks([importedBlock])
+  } else {
+    saveNoteBlocks([...getNoteBlocks(), importedBlock])
+  }
+
+  renderNoteBlocks()
+  importEl.value = ''
+  markTopicoSaved('markdown importado')
+}
+
+function importFromObsidian() {
+  importMarkdown('replace')
 }
 
 function buildTopicoMarkdown() {
@@ -1062,8 +1250,8 @@ function renderTopicoPage() {
           <button class="btn btn-sm btn-accent" onclick="startTopicoFocus()">
             <i data-lucide="play" style="width:13px;height:13px;"></i> Iniciar sessão
           </button>
-          <button class="btn btn-sm" onclick="exportTopicoMarkdown()">
-            <i data-lucide="download" style="width:13px;height:13px;"></i> Exportar .md
+          <button class="btn btn-sm" onclick="copyTopicoMarkdown()">
+            <i data-lucide="copy" style="width:13px;height:13px;"></i> Copiar .md
           </button>
         </div>
       </section>
@@ -1109,7 +1297,7 @@ function renderTopicoPage() {
             <i data-lucide="rotate-ccw"></i> Revisões
           </button>
           <button class="tab" data-tab="exportar" onclick="switchTopicoTab('exportar', this)">
-            <i data-lucide="database"></i> Exportar
+            <i data-lucide="download"></i> Exportar
           </button>
         </div>
 
@@ -1853,6 +2041,54 @@ function renderExportTab() {
   `
 }
 
+function renderExportTab() {
+  const container = document.getElementById('tab-exportar')
+  if (!container) return
+  container.innerHTML = `
+    <div class="obsidian-section" style="padding-top:16px;">
+      <div class="obsidian-box">
+        <h3>Exportar Markdown</h3>
+        <p>Baixe ou copie uma nota completa deste tÃ³pico em formato .md. Funciona com Obsidian, Notion, VS Code e qualquer editor Markdown.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-accent btn-sm" onclick="exportTopicoMarkdown()">
+            <i data-lucide="download" style="width:13px;height:13px;"></i>
+            Baixar .md
+          </button>
+          <button class="btn btn-sm" onclick="copyTopicoMarkdown()">
+            <i data-lucide="copy" style="width:13px;height:13px;"></i>
+            Copiar Markdown
+          </button>
+        </div>
+      </div>
+
+      <div class="obsidian-box">
+        <h3>Importar Markdown</h3>
+        <p>Cole uma anotaÃ§Ã£o em Markdown para adicionar ou substituir as anotaÃ§Ãµes deste tÃ³pico.</p>
+        <textarea class="obsidian-import-area" id="markdown-import" placeholder="Cole o conteÃºdo da nota aqui..."></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="btn btn-sm btn-accent" onclick="importMarkdown('append')">Adicionar como bloco</button>
+          <button class="btn btn-sm" onclick="importMarkdown('replace')">Substituir anotaÃ§Ãµes</button>
+          <button class="btn btn-sm" onclick="document.getElementById('markdown-import').value=''">Limpar</button>
+        </div>
+      </div>
+
+      <details class="manual-questions">
+        <summary>Obsidian experimental</summary>
+        <div class="obsidian-box" style="margin-top:12px;">
+          <h3>Abrir no Obsidian</h3>
+          <p>Opcional. Tenta abrir uma nota no Obsidian usando o protocolo obsidian://. Pode nÃ£o funcionar em todos os navegadores.</p>
+          <div class="obsidian-vault-row">
+            <input class="video-input" type="text" id="vault-name" value="${escapeHtmlForAttr(getVaultName())}" placeholder="Ex: ENEM-Study" />
+            <button class="btn btn-sm" onclick="saveTopicoVault()">Salvar vault</button>
+            <button class="btn btn-sm" onclick="openObsidianNote()">Abrir</button>
+          </div>
+        </div>
+      </details>
+    </div>
+  `
+  lucide.createIcons()
+}
+
 function formatShortDate(iso) {
   if (!iso) return '--'
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
@@ -1942,3 +2178,129 @@ window.addEventListener('beforeunload', () => {
 })
 
 document.addEventListener('DOMContentLoaded', renderTopicoPage)
+
+function renderExportTab() {
+  const container = document.getElementById('tab-exportar')
+  if (!container) return
+  container.innerHTML = `
+    <div class="obsidian-section" style="padding-top:16px;">
+      <div class="obsidian-box">
+        <h3>Exportar Markdown</h3>
+        <p>Baixe ou copie uma nota completa deste topico em formato .md. Funciona com Obsidian, Notion, VS Code e qualquer editor Markdown.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-accent btn-sm" onclick="exportTopicoMarkdown()">
+            <i data-lucide="download" style="width:13px;height:13px;"></i>
+            Baixar .md
+          </button>
+          <button class="btn btn-sm" onclick="copyTopicoMarkdown()">
+            <i data-lucide="copy" style="width:13px;height:13px;"></i>
+            Copiar Markdown
+          </button>
+        </div>
+      </div>
+
+      <div class="obsidian-box">
+        <h3>Importar Markdown</h3>
+        <p>Cole uma anotacao em Markdown para adicionar ou substituir as anotacoes deste topico.</p>
+        <textarea class="obsidian-import-area" id="markdown-import" placeholder="Cole o conteudo da nota aqui..."></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="btn btn-sm btn-accent" onclick="importMarkdown('append')">Adicionar como bloco</button>
+          <button class="btn btn-sm" onclick="importMarkdown('replace')">Substituir anotacoes</button>
+          <button class="btn btn-sm" onclick="document.getElementById('markdown-import').value=''">Limpar</button>
+        </div>
+      </div>
+
+      <details class="manual-questions">
+        <summary>Obsidian experimental</summary>
+        <div class="obsidian-box" style="margin-top:12px;">
+          <h3>Abrir no Obsidian</h3>
+          <p>Opcional. Tenta abrir uma nota no Obsidian usando o protocolo obsidian://. Pode nao funcionar em todos os navegadores.</p>
+          <div class="obsidian-vault-row">
+            <input class="video-input" type="text" id="vault-name" value="${escapeHtmlForAttr(getVaultName())}" placeholder="Ex: ENEM-Study" />
+            <button class="btn btn-sm" onclick="saveTopicoVault()">Salvar vault</button>
+            <button class="btn btn-sm" onclick="openObsidianNote()">Abrir</button>
+          </div>
+        </div>
+      </details>
+    </div>
+  `
+  lucide.createIcons()
+}
+
+function buildTopicoMarkdown() {
+  const videos = getTopicoVideos()
+  const questoes = getTopicoQuestoes()
+  const blocks = getNoteBlocks()
+  const state = getTopicRichState(topicoMateriaKey, topicoKeyId)
+  const tempo = getTempo(topicoMateriaKey, topicoKeyId)
+
+  let md = `---\n`
+  md += `materia: "${topicoMateria.nome}"\n`
+  md += `conteudo: "${conteudo.nome}"\n`
+  md += `topico: "${getTopicoTitulo()}"\n`
+  md += `habilidade: "${habilidade.id}"\n`
+  md += `id: "${topicoKeyId}"\n`
+  md += `concluido: ${isTopicoAtualFeito()}\n`
+  md += `tempo_estudado: "${formatTempo(tempo)}"\n`
+  md += `dominio: ${state.mastery || 0}\n`
+  md += `dificuldade: "${state.difficulty || 'nao_avaliado'}"\n`
+  md += `exportado_em: "${new Date().toISOString()}"\n`
+  md += `---\n\n`
+
+  md += `# ${getTopicoTitulo()}\n\n`
+  md += `> ${getTopicoDescricao()}\n\n`
+
+  md += `## Dados do topico\n\n`
+  md += `- **Materia:** ${topicoMateria.nome}\n`
+  md += `- **Conteudo:** ${conteudo.nome}\n`
+  md += `- **Habilidade:** ${habilidade.id}\n`
+  md += `- **Tempo estudado:** ${formatTempo(tempo)}\n`
+  md += `- **Concluido:** ${isTopicoAtualFeito() ? 'sim' : 'nao'}\n`
+  md += `- **Dominio:** ${state.mastery || 0}%\n`
+  md += `- **Dificuldade:** ${state.difficulty || 'nao_avaliado'}\n\n`
+
+  md += `## Anotacoes\n\n`
+  if (blocks.length) {
+    blocks.forEach(block => {
+      const meta = getBlockMeta(block.type)
+      const title = block.title || meta.title
+      md += `### ${title}\n\n`
+      md += `${block.content || 'Sem conteudo.'}\n\n`
+    })
+  } else {
+    md += `Sem anotacoes ainda.\n\n`
+  }
+
+  if (videos.length) {
+    md += `## Videos\n\n`
+    videos.forEach(video => {
+      const title = video.title || video.titulo || 'Video salvo'
+      const type = video.type ? ` - ${formatVideoType(video.type)}` : ''
+      md += `- [${title}](${video.url})${type}\n`
+    })
+    md += `\n`
+  }
+
+  if (questoes.length) {
+    md += `## Questoes\n\n`
+    questoes.forEach((questao, index) => {
+      md += `### Questao ${index + 1}\n\n`
+      md += `${questao.statement || questao.enunciado || ''}\n\n`
+      if (questao.status) md += `**Status:** ${getQuestionStatusLabel(questao.status)}\n\n`
+      if (questao.errorReason) md += `**Motivo do erro:** ${label('errorReason', questao.errorReason)}\n\n`
+      if (questao.answer || questao.resposta) {
+        md += `**Resposta/comentario:** ${questao.answer || questao.resposta}\n\n`
+      }
+    })
+  }
+
+  if (state.reviews?.length) {
+    md += `## Revisoes geradas\n\n`
+    state.reviews.forEach(review => {
+      md += `- ${review.question} (${review.status || 'pendente'} - ${formatShortDate(review.dueAt)})\n`
+    })
+    md += `\n`
+  }
+
+  return md
+}

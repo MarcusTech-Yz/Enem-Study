@@ -166,6 +166,34 @@
     .pulo-alerta-titulo { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
     .pulo-alerta-sub { font-size: 12px; color: var(--text2); margin-bottom: 1rem; }
     .pulo-opcoes { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mobile-search-entry {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      margin: 0 0 1rem;
+      color: var(--text);
+      text-decoration: none;
+      background: var(--bg2);
+      border: 1px solid rgba(200,241,53,.24);
+      border-radius: var(--radius-sm);
+    }
+    .mobile-search-entry strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+    .mobile-search-entry span {
+      display: block;
+      color: var(--text3);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .mobile-search-entry i {
+      color: var(--accent);
+      flex-shrink: 0;
+    }
     @media (max-width: 768px) {
       .topico-atual {
         padding: 1.2rem;
@@ -208,6 +236,10 @@
       .streak-pill {
         width: 100%;
         justify-content: flex-start;
+      }
+
+      .mobile-search-entry {
+        display: flex;
       }
 
       .proximo-item,
@@ -311,6 +343,14 @@
 
       <p class="home-context" id="home-context"></p>
 
+      <a class="mobile-search-entry" href="materias.html">
+        <div>
+          <strong>Buscar conteúdo</strong>
+          <span>Encontre qualquer tópico, habilidade ou palavra-chave.</span>
+        </div>
+        <i data-lucide="search" style="width:18px;height:18px;"></i>
+      </a>
+
       <!-- Alerta após 2 pulos -->
       <div class="pulo-alerta" id="pulo-alerta">
         <p class="pulo-alerta-titulo">Dificuldade em escolher?</p>
@@ -401,7 +441,6 @@ const ONBOARDING_STEPS = [
     mascotImage: 'Assets/mascote/mascote-02-enem.png',
     mascotClass: 'mascot-calendar',
     options: [
-      { label: 'Nov 2025', value: 2025, insight: 'Plano mais direto, com foco em revisão e pontos fracos.' },
       { label: 'Nov 2026', value: 2026, insight: 'Plano equilibrado, com tempo para construir base e revisar.' },
       { label: 'Nov 2027+', value: 2027, insight: 'Plano leve, ideal para criar constância desde cedo.' },
     ]
@@ -504,9 +543,10 @@ const ONBOARDING_STEPS = [
 ]
 
 let onboardingStepIndex = 0
+const savedEnemYear = Number(getUserProfile().enemAno || 2026)
 let onboardingDraft = {
   ...getUserProfile(),
-  enemAno: getUserProfile().enemAno || 2026,
+  enemAno: savedEnemYear < 2026 ? 2026 : savedEnemYear,
   tempoDiaMin: getUserProfile().tempoDiaMin || 60,
   periodoEstudo: getUserProfile().periodoEstudo || 'noite',
   focoMateria: getUserProfile().focoMateria || 'equilibrado',

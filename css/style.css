@@ -1748,6 +1748,10 @@ body.onboarding-mode .ob-official {
     overflow: visible;
   }
 
+  .modal-overlay {
+    z-index: 1200;
+  }
+
   .sidebar-logo,
   .nav-label,
   .sidebar > div:last-child {

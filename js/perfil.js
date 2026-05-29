@@ -28,12 +28,21 @@ const RANKS = [
 const PERFIL_WALLPAPERS = [
   { id: 'lofi-room', nome: 'Lofi Room', file: 'Assets/back/lofi.mp4', tipo: 'video' },
   { id: 'girl-cat', nome: 'Girl Cat', file: 'Assets/back/girl-cat.mp4', tipo: 'video' },
+  { id: 'black', nome: 'Black', file: 'Assets/background/black.mp4', mobile: 'Assets/background/black-mobile.mp4', tipo: 'video' },
+  { id: 'blue-sky', nome: 'Blue Sky', file: 'Assets/background/BlueSky.mp4', mobile: 'Assets/background/blue-sky-mobile.mp4', tipo: 'video' },
+  { id: 'ferrari', nome: 'Ferrari', file: 'Assets/background/Ferrari.mp4', mobile: 'Assets/background/ferrari-mobile.mp4', tipo: 'video' },
+  { id: 'resident', nome: 'Resident', file: 'Assets/background/resident.mp4', mobile: 'Assets/background/resident-mobile.mp4', tipo: 'video' },
+  { id: 'star', nome: 'Star', file: 'Assets/background/Star.mp4', mobile: 'Assets/background/star-mobile.mp4', tipo: 'video' },
+  { id: 'lucid', nome: 'Lucid', file: 'Assets/background/lucid-mobile.mp4', mobile: 'Assets/background/lucid-mobile.mp4', tipo: 'video' },
+  { id: 'sapinhos', nome: 'Sapinhos', file: 'Assets/background/sapinhos-mobile.mp4', mobile: 'Assets/background/sapinhos-mobile.mp4', tipo: 'video' },
+  { id: 'spiderman', nome: 'Spiderman', file: 'Assets/background/spiderman-mobile.mp4', mobile: 'Assets/background/spiderman-mobile.mp4', tipo: 'video' },
 ]
 
 const PERFIL_HERO_VIDEOS = [
   { id: 'none', nome: 'Sem video', file: '' },
   { id: 'lofi-room', nome: 'Lofi Room', file: 'Assets/back/lofi.mp4' },
   { id: 'girl-cat', nome: 'Girl Cat', file: 'Assets/back/girl-cat.mp4' },
+  { id: 'lucid', nome: 'Lucid', file: 'Assets/background/lucid-mobile.mp4' },
 ]
 
 const PERFIL_FRAMES = [
@@ -77,7 +86,7 @@ function buildHeroData() {
 
 function getSceneLabel(rankNome) {
   const labels = {
-    Calouro: 'Mesa em construção',
+    Calouro: 'Quarto em construção',
     Bronze: 'Noite de arranque',
     Prata: 'Quarto focado',
     Ouro: 'Sala de performance',
@@ -154,6 +163,15 @@ function getHeroVideoDef(id = getPerfilHeroVideo()) {
 
 function getHeroVideoLabel() {
   return getHeroVideoDef().nome
+}
+
+function isPerfilMobileViewport() {
+  return window.matchMedia('(max-width: 768px)').matches
+}
+
+function getResponsiveVideoFile(item) {
+  if (!item) return ''
+  return isPerfilMobileViewport() && item.mobile ? item.mobile : item.file
 }
 
 function isLofiHeroStyle(id = getPerfilHeroVideo()) {
@@ -256,8 +274,10 @@ function applyPerfilWallpaper() {
   if (!video || !source) return
 
   if (wallpaper.tipo === 'video') {
+    const videoFile = getResponsiveVideoFile(wallpaper)
     video.style.display = ''
-    source.src = wallpaper.file
+    if (source.src.endsWith(videoFile)) return
+    source.src = videoFile
     source.type = 'video/mp4'
     video.load()
     video.play().catch(() => {})
@@ -440,7 +460,7 @@ function renderCustomizer() {
   const renderVideoTile = (item, isActive, label) => {
     return `
       <button class="asset-tile ${isActive ? 'is-active' : ''}" type="button" data-${label === 'bloco' ? 'hero-video' : 'wallpaper'}="${item.id}">
-        <span class="asset-thumb is-video" data-video-thumb="${item.file}"></span>
+        <span class="asset-thumb is-video" data-video-thumb="${item.mobile || item.file}"></span>
         <span class="asset-meta">
           <strong>${item.nome}</strong>
           <small>${label}</small>
@@ -590,14 +610,14 @@ function renderHero() {
   document.getElementById('perfil-hero').className = `perfil-hero ${heroMood}`
   document.getElementById('perfil-hero').innerHTML = `
     ${isLofi && heroLofiVideo ? `
-      <video class="hero-lofi-video" autoplay muted loop playsinline preload="auto">
+      <video class="hero-lofi-video" autoplay muted loop playsinline preload="metadata">
         <source src="${heroLofiVideo}" type="video/mp4" />
       </video>
       <div class="hero-lofi-overlay"></div>
     ` : ''}
     <div class="hero-topbar">
       <span class="hero-scene-badge">Cena equipada: <strong>${scene}</strong></span>
-      <span class="hero-track">Segredos restantes: <strong>${secretasRestantes}</strong></span>
+      <span class="hero-track">Personalizações restantes: <strong>${secretasRestantes}</strong></span>
     </div>
 
     <div class="hero-content">
@@ -979,6 +999,8 @@ function renderGrafico() {
 
 function initPerfilPage() {
   applyPerfilWallpaper()
+  const mobileMedia = window.matchMedia('(max-width: 768px)')
+  mobileMedia.addEventListener('change', () => applyPerfilWallpaper())
   renderHero()
   renderCustomizer()
   renderShowcase()
