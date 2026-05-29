@@ -560,11 +560,11 @@
     }
 
     .perfil-hero.is-lofi .perfil-avatar {
-      transform: rotate(-2deg);
+      transform: none;
     }
 
     .perfil-hero.is-lofi .perfil-avatar:hover {
-      transform: rotate(-2deg);
+      transform: none;
     }
 
     .perfil-hero.is-lofi .hero-kicker {
